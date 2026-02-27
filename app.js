@@ -405,6 +405,14 @@ function avatarInitial(name) {
   return value ? value.charAt(0).toUpperCase() : "M";
 }
 
+function publicDisplayName(value, fallback = "Anonymous") {
+  const normalized = String(value || "").trim();
+  if (!normalized || normalized.toLowerCase() === "member") {
+    return fallback;
+  }
+  return normalized;
+}
+
 function loadStoredToken() {
   try {
     return window.localStorage.getItem(AUTH_TOKEN_KEY) || "";
@@ -821,14 +829,14 @@ function requestCardHtml(request) {
   const tags = Array.isArray(request.tags) ? request.tags.slice(0, 5) : [];
   const lane = parseMode(request.mode);
   const laneLabel = lane === "errand" ? "Errand" : "Social";
-  const resolvedName =
+  const resolvedName = publicDisplayName(
     request.createdByName ||
-    request.postedByName ||
-    request.displayName ||
-    (state.auth.user && request.createdBy === state.auth.user.id
-      ? state.auth.user.displayName || state.auth.user.email
-      : "") ||
-    "Member";
+      request.postedByName ||
+      request.displayName ||
+      (state.auth.user && request.createdBy === state.auth.user.id
+        ? state.auth.user.displayName || state.auth.user.email
+        : "")
+  );
   const safeName = escapeHtml(resolvedName);
   const userLink = request.createdBy
     ? `<button class="text-link" type="button" data-action="open-profile" data-user-id="${escapeHtml(request.createdBy)}">${safeName}</button>`
@@ -1006,6 +1014,7 @@ function getActiveChatRequest() {
 function renderChat() {
   const request = getActiveChatRequest();
   if (!request) {
+    dom.sessionChat.classList.add("hidden");
     const hasOpenRequest = Boolean(state.activeRequest && state.activeRequest.status === "open");
     dom.chatHint.textContent = hasOpenRequest
       ? "Your request is open. Find a match or wait for someone to join."
@@ -1016,6 +1025,7 @@ function renderChat() {
     return;
   }
 
+  dom.sessionChat.classList.remove("hidden");
   dom.chatHint.textContent = `Session for "${request.title}". Keep details practical: location pin, ETA, and check-in preferences.`;
   dom.chatForm.classList.remove("hidden");
 
@@ -1791,8 +1801,14 @@ function setFeedMode(mode) {
   renderFeedMode();
 }
 
+function updateSearchUI() {
+  const hasQuery = Boolean(String(dom.searchInput.value || "").trim());
+  dom.clearSearchBtn.classList.toggle("hidden", !hasQuery);
+}
+
 function updateSearch(value) {
   state.searchQuery = String(value || "").trim().toLowerCase();
+  updateSearchUI();
   renderFeedMode();
 }
 
