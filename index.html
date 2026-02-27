@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tag Along - Social + Errand Companionship</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="mode-social">
+    <div class="texture" aria-hidden="true"></div>
+
+    <header class="topbar" id="discover">
+      <div class="brand">
+        <img src="assets/tagalong-app-icon.svg" alt="Tag Along logo" class="brand-logo" width="38" height="38" />
+        <div class="brand-text">
+          <span class="brand-name">Tag Along</span>
+        </div>
+      </div>
+
+      <nav class="topnav" id="topnav" aria-label="Primary">
+        <a href="#feed">Feed</a>
+        <a href="#myRequests">My Requests</a>
+        <a href="#safety">Safety</a>
+      </nav>
+      <p id="navTagline" class="nav-tagline hidden">Trusted companionship for social plans and essential errands.</p>
+
+      <div class="header-actions">
+        <button id="authBtn" class="ghost small" type="button">Sign In</button>
+        <button id="startNowBtn" class="primary header-cta" type="button">Post a Request</button>
+
+        <button
+          id="shareExperienceBtn"
+          class="icon-btn hidden"
+          type="button"
+          aria-label="Share a meetup"
+          title="Share a meetup"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M12 8v8M8 12h8"></path>
+          </svg>
+        </button>
+
+        <div id="accountMenuWrap" class="account-menu hidden">
+          <button
+            id="accountMenuBtn"
+            class="avatar-btn"
+            type="button"
+            aria-label="Account menu"
+            title="Account menu"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            A
+          </button>
+          <div id="accountMenu" class="account-dropdown hidden" role="menu">
+            <button id="accountProfileBtn" class="account-item" type="button" role="menuitem">Profile</button>
+            <button id="accountSettingsBtn" class="account-item" type="button" role="menuitem">Account Settings</button>
+            <button id="adminConsoleBtn" class="account-item hidden" type="button" role="menuitem">Admin Console</button>
+            <button id="logoutBtn" class="account-item" type="button" role="menuitem">Logout</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1 id="heroTitle">Find a plus-one for parties, events, and city hangouts.</h1>
+        <p class="subtext" id="heroSubtext">Find someone to go with — for events, errands, or anything you'd rather not do alone.</p>
+      </section>
+
+      <section class="app-layout">
+        <aside class="card side-panel left-rail" id="myRequests">
+          <div class="section-top">
+            <h2>Your Requests</h2>
+          </div>
+          <p class="card-copy">Track your active plans and jump back into coordination quickly.</p>
+          <div id="myRequestsEmpty" class="empty-state">You have no active requests yet. Post one to get started.</div>
+          <div id="myRequestsSummary" class="stack"></div>
+
+          <article class="session-block">
+            <div class="section-top">
+              <h3>Active Match</h3>
+              <button id="refreshChatBtn" class="ghost small" type="button">Refresh Chat</button>
+            </div>
+            <div id="matchSessionBanner" class="session-banner hidden"></div>
+            <div id="emptyState" class="empty-state">Post or join a request to start a session.</div>
+            <div id="matchList" class="stack"></div>
+
+            <div class="chat-shell" id="sessionChat">
+              <p id="chatHint" class="card-copy">Join a live request or get joined to unlock private coordination chat.</p>
+              <div id="chatEmptyState" class="empty-state">No active matched session yet.</div>
+              <div id="chatList" class="chat-list"></div>
+              <form id="chatForm" class="chat-form">
+                <input id="chatInput" type="text" maxlength="700" placeholder="Share meetup pin, ETA, and check-in preferences..." />
+                <button class="primary" type="submit">Send</button>
+              </form>
+            </div>
+          </article>
+        </aside>
+
+        <section class="feed-column" id="feed">
+          <article class="card feed-card">
+            <div class="section-top">
+              <h2>Live Feed</h2>
+              <button id="refreshFeedBtn" class="ghost small" type="button">Refresh</button>
+            </div>
+
+            <div class="feed-toggle" role="tablist" aria-label="Feed mode">
+              <button id="feedToggleRequests" class="filter-chip active" type="button" role="tab" aria-selected="true">Requests</button>
+              <button id="feedTogglePosts" class="filter-chip" type="button" role="tab" aria-selected="false">Posts</button>
+            </div>
+
+            <p id="feedHint" class="feed-auth-note hidden"></p>
+
+            <div class="command-row">
+              <label class="search-wrap" for="searchInput">
+                <input id="searchInput" type="search" placeholder="Search requests, posts, locations, tags" autocomplete="off" />
+              </label>
+              <button id="clearSearchBtn" class="ghost small" type="button">Clear</button>
+            </div>
+            <div id="feedEmptyState" class="empty-state hidden"></div>
+            <div id="feedList" class="stack"></div>
+            <div id="postsList" class="stack hidden"></div>
+          </article>
+        </section>
+
+        <aside class="card side-panel safety-panel" id="safety">
+          <h2>Trust & Safety</h2>
+          <p class="card-copy">Built into every request flow so expectations stay clear from the first click.</p>
+
+          <div class="safety-kpis" aria-label="Platform metrics">
+            <article>
+              <p class="label">Median Match Time</p>
+              <p class="value" id="matchTime">9 min</p>
+            </article>
+            <article>
+              <p class="label">Completion Rate</p>
+              <p class="value" id="completionRate">84%</p>
+            </article>
+            <article>
+              <p class="label">Verified Profiles</p>
+              <p class="value" id="verifiedShare">75%</p>
+            </article>
+          </div>
+
+          <ul class="safety-list">
+            <li>Identity and selfie verification badges</li>
+            <li>Check-in timeline with missed-ping alerts</li>
+            <li>SOS and emergency contact escalation flow</li>
+            <li>Reliability score with no-show and incident weighting</li>
+          </ul>
+
+          <button id="checkInBtn" class="secondary" disabled type="button">Start Check-In Session</button>
+          <p id="checkInStatus" class="status hidden"></p>
+        </aside>
+      </section>
+    </main>
+
+    <nav class="mobile-nav" aria-label="Mobile">
+      <a href="#feed">Feed</a>
+      <a href="#myRequests">My Requests</a>
+      <a href="#safety">Safety</a>
+    </nav>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <div class="modal-shell hidden" id="requestModal" aria-hidden="true">
+      <div class="modal-backdrop" id="requestBackdrop"></div>
+      <section class="modal-card request-modal-card" role="dialog" aria-modal="true" aria-labelledby="requestModalTitle">
+        <div class="modal-head">
+          <h2 id="requestModalTitle">Post a Request</h2>
+          <button id="requestCloseBtn" class="ghost small" type="button" aria-label="Close request modal">Close</button>
+        </div>
+
+        <div class="feed-toggle lane-toggle" role="tablist" aria-label="Lane selector">
+          <button id="laneSocialBtn" data-mode="social" class="filter-chip active" type="button" role="tab" aria-selected="true">Social Plus-One</button>
+          <button id="laneErrandBtn" data-mode="errand" class="filter-chip" type="button" role="tab" aria-selected="false">Errand Companion</button>
+        </div>
+
+        <div class="lane-context" id="laneContext">
+          <h3 id="laneTitle">Social lane expectations</h3>
+          <p id="laneDescription">
+            People here are typically looking for enjoyable company and open conversation in public spaces.
+          </p>
+        </div>
+
+        <form id="requestForm" class="request-form">
+          <label>
+            <span id="titleLabel">Event or hangout title</span>
+            <input type="text" id="title" placeholder="Night market + food walk" required />
+          </label>
+
+          <div class="two-col">
+            <label>
+              Category
+              <select id="category" required></select>
+            </label>
+            <label>
+              Start time
+              <input type="datetime-local" id="time" required />
+            </label>
+          </div>
+
+          <div class="location-row">
+            <label class="location-stack">
+              <span id="locationLabel">Meetup area</span>
+              <input type="text" id="location" placeholder="Bandra West" required />
+              <div class="radius-inline">
+                <div class="radius-head">
+                  <span>Distance radius</span>
+                  <span id="radiusValue">8 km</span>
+                </div>
+                <input type="range" id="radius" min="1" max="30" value="8" step="1" />
+              </div>
+            </label>
+          </div>
+
+          <label>
+            <span id="tagsLabel">Vibe tags</span>
+            <input type="text" id="tags" placeholder="chill, foodie, outgoing" required />
+          </label>
+
+          <div class="check-wrap">
+            <label class="checkbox-field">
+              <input type="checkbox" id="verifiedOnly" checked />
+              <span>Verified companions only</span>
+            </label>
+            <label class="checkbox-field">
+              <input type="checkbox" id="checkIn" checked />
+              <span>Enable live safety check-ins</span>
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button class="primary" type="submit">Post Request</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <div class="modal-shell hidden" id="shareModal" aria-hidden="true">
+      <div class="modal-backdrop" id="shareBackdrop"></div>
+      <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
+        <div class="modal-head">
+          <h2 id="shareModalTitle">Share a Meetup</h2>
+          <button id="shareCloseBtn" class="ghost small" type="button" aria-label="Close share modal">Close</button>
+        </div>
+
+        <form id="sharePostForm" class="auth-form">
+          <label>
+            Your experience
+            <textarea id="sharePostText" maxlength="280" rows="4" placeholder="Share what went well and what helped." required></textarea>
+          </label>
+          <label>
+            Meetup tags
+            <input id="sharePostTags" type="text" placeholder="Kala Ghoda art fair, music, new-friends" />
+          </label>
+          <label>
+            Image (coming soon)
+            <input id="sharePostImage" type="file" disabled />
+          </label>
+          <label class="checkbox-field">
+            <input id="sharePostVerifiedOnly" type="checkbox" />
+            <span>Only verified users can see this</span>
+          </label>
+          <div class="form-actions">
+            <button id="sharePostSubmit" class="primary" type="submit">Publish Post</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <div class="modal-shell hidden" id="profileModal" aria-hidden="true">
+      <div class="modal-backdrop" id="profileBackdrop"></div>
+      <section class="modal-card profile-modal-card" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+        <div class="modal-head">
+          <h2 id="profileModalTitle">Profile</h2>
+          <button id="profileCloseBtn" class="ghost small" type="button" aria-label="Close profile modal">Close</button>
+        </div>
+
+        <div id="profileLoadingSkeleton" class="profile-skeleton hidden" aria-hidden="true">
+          <div class="skeleton-row skeleton-head"></div>
+          <div class="skeleton-row skeleton-stats"></div>
+          <div class="skeleton-row skeleton-tabs"></div>
+        </div>
+
+        <article id="profilePanel" class="profile-panel">
+          <div class="public-profile-head">
+            <div class="avatar-initial" id="publicProfileAvatar">T</div>
+            <div>
+              <h3 id="publicProfileName">Member</h3>
+              <p id="publicProfileJoinDate" class="card-copy"></p>
+            </div>
+          </div>
+          <div class="profile-grid">
+            <article>
+              <p class="label">Verified</p>
+              <p class="value" id="publicProfileVerified">--</p>
+            </article>
+            <article>
+              <p class="label">Reliability</p>
+              <p class="value" id="publicProfileReliability">--</p>
+            </article>
+            <article>
+              <p class="label">Completion</p>
+              <p class="value" id="publicProfileCompletion">--</p>
+            </article>
+          </div>
+        </article>
+
+        <div id="profileTabsWrap" class="feed-toggle" role="tablist" aria-label="Profile tabs">
+          <button id="profileTabPosts" class="filter-chip active" type="button" role="tab" aria-selected="true">Posts</button>
+          <button id="profileTabRequests" class="filter-chip" type="button" role="tab" aria-selected="false">Requests</button>
+        </div>
+
+        <div id="profileTabEmpty" class="empty-state hidden"></div>
+        <div id="profilePostsList" class="stack"></div>
+        <div id="profileRequestsList" class="stack hidden"></div>
+      </section>
+    </div>
+
+    <div class="modal-shell hidden" id="matchModal" aria-hidden="true">
+      <div class="modal-backdrop" id="matchBackdrop"></div>
+      <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="matchModalTitle">
+        <div class="modal-head">
+          <h2 id="matchModalTitle">Companion profile</h2>
+          <button id="matchCloseBtn" class="ghost small" type="button" aria-label="Close companion profile">Close</button>
+        </div>
+
+        <article class="profile-panel">
+          <div class="profile-top">
+            <h3 id="profileName">Companion</h3>
+            <span id="profileVerified" class="tag">Verified</span>
+          </div>
+          <p id="profileSummary" class="card-copy"></p>
+
+          <div class="profile-grid">
+            <article>
+              <p class="label">Reliability</p>
+              <p class="value" id="profileReliability">--</p>
+            </article>
+            <article>
+              <p class="label">Distance</p>
+              <p class="value" id="profileDistance">--</p>
+            </article>
+            <article>
+              <p class="label">Completed</p>
+              <p class="value" id="profileCompleted">--</p>
+            </article>
+          </div>
+
+          <p class="profile-lanes"><strong>Lanes:</strong> <span id="profileSupports">--</span></p>
+          <div id="profileTags" class="meta"></div>
+        </article>
+
+        <div class="form-actions">
+          <button id="profilePingBtn" class="secondary" type="button">Send Ping</button>
+          <button id="profileAcceptBtn" class="primary" type="button">Accept Companion</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="modal-shell hidden" id="authModal" aria-hidden="true">
+      <div class="modal-backdrop" id="authBackdrop"></div>
+      <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+        <div class="modal-head">
+          <h2 id="authModalTitle">Sign in for verified posting</h2>
+          <button id="authCloseBtn" class="ghost small" type="button" aria-label="Close sign in dialog">Close</button>
+        </div>
+        <p class="card-copy">
+          Auth keeps posting and trust actions accountable. Use your account to create requests, send pings, and report issues.
+        </p>
+
+        <div class="auth-toggle" role="tablist" aria-label="Auth mode">
+          <button id="authLoginTab" class="auth-tab active" type="button" role="tab" aria-selected="true">Sign In</button>
+          <button id="authRegisterTab" class="auth-tab" type="button" role="tab" aria-selected="false">Create Account</button>
+        </div>
+
+        <form id="authForm" class="auth-form">
+          <label id="displayNameWrap" class="hidden">
+            Display name
+            <input id="authDisplayName" type="text" autocomplete="name" placeholder="Your name" />
+          </label>
+          <label>
+            Email
+            <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" required />
+          </label>
+          <label>
+            Password
+            <input id="authPassword" type="password" autocomplete="current-password" placeholder="Minimum 8 characters" required />
+          </label>
+          <button id="authSubmitBtn" class="primary" type="submit">Sign In</button>
+        </form>
+
+        <div class="auth-links">
+          <button id="verifyEmailToggleBtn" class="ghost small" type="button">Verify Email</button>
+          <button id="forgotPasswordToggleBtn" class="ghost small" type="button">Forgot Password</button>
+        </div>
+
+        <form id="verifyEmailForm" class="auth-form hidden">
+          <label>
+            Email
+            <input id="verifyEmailInput" type="email" autocomplete="email" placeholder="you@example.com" />
+          </label>
+          <label>
+            Verification code
+            <input id="verifyCodeInput" type="text" inputmode="numeric" maxlength="6" placeholder="6-digit code" />
+          </label>
+          <div class="auth-links">
+            <button id="requestVerifyCodeBtn" class="ghost small" type="button">Send Code</button>
+            <button id="confirmVerifyCodeBtn" class="primary" type="submit">Confirm</button>
+          </div>
+        </form>
+
+        <form id="passwordResetForm" class="auth-form hidden">
+          <label>
+            Email
+            <input id="resetEmailInput" type="email" autocomplete="email" placeholder="you@example.com" />
+          </label>
+          <label>
+            Reset code
+            <input id="resetCodeInput" type="text" inputmode="numeric" maxlength="6" placeholder="6-digit code" />
+          </label>
+          <label>
+            New password
+            <input id="resetNewPasswordInput" type="password" autocomplete="new-password" placeholder="Minimum 8 characters" />
+          </label>
+          <div class="auth-links">
+            <button id="requestResetCodeBtn" class="ghost small" type="button">Send Reset Code</button>
+            <button id="confirmResetBtn" class="primary" type="submit">Reset Password</button>
+          </div>
+        </form>
+
+        <div class="auth-divider"><span>or</span></div>
+        <button id="googleAuthBtn" class="secondary auth-google-btn" type="button">Continue with Google</button>
+        <p id="googleAuthHint" class="status hidden"></p>
+      </section>
+    </div>
+
+    <div class="modal-shell hidden" id="adminModal" aria-hidden="true">
+      <div class="modal-backdrop" id="adminBackdrop"></div>
+      <section class="modal-card admin-modal-card" role="dialog" aria-modal="true" aria-labelledby="adminModalTitle">
+        <div class="modal-head">
+          <h2 id="adminModalTitle">Admin Console</h2>
+          <button id="adminCloseBtn" class="ghost small" type="button" aria-label="Close admin console">Close</button>
+        </div>
+        <p class="card-copy">Platform overview and control panel for moderation, user roles, and request status management.</p>
+
+        <section class="admin-section">
+          <div class="section-top">
+            <h3>Overview</h3>
+            <button id="adminRefreshBtn" class="ghost small" type="button">Refresh</button>
+          </div>
+          <div class="admin-overview-grid">
+            <article>
+              <p class="label">Total Users</p>
+              <p class="value" id="adminUsersTotal">--</p>
+            </article>
+            <article>
+              <p class="label">Admins</p>
+              <p class="value" id="adminAdminsTotal">--</p>
+            </article>
+            <article>
+              <p class="label">Open Requests</p>
+              <p class="value" id="adminOpenRequests">--</p>
+            </article>
+            <article>
+              <p class="label">Matched Requests</p>
+              <p class="value" id="adminMatchedRequests">--</p>
+            </article>
+            <article>
+              <p class="label">Open Reports</p>
+              <p class="value" id="adminOpenReports">--</p>
+            </article>
+            <article>
+              <p class="label">Total Events</p>
+              <p class="value" id="adminEventsTotal">--</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="admin-section">
+          <h3>Users</h3>
+          <div id="adminUsersList" class="stack"></div>
+        </section>
+
+        <section class="admin-section">
+          <h3>Requests</h3>
+          <div id="adminRequestsList" class="stack"></div>
+        </section>
+      </section>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </body>
+</html>

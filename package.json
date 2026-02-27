@@ -1,0 +1,14 @@
+{
+  "name": "tag-along",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tag Along web app with social + errand companionship and public-launch backend foundation.",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node --watch backend/server.js",
+    "migrate": "node backend/scripts/migrate.js"
+  },
+  "dependencies": {
+    "pg": "^8.12.0"
+  }
+}
