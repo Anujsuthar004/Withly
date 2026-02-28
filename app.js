@@ -827,7 +827,6 @@ function updateAuthUI() {
 
 function updateGoogleAuthUI() {
   const enabled = state.googleAuthEnabled && Boolean(state.googleClientId);
-  dom.googleAuthBtn.disabled = !enabled;
   if (enabled) {
     dom.googleAuthHint.classList.add("hidden");
     dom.googleAuthHint.textContent = "";
@@ -864,6 +863,7 @@ function initializeGoogleAuth() {
     state.googleReady = false;
     return;
   }
+  if (state.googleReady) return;
 
   try {
     window.google.accounts.id.initialize({
@@ -871,6 +871,14 @@ function initializeGoogleAuth() {
       callback: handleGoogleCredentialResponse,
       ux_mode: "popup",
     });
+
+    const btnContainer = document.getElementById("googleAuthBtn");
+    if (btnContainer) {
+      window.google.accounts.id.renderButton(
+        btnContainer,
+        { theme: "outline", size: "large", width: 280, text: "continue_with" }
+      );
+    }
     state.googleReady = true;
   } catch {
     state.googleReady = false;
@@ -2798,26 +2806,6 @@ function wireEvents() {
     void requestResetCode();
   });
   dom.passwordResetForm.addEventListener("submit", confirmResetPassword);
-
-  dom.googleAuthBtn.addEventListener("click", () => {
-    if (!state.googleAuthEnabled || !state.googleClientId) {
-      showToast("Google sign-in is not configured yet.");
-      return;
-    }
-    if (!state.googleReady) {
-      initializeGoogleAuth();
-    }
-    if (!state.googleReady) {
-      showToast("Google sign-in is unavailable right now.");
-      return;
-    }
-
-    try {
-      window.google.accounts.id.prompt();
-    } catch {
-      showToast("Could not start Google sign-in.");
-    }
-  });
 
   dom.authBackdrop.addEventListener("click", closeAuthModal);
   dom.authCloseBtn.addEventListener("click", closeAuthModal);
