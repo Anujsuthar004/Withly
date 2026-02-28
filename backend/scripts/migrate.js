@@ -66,7 +66,8 @@ async function main() {
 
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
-    throw new Error("DATABASE_URL is required. Point it to Supabase/Postgres before running migrations.");
+    console.log("DATABASE_URL not found. Skipping Postgres migrations (JSON mode active).");
+    return;
   }
 
   const ssl = process.env.PGSSL === "disable" ? false : { rejectUnauthorized: false };

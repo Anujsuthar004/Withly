@@ -4,3 +4,6 @@ ADD COLUMN poster_outcome TEXT,
 ADD COLUMN poster_meet_again BOOLEAN,
 ADD COLUMN peer_outcome TEXT,
 ADD COLUMN peer_meet_again BOOLEAN;
+
+ALTER TABLE requests
+ALTER COLUMN time DROP NOT NULL;

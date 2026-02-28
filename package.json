@@ -4,7 +4,7 @@
   "private": true,
   "description": "Tag Along web app with social + errand companionship and public-launch backend foundation.",
   "scripts": {
-    "start": "node backend/server.js",
+    "start": "node backend/scripts/migrate.js && node backend/server.js",
     "dev": "node --watch backend/server.js",
     "migrate": "node backend/scripts/migrate.js"
   },
