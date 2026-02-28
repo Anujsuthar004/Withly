@@ -2,6 +2,8 @@ const API_BASE = window.location.origin && window.location.origin.startsWith("ht
   ? window.location.origin
   : "http://localhost:8787";
 const AUTH_TOKEN_KEY = "tagalong_auth_token";
+const VIEWER_AREA_KEY = "tagalong_viewer_area";
+const VIEWER_AREA_RADIUS_KEY = "tagalong_viewer_area_radius";
 
 const MODE_PROFILES = {
   social: {
@@ -10,12 +12,7 @@ const MODE_PROFILES = {
     laneTitle: "Social lane expectations",
     laneDescription:
       "People here are typically looking for enjoyable company and open conversation in public spaces.",
-    titleLabel: "Event or hangout title",
-    titlePlaceholder: "Night market + food walk",
-    locationLabel: "Meetup area",
-    locationPlaceholder: "Bandra West",
-    tagsLabel: "Vibe tags",
-    tagsPlaceholder: "chill, foodie, outgoing",
+    titlePlaceholder: "Anyone up for Holi hangout?",
     defaultCategory: "music",
     defaultRadius: 8,
   },
@@ -25,12 +22,7 @@ const MODE_PROFILES = {
     laneTitle: "Errand lane expectations",
     laneDescription:
       "People here usually need structured, practical companionship with clear timing and destination details.",
-    titleLabel: "Errand or task title",
-    titlePlaceholder: "Hospital follow-up visit",
-    locationLabel: "Destination / area",
-    locationPlaceholder: "Andheri East",
-    tagsLabel: "Need tags",
-    tagsPlaceholder: "calm, paperwork, support",
+    titlePlaceholder: "Passport office run, need company",
     defaultCategory: "hospital",
     defaultRadius: 6,
   },
@@ -116,6 +108,10 @@ const state = {
   activeLane: "social",
   feedMode: "requests",
   searchQuery: "",
+  areaFilter: {
+    area: "",
+    radius: "any",
+  },
   metrics: { ...FALLBACK_DATA.metrics },
   categories: { ...FALLBACK_DATA.categories },
   requests: [...FALLBACK_DATA.requests],
@@ -129,6 +125,16 @@ const state = {
   activeRequest: null,
   matches: [],
   activeMatchId: null,
+  joinPrompt: {
+    requestId: null,
+    requestTitle: "",
+    posterName: "",
+  },
+  joinReview: {
+    requestId: null,
+    requestTitle: "",
+    items: [],
+  },
   chatMessages: [],
   localMessagesByRequest: {},
   checkInStarted: false,
@@ -145,6 +151,9 @@ const state = {
     request: false,
     share: false,
     profile: false,
+    settings: false,
+    joinPrompt: false,
+    joinReview: false,
   },
   adminData: {
     overview: null,
@@ -152,6 +161,8 @@ const state = {
     requests: [],
   },
   helpfulReactions: {},
+  expandedRequestDescriptions: {},
+  expandedPostTexts: {},
 };
 
 const dom = {
@@ -188,6 +199,10 @@ const dom = {
   chatInput: document.querySelector("#chatInput"),
 
   refreshFeedBtn: document.querySelector("#refreshFeedBtn"),
+  viewerAreaInput: document.querySelector("#viewerAreaInput"),
+  viewerAreaRadius: document.querySelector("#viewerAreaRadius"),
+  updateAreaFilterBtn: document.querySelector("#updateAreaFilterBtn"),
+  areaUnsetBanner: document.querySelector("#areaUnsetBanner"),
   feedToggleRequests: document.querySelector("#feedToggleRequests"),
   feedTogglePosts: document.querySelector("#feedTogglePosts"),
   searchInput: document.querySelector("#searchInput"),
@@ -211,16 +226,18 @@ const dom = {
   laneTitle: document.querySelector("#laneTitle"),
   laneDescription: document.querySelector("#laneDescription"),
   requestForm: document.querySelector("#requestForm"),
-  categorySelect: document.querySelector("#category"),
   titleLabel: document.querySelector("#titleLabel"),
   locationLabel: document.querySelector("#locationLabel"),
-  tagsLabel: document.querySelector("#tagsLabel"),
   titleInput: document.querySelector("#title"),
+  descriptionInput: document.querySelector("#description"),
   locationInput: document.querySelector("#location"),
   timeInput: document.querySelector("#time"),
-  tagsInput: document.querySelector("#tags"),
+  requestMediaInput: document.querySelector("#requestMedia"),
   radiusInput: document.querySelector("#radius"),
   radiusValue: document.querySelector("#radiusValue"),
+  radiusAudienceText: document.querySelector("#radiusAudienceText"),
+  safetyOptionsToggleBtn: document.querySelector("#safetyOptionsToggleBtn"),
+  safetyOptionsPanel: document.querySelector("#safetyOptionsPanel"),
   verifiedOnlyInput: document.querySelector("#verifiedOnly"),
   checkInInput: document.querySelector("#checkIn"),
 
@@ -231,6 +248,22 @@ const dom = {
   sharePostText: document.querySelector("#sharePostText"),
   sharePostTags: document.querySelector("#sharePostTags"),
   sharePostVerifiedOnly: document.querySelector("#sharePostVerifiedOnly"),
+
+  joinPromptModal: document.querySelector("#joinPromptModal"),
+  joinPromptBackdrop: document.querySelector("#joinPromptBackdrop"),
+  joinPromptCloseBtn: document.querySelector("#joinPromptCloseBtn"),
+  joinPromptRequestTitle: document.querySelector("#joinPromptRequestTitle"),
+  joinPromptLabel: document.querySelector("#joinPromptLabel"),
+  joinPromptForm: document.querySelector("#joinPromptForm"),
+  joinIntroInput: document.querySelector("#joinIntroInput"),
+  joinPromptSubmitBtn: document.querySelector("#joinPromptSubmitBtn"),
+  joinPromptCancelBtn: document.querySelector("#joinPromptCancelBtn"),
+
+  joinReviewModal: document.querySelector("#joinReviewModal"),
+  joinReviewBackdrop: document.querySelector("#joinReviewBackdrop"),
+  joinReviewCloseBtn: document.querySelector("#joinReviewCloseBtn"),
+  joinReviewSubtitle: document.querySelector("#joinReviewSubtitle"),
+  joinReviewList: document.querySelector("#joinReviewList"),
 
   profileModal: document.querySelector("#profileModal"),
   profileBackdrop: document.querySelector("#profileBackdrop"),
@@ -244,6 +277,7 @@ const dom = {
   publicProfileVerified: document.querySelector("#publicProfileVerified"),
   publicProfileReliability: document.querySelector("#publicProfileReliability"),
   publicProfileCompletion: document.querySelector("#publicProfileCompletion"),
+  publicProfileAbout: document.querySelector("#publicProfileAbout"),
   profileTabPosts: document.querySelector("#profileTabPosts"),
   profileTabRequests: document.querySelector("#profileTabRequests"),
   profileTabEmpty: document.querySelector("#profileTabEmpty"),
@@ -288,6 +322,12 @@ const dom = {
   requestResetCodeBtn: document.querySelector("#requestResetCodeBtn"),
   googleAuthBtn: document.querySelector("#googleAuthBtn"),
   googleAuthHint: document.querySelector("#googleAuthHint"),
+
+  settingsModal: document.querySelector("#settingsModal"),
+  settingsBackdrop: document.querySelector("#settingsBackdrop"),
+  settingsCloseBtn: document.querySelector("#settingsCloseBtn"),
+  settingsForm: document.querySelector("#settingsForm"),
+  settingsAboutMe: document.querySelector("#settingsAboutMe"),
 
   adminModal: document.querySelector("#adminModal"),
   adminBackdrop: document.querySelector("#adminBackdrop"),
@@ -437,6 +477,27 @@ function clearStoredToken() {
   }
 }
 
+function loadAreaFilterState() {
+  try {
+    const storedArea = String(window.localStorage.getItem(VIEWER_AREA_KEY) || "").trim();
+    const storedRadius = String(window.localStorage.getItem(VIEWER_AREA_RADIUS_KEY) || "any").trim().toLowerCase();
+    state.areaFilter.area = storedArea;
+    state.areaFilter.radius = ["1", "3", "5", "10", "25", "any"].includes(storedRadius) ? storedRadius : "any";
+  } catch {
+    state.areaFilter.area = "";
+    state.areaFilter.radius = "any";
+  }
+}
+
+function saveAreaFilterState() {
+  try {
+    window.localStorage.setItem(VIEWER_AREA_KEY, state.areaFilter.area);
+    window.localStorage.setItem(VIEWER_AREA_RADIUS_KEY, state.areaFilter.radius);
+  } catch {
+    // ignore
+  }
+}
+
 async function apiFetch(path, options = {}) {
   const headers = {
     ...(options.headers || {}),
@@ -515,6 +576,9 @@ function openModal(name) {
     request: dom.requestModal,
     share: dom.shareModal,
     profile: dom.profileModal,
+    settings: dom.settingsModal,
+    joinPrompt: dom.joinPromptModal,
+    joinReview: dom.joinReviewModal,
   };
   const node = map[name];
   if (!node) {
@@ -533,6 +597,9 @@ function closeModal(name) {
     request: dom.requestModal,
     share: dom.shareModal,
     profile: dom.profileModal,
+    settings: dom.settingsModal,
+    joinPrompt: dom.joinPromptModal,
+    joinReview: dom.joinReviewModal,
   };
   const node = map[name];
   if (!node) {
@@ -557,6 +624,7 @@ function closeAuthModal() {
 
 function openRequestModal() {
   applyLaneToForm();
+  setSafetyOptionsExpanded(false);
   openModal("request");
   dom.titleInput.focus();
 }
@@ -572,6 +640,64 @@ function openShareModal() {
 
 function closeShareModal() {
   closeModal("share");
+}
+
+function openSettingsModal() {
+  if (!state.auth.user) {
+    return;
+  }
+  dom.settingsAboutMe.value = String(state.auth.user.aboutMe || "");
+  openModal("settings");
+  dom.settingsAboutMe.focus();
+}
+
+function closeSettingsModal() {
+  closeModal("settings");
+}
+
+function openJoinPrompt(requestId) {
+  if (!requireAuthForAction("join requests")) {
+    return;
+  }
+  const request = state.requests.find((entry) => String(entry.id) === String(requestId));
+  if (!request) {
+    showToast("Request not found.");
+    return;
+  }
+  const posterName = publicDisplayName(request.createdByName || request.postedByName || request.displayName);
+  state.joinPrompt.requestId = request.id;
+  state.joinPrompt.requestTitle = request.title || "Request";
+  state.joinPrompt.posterName = posterName;
+  dom.joinPromptRequestTitle.textContent = `Joining: "${state.joinPrompt.requestTitle}"`;
+  dom.joinPromptLabel.textContent = `Say something to ${posterName}`;
+  dom.joinIntroInput.value = "";
+  openModal("joinPrompt");
+  dom.joinIntroInput.focus();
+}
+
+function closeJoinPrompt() {
+  closeModal("joinPrompt");
+  state.joinPrompt.requestId = null;
+  state.joinPrompt.requestTitle = "";
+  state.joinPrompt.posterName = "";
+  dom.joinIntroInput.value = "";
+}
+
+function openJoinReviewModal(requestId) {
+  state.joinReview.requestId = String(requestId || "");
+  state.joinReview.requestTitle = "";
+  state.joinReview.items = [];
+  dom.joinReviewSubtitle.textContent = "Loading join requests...";
+  dom.joinReviewList.innerHTML = '<div class="empty-state">Loading...</div>';
+  openModal("joinReview");
+  void loadJoinReviewRequests();
+}
+
+function closeJoinReviewModal() {
+  closeModal("joinReview");
+  state.joinReview.requestId = null;
+  state.joinReview.requestTitle = "";
+  state.joinReview.items = [];
 }
 
 function setProfileRoute(userId, replace = false) {
@@ -643,6 +769,7 @@ function clearSession() {
   clearStoredToken();
   closeAccountMenu();
   closeModal("admin");
+  closeSettingsModal();
   updateAuthUI();
   refreshSessionWorkspace();
 }
@@ -770,42 +897,35 @@ function setLane(mode) {
 }
 
 function setDefaultTime() {
-  const nextHour = new Date(Date.now() + 60 * 60 * 1000);
-  const localValue = `${nextHour.getFullYear()}-${String(nextHour.getMonth() + 1).padStart(2, "0")}-${String(nextHour.getDate()).padStart(2, "0")}T${String(nextHour.getHours()).padStart(2, "0")}:${String(nextHour.getMinutes()).padStart(2, "0")}`;
-  dom.timeInput.value = localValue;
+  dom.timeInput.value = "";
 }
 
 function updateRadiusValue() {
-  dom.radiusValue.textContent = `${Number(dom.radiusInput.value || 8)} km`;
-}
-
-function updateCategoryOptions() {
-  const options = state.categories[state.activeLane] || FALLBACK_DATA.categories[state.activeLane] || [];
-  dom.categorySelect.innerHTML = options
-    .map((entry) => `<option value="${escapeHtml(entry.value)}">${escapeHtml(entry.label)}</option>`)
-    .join("");
-
-  const profile = modeProfile();
-  if (options.some((entry) => entry.value === profile.defaultCategory)) {
-    dom.categorySelect.value = profile.defaultCategory;
-  }
+  const radius = Number(dom.radiusInput.value || 8);
+  const areaText = String(dom.locationInput.value || "").trim() || "your area";
+  dom.radiusValue.textContent = `${radius} km`;
+  dom.radiusAudienceText.textContent = `People within ${radius} km of ${areaText}`;
 }
 
 function applyLaneToForm() {
   const profile = modeProfile();
   dom.laneTitle.textContent = profile.laneTitle;
   dom.laneDescription.textContent = profile.laneDescription;
-  dom.titleLabel.textContent = profile.titleLabel;
-  dom.locationLabel.textContent = profile.locationLabel;
-  dom.tagsLabel.textContent = profile.tagsLabel;
+  dom.titleLabel.textContent = "Title";
+  dom.locationLabel.textContent = "Your area";
   dom.titleInput.placeholder = profile.titlePlaceholder;
-  dom.locationInput.placeholder = profile.locationPlaceholder;
-  dom.tagsInput.placeholder = profile.tagsPlaceholder;
+  dom.locationInput.placeholder = "Andheri West, Bandra, Powai...";
   if (!dom.radiusInput.dataset.touched) {
     dom.radiusInput.value = String(profile.defaultRadius);
   }
-  updateCategoryOptions();
   updateRadiusValue();
+}
+
+function setSafetyOptionsExpanded(expanded) {
+  const isExpanded = Boolean(expanded);
+  dom.safetyOptionsPanel.classList.toggle("hidden", !isExpanded);
+  dom.safetyOptionsToggleBtn.setAttribute("aria-expanded", String(isExpanded));
+  dom.safetyOptionsToggleBtn.textContent = isExpanded ? "Safety options ▴" : "Safety options ▾";
 }
 
 function updateMetrics() {
@@ -825,36 +945,94 @@ function matchesSearch(parts) {
   return parts.join(" ").toLowerCase().includes(state.searchQuery);
 }
 
+function normalizedAreaText(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function getRequestAreaSearchText(request) {
+  return normalizedAreaText(request.location || "");
+}
+
+function getPostAreaSearchText(post) {
+  // Pilot-phase area filter uses text matching until geocoding is integrated.
+  return normalizedAreaText([post.area || "", post.location || "", post.text || "", ...(post.tags || [])].join(" "));
+}
+
+function matchesAreaFilter(areaText) {
+  const desiredArea = normalizedAreaText(state.areaFilter.area);
+  if (!desiredArea) {
+    return true;
+  }
+  return normalizedAreaText(areaText).includes(desiredArea);
+}
+
+function applyAreaFilterFromControls() {
+  state.areaFilter.area = String(dom.viewerAreaInput.value || "").trim();
+  const radius = String(dom.viewerAreaRadius.value || "any").trim().toLowerCase();
+  state.areaFilter.radius = ["1", "3", "5", "10", "25", "any"].includes(radius) ? radius : "any";
+  saveAreaFilterState();
+  renderFeedMode();
+}
+
+function updateAreaFilterUI() {
+  dom.viewerAreaInput.value = state.areaFilter.area || "";
+  dom.viewerAreaRadius.value = state.areaFilter.radius || "any";
+  const areaSet = Boolean(normalizedAreaText(state.areaFilter.area));
+  dom.areaUnsetBanner.classList.toggle("hidden", areaSet);
+}
+
 function requestCardHtml(request) {
   const tags = Array.isArray(request.tags) ? request.tags.slice(0, 5) : [];
   const lane = parseMode(request.mode);
   const laneLabel = lane === "errand" ? "Errand" : "Social";
+  const requestId = String(request.id || "");
+  const fullDescription = String(request.description || "").trim();
+  const hasDescription = Boolean(fullDescription);
+  const canExpand = fullDescription.length > 220;
+  const expanded = Boolean(state.expandedRequestDescriptions[requestId]);
   const resolvedName = publicDisplayName(
     request.createdByName ||
-      request.postedByName ||
-      request.displayName ||
-      (state.auth.user && request.createdBy === state.auth.user.id
-        ? state.auth.user.displayName || state.auth.user.email
-        : "")
+    request.postedByName ||
+    request.displayName ||
+    (state.auth.user && request.createdBy === state.auth.user.id
+      ? state.auth.user.displayName || state.auth.user.email
+      : "")
   );
-  const safeName = escapeHtml(resolvedName);
-  const userLink = request.createdBy
-    ? `<button class="text-link" type="button" data-action="open-profile" data-user-id="${escapeHtml(request.createdBy)}">${safeName}</button>`
-    : safeName;
+  const safeName = escapeHtml(resolvedName || "Anonymous");
 
   return `
     <article class="item request-card">
       <div class="item-head">
-        <h3>${escapeHtml(request.title || "Untitled request")}</h3>
+        <h3 class="request-title">${escapeHtml(request.title || "Untitled request")}</h3>
         <span class="tag lane-${escapeHtml(lane)}">${laneLabel}</span>
       </div>
-      <p>${escapeHtml(request.location || "Unknown area")} • ${escapeHtml(formatDateTime(request.time))}</p>
+      <p class="request-description ${canExpand && !expanded ? "clamped" : ""}">
+        ${escapeHtml(hasDescription ? fullDescription : "No description added yet.")}
+      </p>
+      ${canExpand
+      ? `<button class="text-link text-link-small" type="button" data-action="toggle-request-description" data-request-id="${escapeHtml(
+        requestId
+      )}">${expanded ? "See less" : "See more"}</button>`
+      : ""
+    }
+      <div class="request-poster-row">
+        <button class="post-author" type="button" data-action="open-profile" data-user-id="${escapeHtml(request.createdBy || "")}">
+          <span class="avatar-initial small">${escapeHtml(avatarInitial(resolvedName || "Anonymous"))}</span>
+          <span>${safeName}</span>
+        </button>
+        ${request.createdByVerified ? '<span class="tag">Verified</span>' : ""}
+      </div>
+      <p class="small-meta">${escapeHtml(request.location || "Unknown area")} • ${escapeHtml(formatDateTime(request.time))}</p>
+      ${request.mediaAttached
+      ? '<div class="image-placeholder" aria-hidden="true">Media attached (preview coming soon)</div>'
+      : ""
+    }
       <div class="meta">
         ${tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("")}
         ${request.verifiedOnly ? '<span class="tag">Verified-only</span>' : ""}
       </div>
       <div class="item-actions">
-        <span class="score">Posted by ${userLink}</span>
+        <span class="score">Open request</span>
         <button class="secondary" type="button" data-action="join" data-request-id="${escapeHtml(request.id)}">Join Request</button>
       </div>
     </article>
@@ -864,25 +1042,35 @@ function requestCardHtml(request) {
 function postCardHtml(post) {
   const tags = Array.isArray(post.tags) ? post.tags.slice(0, 5) : [];
   const reactionKey = `post:${post.id}`;
-  const reactionCount = Number(post.helpfulCount || 0) + Number(state.helpfulReactions[reactionKey] || 0);
+  const reacted = Boolean(state.helpfulReactions[reactionKey]);
+  const fullText = String(post.text || "");
+  const canExpand = fullText.length > 280;
+  const expanded = Boolean(state.expandedPostTexts[String(post.id || "")]);
   return `
     <article class="item post-card">
       <div class="post-head">
         <button class="post-author" type="button" data-action="open-profile" data-user-id="${escapeHtml(post.userId)}">
           <span class="avatar-initial small">${escapeHtml(avatarInitial(post.displayName))}</span>
-          <span>${escapeHtml(post.displayName || "Member")}</span>
+          <span>${escapeHtml(publicDisplayName(post.displayName))}</span>
         </button>
         <span class="tag">${escapeHtml(formatRelativeTime(post.createdAt))}</span>
       </div>
-      <p class="post-text">${escapeHtml(post.text || "")}</p>
-      <div class="image-placeholder" aria-hidden="true">Image upload coming soon</div>
+      <p class="post-text ${canExpand && !expanded ? "clamped" : ""}">${escapeHtml(fullText)}</p>
+      ${canExpand
+      ? `<button class="text-link text-link-small" type="button" data-action="toggle-post-text" data-post-id="${escapeHtml(
+        post.id
+      )}">${expanded ? "See less" : "See more"}</button>`
+      : ""
+    }
+      ${post.mediaAttached ? '<div class="image-placeholder" aria-hidden="true">Media attached (preview coming soon)</div>' : ""}
       <div class="meta">
         ${tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("")}
         ${post.visibility === "verified-only" ? '<span class="tag">Verified audience</span>' : ""}
       </div>
       <div class="item-actions">
         <span></span>
-        <button class="ghost small" type="button" data-action="helpful" data-post-id="${escapeHtml(post.id)}">❤ Helpful (${reactionCount})</button>
+        <button class="ghost small" type="button" data-action="helpful" data-post-id="${escapeHtml(post.id)}">${reacted ? "❤ Marked helpful" : "❤ Helpful"
+    }</button>
       </div>
     </article>
   `;
@@ -891,9 +1079,11 @@ function postCardHtml(post) {
 function renderRequestsFeed() {
   const openRequests = state.requests
     .filter((entry) => entry.status === "open")
+    .filter((entry) => matchesAreaFilter(getRequestAreaSearchText(entry)))
     .filter((entry) =>
       matchesSearch([
         entry.title || "",
+        entry.description || "",
         entry.location || "",
         entry.category || "",
         (entry.tags || []).join(" "),
@@ -915,6 +1105,7 @@ function renderRequestsFeed() {
 
 function renderPostsFeed() {
   const posts = state.posts
+    .filter((entry) => matchesAreaFilter(getPostAreaSearchText(entry)))
     .filter((entry) => matchesSearch([entry.text || "", (entry.tags || []).join(" "), entry.displayName || ""]))
     .sort((left, right) => new Date(right.createdAt || 0) - new Date(left.createdAt || 0));
 
@@ -950,6 +1141,8 @@ function renderFeedMode() {
       : "Browse posts without signing in. Actions require an account.";
   }
 
+  updateAreaFilterUI();
+
   if (showingRequests) {
     renderRequestsFeed();
   } else {
@@ -981,6 +1174,13 @@ function renderMyRequestsSummary() {
     .slice(0, 6)
     .map((entry) => {
       const lane = parseMode(entry.mode);
+      const pendingCount = Number(entry.pendingJoinCount || 0);
+      const canReviewJoiners =
+        entry.status === "open" &&
+        pendingCount > 0 &&
+        state.auth.user &&
+        String(entry.createdBy || "") === String(state.auth.user.id);
+      const pendingText = pendingCount === 1 ? "1 person wants to join" : `${pendingCount} people want to join`;
       return `
         <article class="item compact">
           <div class="item-head">
@@ -988,6 +1188,19 @@ function renderMyRequestsSummary() {
             <span class="tag lane-${lane}">${lane === "errand" ? "Errand" : "Social"}</span>
           </div>
           <p>${escapeHtml(formatDateTime(entry.time))} • ${escapeHtml(entry.status)}</p>
+          ${canReviewJoiners
+          ? `
+            <button
+              class="pending-join-indicator"
+              type="button"
+              data-action="open-join-review"
+              data-request-id="${escapeHtml(entry.id)}"
+            >
+              ${escapeHtml(pendingText)}
+            </button>
+          `
+          : ""
+        }
           <div class="item-actions">
             <button class="ghost small" type="button" data-action="activate-request" data-request-id="${escapeHtml(entry.id)}">Open Session</button>
             ${entry.status === "open" ? `<button class="secondary" type="button" data-action="find-matches" data-request-id="${escapeHtml(entry.id)}">Find Matches</button>` : ""}
@@ -1053,6 +1266,66 @@ function renderChat() {
   dom.chatList.scrollTop = dom.chatList.scrollHeight;
 }
 
+function generateMatchActionsHtml(request, joinedAsPeer) {
+  const nowMs = Date.now();
+  const isPastDue = request.time
+    ? new Date(request.time).getTime() < nowMs
+    : request.matchedAt
+      ? new Date(request.matchedAt).getTime() + 4 * 60 * 60 * 1000 < nowMs
+      : false;
+
+  const userOutcome = joinedAsPeer ? request.peerOutcome : request.posterOutcome;
+  const userMeetAgain = joinedAsPeer ? request.peerMeetAgain : request.posterMeetAgain;
+
+  if (!userOutcome && isPastDue) {
+    return `
+      <div class="completion-prompt" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border);">
+        <p class="card-copy" style="margin-bottom: 8px;"><strong>How did it go?</strong></p>
+        <div class="item-actions">
+          <button class="primary" type="button" data-action="complete-success" data-request-id="${escapeHtml(request.id)}">It went well ✓</button>
+          <button class="secondary" type="button" data-action="complete-report" data-request-id="${escapeHtml(request.id)}">Report an issue</button>
+        </div>
+      </div>
+    `;
+  }
+
+  if (userOutcome === "success" && userMeetAgain === null) {
+    return `
+      <div class="completion-prompt" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border);">
+        <p class="card-copy" style="margin-bottom: 8px;"><strong>Would you meet this person again?</strong> (Private)</p>
+        <div class="item-actions">
+          <button class="primary" style="min-width: 60px" type="button" data-action="rate-yes" data-request-id="${escapeHtml(request.id)}">Yes</button>
+          <button class="secondary" style="min-width: 60px" type="button" data-action="rate-no" data-request-id="${escapeHtml(request.id)}">No</button>
+        </div>
+      </div>
+    `;
+  }
+
+  if (userOutcome === "success" && !joinedAsPeer && userMeetAgain !== null) {
+    return `
+      <div class="completion-prompt" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border);">
+        <p class="card-copy" style="margin-bottom: 8px;"><strong>Session marked complete.</strong></p>
+        <button class="secondary text-link" type="button" data-action="open-share-prefilled" data-request-title="${escapeHtml(request.title)}" data-request-area="${escapeHtml(request.location)}">Want to share how it went?</button>
+      </div>
+    `;
+  }
+
+  if (userOutcome === "success") {
+    return `
+      <div class="item-actions" style="margin-top: 12px;">
+        <span class="tag">Meetup completed ✓</span>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="item-actions" style="margin-top: 12px;">
+      <button class="secondary" type="button" data-action="open-chat">Open Chat</button>
+      <button class="primary" type="button" data-action="plan-checkin">Check-In</button>
+    </div>
+  `;
+}
+
 function renderMatches() {
   dom.matchSessionBanner.classList.add("hidden");
   dom.matchSessionBanner.textContent = "";
@@ -1066,13 +1339,48 @@ function renderMatches() {
   const request = state.activeRequest;
 
   if (request.status === "matched" && request.matchedUserId) {
-    const joinedAsPeer = state.auth.user && String(request.matchedUserId) === String(state.auth.user.id);
+    const ownerName = publicDisplayName(
+      request.createdByName ||
+      (state.auth.user && String(request.createdBy || "") === String(state.auth.user.id) ? state.auth.user.displayName : ""),
+      "Anonymous"
+    );
+    const peerName = publicDisplayName(
+      request.matchedUserName ||
+      (state.auth.user && String(request.matchedUserId || "") === String(state.auth.user.id) ? state.auth.user.displayName : ""),
+      "Anonymous"
+    );
+    const joinedAsPeer = state.auth.user && String(request.matchedUserId || "") === String(state.auth.user.id);
+    const timeLabel = request.time ? formatDateTime(request.time) : "Time TBD - coordinate in chat";
     dom.matchSessionBanner.textContent = joinedAsPeer
       ? "You joined this request. Coordinate in chat and use check-ins when you meet."
       : "A verified user joined your request. Coordinate in chat and use check-ins when you meet.";
     dom.matchSessionBanner.classList.remove("hidden");
-    dom.emptyState.textContent = "Peer session active. Use the chat panel to coordinate.";
-    dom.matchList.innerHTML = "";
+    dom.emptyState.textContent = "Active match ready. Coordinate details in chat.";
+    dom.matchList.innerHTML = `
+      <article class="item shared-plan-card">
+        <div class="item-head">
+          <h3>${escapeHtml(request.title || "Matched request")}</h3>
+          <span class="tag">Matched</span>
+        </div>
+        <p>${escapeHtml(request.location || "Area TBD")} • ${escapeHtml(timeLabel)}</p>
+        <div class="plan-people">
+          <button class="plan-person" type="button" data-action="open-profile" data-user-id="${escapeHtml(
+      request.createdBy || ""
+    )}">
+            <span class="avatar-initial small">${escapeHtml(avatarInitial(ownerName))}</span>
+            <span>${escapeHtml(ownerName)}</span>
+          </button>
+          <span class="plan-separator">+</span>
+          <button class="plan-person" type="button" data-action="open-profile" data-user-id="${escapeHtml(
+      request.matchedUserId || ""
+    )}">
+            <span class="avatar-initial small">${escapeHtml(avatarInitial(peerName))}</span>
+            <span>${escapeHtml(peerName)}</span>
+          </button>
+        </div>
+        ${generateMatchActionsHtml(request, joinedAsPeer)}
+      </article>
+    `;
     return;
   }
 
@@ -1176,6 +1484,9 @@ function renderProfileModal() {
   dom.publicProfileVerified.textContent = profile.badges?.verified ? "Yes" : "No";
   dom.publicProfileReliability.textContent = `${Number(profile.badges?.reliabilityScore || 0)}%`;
   dom.publicProfileCompletion.textContent = `${Number(profile.badges?.completionRate || 0)}%`;
+  dom.publicProfileAbout.textContent =
+    String(profile.aboutMe || "").trim() ||
+    "Tell people a bit about yourself - who you are, what you're into, what to expect.";
 
   const posts = Array.isArray(state.profile.posts) ? state.profile.posts : [];
   const requests = Array.isArray(profile.requests) ? profile.requests : [];
@@ -1398,7 +1709,7 @@ async function loadRequests() {
   state.requests = Array.isArray(allPayload.requests) ? allPayload.requests : [];
 
   if (state.auth.user) {
-    const minePayload = await apiFetch(`/api/requests?createdBy=${encodeURIComponent(state.auth.user.id)}`);
+    const minePayload = await apiFetch(`/api/requests?participantId=${encodeURIComponent(state.auth.user.id)}`);
     state.myRequests = Array.isArray(minePayload.requests) ? minePayload.requests : [];
   } else {
     state.myRequests = [];
@@ -1458,14 +1769,16 @@ async function refreshFeed() {
 }
 
 function buildRequestPayload() {
+  const profile = modeProfile();
   return {
     mode: state.activeLane,
     title: dom.titleInput.value.trim(),
-    category: dom.categorySelect.value,
-    time: dom.timeInput.value,
+    description: dom.descriptionInput.value.trim(),
+    category: profile.defaultCategory,
+    time: dom.timeInput.value.trim(),
     location: dom.locationInput.value.trim(),
     radius: Number(dom.radiusInput.value || 8),
-    tags: normalizeTags(dom.tagsInput.value),
+    tags: [],
     verifiedOnly: dom.verifiedOnlyInput.checked,
     checkIn: dom.checkInInput.checked,
   };
@@ -1477,8 +1790,8 @@ async function createRequest() {
   }
 
   const payload = buildRequestPayload();
-  if (!payload.title || !payload.location || payload.tags.length === 0) {
-    showToast("Add title, location, and at least one tag.");
+  if (!payload.title || !payload.description || !payload.location) {
+    showToast("Add title, description, and area.");
     return;
   }
 
@@ -1554,6 +1867,19 @@ async function activateRequestSession(requestId, { loadMatches = false } = {}) {
   state.activeRequest = request;
   state.checkInStarted = false;
 
+  if (state.backendReady && state.auth.user) {
+    try {
+      const sessionPayload = await apiFetch(`/api/requests/session?requestId=${encodeURIComponent(request.id)}`);
+      if (sessionPayload && sessionPayload.request) {
+        state.activeRequest = sessionPayload.request;
+      }
+    } catch (error) {
+      if (handleApiAuthError(error)) {
+        return;
+      }
+    }
+  }
+
   if (loadMatches && request.status === "open") {
     try {
       const payload = await apiFetch(`/api/matches?requestId=${encodeURIComponent(request.id)}`);
@@ -1573,32 +1899,140 @@ async function activateRequestSession(requestId, { loadMatches = false } = {}) {
   refreshSessionWorkspace();
 }
 
-async function joinRequest(requestId) {
-  if (!requireAuthForAction("join requests")) {
+async function joinRequest(requestId, introMessage = "") {
+  try {
+    const payload = await apiFetch("/api/actions/join", {
+      method: "POST",
+      body: JSON.stringify({ requestId, introMessage: String(introMessage || "").slice(0, 200) }),
+    });
+
+    if (payload && payload.alreadyMatched && payload.request) {
+      closeJoinPrompt();
+      state.activeRequest = payload.request;
+      if (Array.isArray(payload.messages)) {
+        state.chatMessages = payload.messages;
+      }
+      state.matches = [];
+      await refreshFeed();
+      refreshSessionWorkspace();
+      showToast("Request joined. Chat unlocked.");
+      return;
+    }
+
+    closeJoinPrompt();
+    await refreshFeed();
+    showToast("Join request sent. The poster can review your intro before accepting.");
+  } catch (error) {
+    if (handleApiAuthError(error)) {
+      return;
+    }
+    showToast(safeApiErrorMessage(error, "Could not join request."));
+  }
+}
+
+function joinReviewItemHtml(item) {
+  const badges = item.badges || {};
+  const verifiedLabel = badges.verified ? "Verified" : "Unverified";
+  return `
+    <article class="item compact">
+      <div class="item-head">
+        <button class="post-author" type="button" data-action="open-profile" data-user-id="${escapeHtml(item.joinerUserId)}">
+          <span class="avatar-initial small">${escapeHtml(avatarInitial(item.displayName))}</span>
+          <span>${escapeHtml(publicDisplayName(item.displayName))}</span>
+        </button>
+        <span class="tag">${escapeHtml(formatRelativeTime(item.createdAt))}</span>
+      </div>
+      <div class="meta">
+        <span class="tag">${escapeHtml(verifiedLabel)}</span>
+        <span class="tag">Reliability ${escapeHtml(String(Number(badges.reliabilityScore || 0)))}%</span>
+        <span class="tag">Completion ${escapeHtml(String(Number(badges.completionRate || 0)))}%</span>
+      </div>
+      <p>${escapeHtml(item.introMessage || "No message sent")}</p>
+      <div class="item-actions">
+        <button class="secondary" type="button" data-action="accept-join" data-request-id="${escapeHtml(
+    state.joinReview.requestId
+  )}" data-user-id="${escapeHtml(item.joinerUserId)}">Accept</button>
+        <button class="ghost" type="button" data-action="decline-join" data-request-id="${escapeHtml(
+    state.joinReview.requestId
+  )}" data-user-id="${escapeHtml(item.joinerUserId)}">Decline</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderJoinReviewRequests() {
+  const items = Array.isArray(state.joinReview.items) ? state.joinReview.items : [];
+  if (!items.length) {
+    dom.joinReviewList.innerHTML = '<div class="empty-state">No pending join requests right now.</div>';
+    return;
+  }
+
+  dom.joinReviewList.innerHTML = items.map(joinReviewItemHtml).join("");
+}
+
+async function loadJoinReviewRequests() {
+  if (!state.joinReview.requestId) {
     return;
   }
 
   try {
-    const payload = await apiFetch("/api/actions/join", {
-      method: "POST",
-      body: JSON.stringify({ requestId }),
-    });
+    const payload = await apiFetch(`/api/requests/join-requests?requestId=${encodeURIComponent(state.joinReview.requestId)}`);
+    const request = payload.request || null;
+    const joinRequests = Array.isArray(payload.joinRequests) ? payload.joinRequests : [];
+    state.joinReview.requestTitle = request ? request.title || "Request" : "Request";
+    state.joinReview.items = joinRequests;
+    dom.joinReviewSubtitle.textContent = `Review pending joiners for "${state.joinReview.requestTitle}".`;
+    renderJoinReviewRequests();
+    await refreshFeed();
+  } catch (error) {
+    if (handleApiAuthError(error)) {
+      return;
+    }
+    dom.joinReviewList.innerHTML = '<div class="empty-state">Could not load join requests.</div>';
+    dom.joinReviewSubtitle.textContent = "";
+    showToast("Could not load join requests.");
+  }
+}
 
+async function acceptJoinApplicant(requestId, joinUserId) {
+  try {
+    const payload = await apiFetch("/api/actions/accept", {
+      method: "POST",
+      body: JSON.stringify({ requestId, joinUserId }),
+    });
     if (payload.request) {
       state.activeRequest = payload.request;
     }
     if (Array.isArray(payload.messages)) {
       state.chatMessages = payload.messages;
     }
-    state.matches = [];
+    closeJoinReviewModal();
     await refreshFeed();
     refreshSessionWorkspace();
-    showToast("Request joined. Chat unlocked.");
+    showToast("Join request accepted. Shared chat is now active.");
   } catch (error) {
     if (handleApiAuthError(error)) {
       return;
     }
-    showToast(safeApiErrorMessage(error, "Could not join request."));
+    showToast(safeApiErrorMessage(error, "Could not accept join request."));
+  }
+}
+
+async function declineJoinApplicant(requestId, joinUserId) {
+  try {
+    await apiFetch("/api/actions/join/decline", {
+      method: "POST",
+      body: JSON.stringify({ requestId, joinUserId }),
+    });
+    state.joinReview.items = state.joinReview.items.filter((entry) => String(entry.joinerUserId) !== String(joinUserId));
+    renderJoinReviewRequests();
+    await refreshFeed();
+    showToast("Join request declined.");
+  } catch (error) {
+    if (handleApiAuthError(error)) {
+      return;
+    }
+    showToast(safeApiErrorMessage(error, "Could not decline join request."));
   }
 }
 
@@ -1662,6 +2096,50 @@ async function acceptCompanion(companionId) {
       return;
     }
     showToast(safeApiErrorMessage(error, "Could not accept companion."));
+  }
+}
+
+async function completeMatchSession(requestId, action) {
+  const outcome = action === "complete-success" ? "success" : "report";
+  try {
+    const payload = await apiFetch(`/api/requests/${encodeURIComponent(requestId)}/complete`, {
+      method: "POST",
+      body: JSON.stringify({ outcome })
+    });
+    if (payload.request) {
+      state.activeRequest = payload.request;
+      const index = state.myRequests.findIndex(r => r.id === requestId);
+      if (index !== -1) state.myRequests[index] = payload.request;
+    }
+    refreshSessionWorkspace();
+    if (outcome === "success") {
+      showToast("Meetup marked successful.");
+    } else {
+      showToast("Report flow opened (placeholder).");
+    }
+  } catch (error) {
+    if (handleApiAuthError(error)) return;
+    showToast(safeApiErrorMessage(error, "Could not complete session."));
+  }
+}
+
+async function rateCompanionMatch(requestId, action) {
+  const meetAgain = action === "rate-yes";
+  try {
+    const payload = await apiFetch(`/api/requests/${encodeURIComponent(requestId)}/rate`, {
+      method: "POST",
+      body: JSON.stringify({ meetAgain })
+    });
+    if (payload.request) {
+      state.activeRequest = payload.request;
+      const index = state.myRequests.findIndex(r => r.id === requestId);
+      if (index !== -1) state.myRequests[index] = payload.request;
+    }
+    refreshSessionWorkspace();
+    showToast("Rating saved privately.");
+  } catch (error) {
+    if (handleApiAuthError(error)) return;
+    showToast(safeApiErrorMessage(error, "Could not save rating."));
   }
 }
 
@@ -1759,6 +2237,17 @@ function refreshSessionWorkspace() {
   renderMatches();
   renderChat();
   updateCheckInControls();
+}
+
+function openSessionChat() {
+  if (dom.sessionChat.classList.contains("hidden")) {
+    showToast("Chat unlocks after a real user match is confirmed.");
+    return;
+  }
+  dom.sessionChat.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  if (dom.chatInput && !dom.chatForm.classList.contains("hidden")) {
+    dom.chatInput.focus();
+  }
 }
 
 async function loadProfile(userId) {
@@ -1979,6 +2468,38 @@ async function updateRequestStatus(requestId, status) {
   }
 }
 
+async function saveAccountSettings(event) {
+  event.preventDefault();
+  if (!state.auth.user) {
+    closeSettingsModal();
+    return;
+  }
+
+  const aboutMe = String(dom.settingsAboutMe.value || "").trim();
+  try {
+    const payload = await apiFetch("/api/account/settings", {
+      method: "POST",
+      body: JSON.stringify({ aboutMe }),
+    });
+    if (payload && payload.user) {
+      state.auth.user = payload.user;
+    } else {
+      state.auth.user.aboutMe = aboutMe;
+    }
+    if (state.profile.data && String(state.profile.data.userId || "") === String(state.auth.user.id)) {
+      state.profile.data.aboutMe = state.auth.user.aboutMe || "";
+      renderProfileModal();
+    }
+    closeSettingsModal();
+    showToast("Account settings updated.");
+  } catch (error) {
+    if (handleApiAuthError(error)) {
+      return;
+    }
+    showToast(safeApiErrorMessage(error, "Could not update account settings."));
+  }
+}
+
 function wireEvents() {
   dom.authBtn.addEventListener("click", () => openAuthModal("login"));
 
@@ -2011,7 +2532,7 @@ function wireEvents() {
 
   dom.accountSettingsBtn.addEventListener("click", () => {
     closeAccountMenu();
-    showToast("Account settings UI is coming soon.");
+    openSettingsModal();
   });
 
   dom.adminConsoleBtn.addEventListener("click", async () => {
@@ -2026,6 +2547,19 @@ function wireEvents() {
 
   dom.feedToggleRequests.addEventListener("click", () => setFeedMode("requests"));
   dom.feedTogglePosts.addEventListener("click", () => setFeedMode("posts"));
+
+  dom.updateAreaFilterBtn.addEventListener("click", () => {
+    applyAreaFilterFromControls();
+  });
+  dom.viewerAreaInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      applyAreaFilterFromControls();
+    }
+  });
+  dom.viewerAreaRadius.addEventListener("change", () => {
+    applyAreaFilterFromControls();
+  });
 
   dom.searchInput.addEventListener("input", (event) => {
     updateSearch(event.target.value);
@@ -2048,12 +2582,22 @@ function wireEvents() {
 
     const action = actionBtn.dataset.action;
     if (action === "join") {
-      void joinRequest(actionBtn.dataset.requestId);
+      openJoinPrompt(actionBtn.dataset.requestId);
       return;
     }
 
     if (action === "open-profile") {
       openProfileModal(actionBtn.dataset.userId);
+      return;
+    }
+
+    if (action === "toggle-request-description") {
+      const requestId = String(actionBtn.dataset.requestId || "");
+      if (!requestId) {
+        return;
+      }
+      state.expandedRequestDescriptions[requestId] = !state.expandedRequestDescriptions[requestId];
+      renderRequestsFeed();
     }
   });
 
@@ -2071,7 +2615,17 @@ function wireEvents() {
 
     if (action === "helpful") {
       const key = `post:${actionBtn.dataset.postId}`;
-      state.helpfulReactions[key] = Number(state.helpfulReactions[key] || 0) + 1;
+      state.helpfulReactions[key] = true;
+      renderPostsFeed();
+      return;
+    }
+
+    if (action === "toggle-post-text") {
+      const postId = String(actionBtn.dataset.postId || "");
+      if (!postId) {
+        return;
+      }
+      state.expandedPostTexts[postId] = !state.expandedPostTexts[postId];
       renderPostsFeed();
     }
   });
@@ -2089,15 +2643,50 @@ function wireEvents() {
 
     if (button.dataset.action === "find-matches") {
       void activateRequestSession(button.dataset.requestId, { loadMatches: true });
+      return;
+    }
+
+    if (button.dataset.action === "open-join-review") {
+      openJoinReviewModal(button.dataset.requestId);
     }
   });
 
   dom.matchList.addEventListener("click", (event) => {
-    const button = event.target.closest("button[data-action='view-profile']");
+    const button = event.target.closest("button[data-action]");
     if (!button) {
       return;
     }
-    openMatchModal(button.dataset.matchId);
+    const { action } = button.dataset;
+    if (action === "view-profile") {
+      openMatchModal(button.dataset.matchId);
+      return;
+    }
+    if (action === "open-chat") {
+      openSessionChat();
+      return;
+    }
+    if (action === "plan-checkin") {
+      void toggleCheckIn();
+      return;
+    }
+    if (action === "complete-success" || action === "complete-report") {
+      void completeMatchSession(button.dataset.requestId, action);
+      return;
+    }
+    if (action === "rate-yes" || action === "rate-no") {
+      void rateCompanionMatch(button.dataset.requestId, action);
+      return;
+    }
+    if (action === "open-share-prefilled") {
+      openShareModal();
+      if (dom.sharePostText) {
+        dom.sharePostText.value = `My meetup for "${button.dataset.requestTitle}" in ${button.dataset.requestArea} went well! `;
+      }
+      return;
+    }
+    if (action === "open-profile") {
+      openProfileModal(button.dataset.userId);
+    }
   });
 
   dom.refreshChatBtn.addEventListener("click", () => {
@@ -2125,6 +2714,13 @@ function wireEvents() {
     dom.radiusInput.dataset.touched = "true";
     updateRadiusValue();
   });
+  dom.locationInput.addEventListener("input", () => {
+    updateRadiusValue();
+  });
+  dom.safetyOptionsToggleBtn.addEventListener("click", () => {
+    const nextExpanded = dom.safetyOptionsPanel.classList.contains("hidden");
+    setSafetyOptionsExpanded(nextExpanded);
+  });
 
   dom.requestBackdrop.addEventListener("click", closeRequestModal);
   dom.requestCloseBtn.addEventListener("click", closeRequestModal);
@@ -2135,6 +2731,38 @@ function wireEvents() {
   });
   dom.shareBackdrop.addEventListener("click", closeShareModal);
   dom.shareCloseBtn.addEventListener("click", closeShareModal);
+
+  dom.joinPromptForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!state.joinPrompt.requestId) {
+      return;
+    }
+    void joinRequest(state.joinPrompt.requestId, dom.joinIntroInput.value);
+  });
+  dom.joinPromptCancelBtn.addEventListener("click", closeJoinPrompt);
+  dom.joinPromptBackdrop.addEventListener("click", closeJoinPrompt);
+  dom.joinPromptCloseBtn.addEventListener("click", closeJoinPrompt);
+
+  dom.joinReviewBackdrop.addEventListener("click", closeJoinReviewModal);
+  dom.joinReviewCloseBtn.addEventListener("click", closeJoinReviewModal);
+  dom.joinReviewList.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-action]");
+    if (!button) {
+      return;
+    }
+    const action = String(button.dataset.action || "");
+    if (action === "open-profile") {
+      openProfileModal(button.dataset.userId);
+      return;
+    }
+    if (action === "accept-join") {
+      void acceptJoinApplicant(button.dataset.requestId, button.dataset.userId);
+      return;
+    }
+    if (action === "decline-join") {
+      void declineJoinApplicant(button.dataset.requestId, button.dataset.userId);
+    }
+  });
 
   dom.profileTabPosts.addEventListener("click", () => setProfileTab("posts"));
   dom.profileTabRequests.addEventListener("click", () => setProfileTab("requests"));
@@ -2208,6 +2836,10 @@ function wireEvents() {
   dom.authBackdrop.addEventListener("click", closeAuthModal);
   dom.authCloseBtn.addEventListener("click", closeAuthModal);
 
+  dom.settingsBackdrop.addEventListener("click", closeSettingsModal);
+  dom.settingsCloseBtn.addEventListener("click", closeSettingsModal);
+  dom.settingsForm.addEventListener("submit", saveAccountSettings);
+
   dom.adminBackdrop.addEventListener("click", () => closeModal("admin"));
   dom.adminCloseBtn.addEventListener("click", () => closeModal("admin"));
   dom.adminRefreshBtn.addEventListener("click", () => {
@@ -2240,6 +2872,8 @@ function wireEvents() {
     if (event.key === "Escape") {
       if (state.modals.auth) {
         closeAuthModal();
+      } else if (state.modals.settings) {
+        closeSettingsModal();
       } else if (state.modals.admin) {
         closeModal("admin");
       } else if (state.modals.match) {
@@ -2248,6 +2882,10 @@ function wireEvents() {
         closeRequestModal();
       } else if (state.modals.share) {
         closeShareModal();
+      } else if (state.modals.joinPrompt) {
+        closeJoinPrompt();
+      } else if (state.modals.joinReview) {
+        closeJoinReviewModal();
       } else if (state.modals.profile) {
         closeProfileModal();
       }
@@ -2278,8 +2916,11 @@ async function bootstrapProfileRoute() {
 async function init() {
   setLane("social");
   setDefaultTime();
+  setSafetyOptionsExpanded(false);
   setAuthMode("login");
   setAuthAuxPanels({ verifyVisible: false, resetVisible: false });
+  loadAreaFilterState();
+  updateAreaFilterUI();
   updateSearch("");
   wireEvents();
 

@@ -168,10 +168,11 @@ const DEFAULT_COMPANIONS = [
 ];
 
 const FALLBACK_STORE = {
-  version: 2,
+  version: 3,
   updatedAt: new Date().toISOString(),
   nextRequestId: 1,
   nextEventId: 1,
+  nextJoinRequestId: 1,
   nextMessageId: 1,
   nextPostId: 1,
   nextUserId: 1,
@@ -181,6 +182,7 @@ const FALLBACK_STORE = {
   companions: DEFAULT_COMPANIONS,
   requests: [],
   events: [],
+  joinRequests: [],
   messages: [],
   posts: [],
   users: [],
@@ -338,6 +340,13 @@ function buildMatches(store, request) {
 
 function buildFeed(store, mode, limit = 8) {
   const usersById = new Map((store.users || []).map((entry) => [entry.id, entry]));
+  const pendingByRequest = new Map();
+  for (const join of Array.isArray(store.joinRequests) ? store.joinRequests : []) {
+    if (join.status !== "pending") {
+      continue;
+    }
+    pendingByRequest.set(join.requestId, Number(pendingByRequest.get(join.requestId) || 0) + 1);
+  }
   return store.requests
     .filter((request) => request.mode === mode && request.status === "open")
     .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
@@ -353,7 +362,33 @@ function buildFeed(store, mode, limit = 8) {
       verifiedOnly: request.verifiedOnly,
       postedByName:
         (request.createdBy && usersById.get(request.createdBy) && usersById.get(request.createdBy).displayName) || "Member",
+      pendingJoinCount: Number(pendingByRequest.get(request.id) || 0),
     }));
+}
+
+function computeUserBadgesFromStore(store, userId) {
+  const user = (store.users || []).find((entry) => entry.id === userId);
+  if (!user) {
+    return {
+      verified: false,
+      reliabilityScore: 0,
+      completionRate: 0,
+    };
+  }
+
+  const requests = (store.requests || []).filter((entry) => entry.createdBy === userId);
+  const totalRequests = requests.length;
+  const closedRequests = requests.filter((entry) => entry.status === "closed").length;
+  const matchedRequests = requests.filter((entry) => entry.status === "matched").length;
+  const completionRate = totalRequests > 0 ? Math.round((closedRequests / totalRequests) * 100) : 0;
+  const reliabilityScore =
+    totalRequests > 0 ? Math.min(99, Math.round(((closedRequests + matchedRequests * 0.6) / totalRequests) * 100)) : 80;
+
+  return {
+    verified: Boolean(user.emailVerified),
+    reliabilityScore,
+    completionRate,
+  };
 }
 
 function ensureStoreShape(store) {
@@ -362,6 +397,7 @@ function ensureStoreShape(store) {
     updatedAt: store.updatedAt || FALLBACK_STORE.updatedAt,
     nextRequestId: Number(store.nextRequestId || FALLBACK_STORE.nextRequestId),
     nextEventId: Number(store.nextEventId || FALLBACK_STORE.nextEventId),
+    nextJoinRequestId: Number(store.nextJoinRequestId || FALLBACK_STORE.nextJoinRequestId),
     nextMessageId: Number(store.nextMessageId || FALLBACK_STORE.nextMessageId),
     nextPostId: Number(store.nextPostId || FALLBACK_STORE.nextPostId),
     nextUserId: Number(store.nextUserId || FALLBACK_STORE.nextUserId),
@@ -371,25 +407,39 @@ function ensureStoreShape(store) {
     companions: Array.isArray(store.companions) && store.companions.length > 0 ? store.companions : DEFAULT_COMPANIONS,
     requests: Array.isArray(store.requests)
       ? store.requests.map((entry) => ({
-          ...entry,
-          matchedUserId: entry.matchedUserId || null,
-          matchedCompanionId: entry.matchedCompanionId || null,
-          matchedAt: entry.matchedAt || null,
-          createdByName: entry.createdByName || null,
-        }))
+        ...entry,
+        matchedUserId: entry.matchedUserId || null,
+        matchedCompanionId: entry.matchedCompanionId || null,
+        matchedAt: entry.matchedAt || null,
+        createdByName: entry.createdByName || null,
+        matchedUserName: entry.matchedUserName || null,
+        createdByVerified: typeof entry.createdByVerified === "boolean" ? entry.createdByVerified : null,
+        description: String(entry.description || ""),
+        pendingJoinCount: Number(entry.pendingJoinCount || 0),
+      }))
       : [],
     events: Array.isArray(store.events) ? store.events : [],
+    joinRequests: Array.isArray(store.joinRequests)
+      ? store.joinRequests.map((entry) => ({
+        ...entry,
+        introMessage: String(entry.introMessage || ""),
+        status: String(entry.status || "pending"),
+        createdAt: entry.createdAt || new Date().toISOString(),
+        updatedAt: entry.updatedAt || entry.createdAt || new Date().toISOString(),
+      }))
+      : [],
     messages: Array.isArray(store.messages) ? store.messages : [],
     posts: Array.isArray(store.posts) ? store.posts : [],
     users: Array.isArray(store.users)
       ? store.users.map((entry) => ({
-          ...entry,
-          emailVerified:
-            typeof entry.emailVerified === "boolean"
-              ? entry.emailVerified
-              : Boolean(entry.googleSub || entry.passwordHash || entry.role === "admin"),
-          emailVerifiedAt: entry.emailVerifiedAt || null,
-        }))
+        ...entry,
+        emailVerified:
+          typeof entry.emailVerified === "boolean"
+            ? entry.emailVerified
+            : Boolean(entry.googleSub || entry.passwordHash || entry.role === "admin"),
+        emailVerifiedAt: entry.emailVerifiedAt || null,
+        aboutMe: String(entry.aboutMe || ""),
+      }))
       : [],
     emailVerificationCodes: Array.isArray(store.emailVerificationCodes) ? store.emailVerificationCodes : [],
     passwordResetCodes: Array.isArray(store.passwordResetCodes) ? store.passwordResetCodes : [],
@@ -408,6 +458,7 @@ function sanitizeUser(user) {
     displayName: user.displayName,
     role: user.role,
     createdAt: user.createdAt,
+    aboutMe: String(user.aboutMe || ""),
     googleLinked: Boolean(user.googleSub),
     hasPassword: Boolean(user.passwordHash),
     emailVerified: Boolean(user.emailVerified),
@@ -425,28 +476,34 @@ function isValidEmail(value) {
 function cleanRequestPayload(payload) {
   const mode = parseMode(payload.mode);
   const title = String(payload.title || "").trim();
-  const category = String(payload.category || "").trim().toLowerCase();
+  const description = String(payload.description || "").trim();
+  const fallbackCategory = mode === "errand" ? "paperwork" : "explore";
+  const category = String(payload.category || "").trim().toLowerCase() || fallbackCategory;
   const location = String(payload.location || "").trim();
   const tags = normalizeTags(payload.tags);
 
   if (!title) {
     throw new ApiError(400, "Title is required.");
   }
+  if (!description) {
+    throw new ApiError(400, "Description is required.");
+  }
+  if (description.length > 500) {
+    throw new ApiError(400, "Description must be 500 characters or less.");
+  }
   if (!location) {
     throw new ApiError(400, "Location is required.");
-  }
-  if (tags.length === 0) {
-    throw new ApiError(400, "At least one tag is required.");
   }
 
   return {
     mode,
     title,
+    description,
     category,
     time: String(payload.time || ""),
     location,
-    radius: clampRadius(payload.radius),
-    tags,
+    radius: Math.min(25, clampRadius(payload.radius)),
+    tags: tags.length ? tags : [mode, category],
     verifiedOnly: Boolean(payload.verifiedOnly),
     checkIn: Boolean(payload.checkIn),
   };
@@ -548,6 +605,14 @@ function cleanRequestStatusPayload(payload) {
   return { requestId, status };
 }
 
+function cleanAccountSettingsPayload(payload) {
+  const aboutMe = String(payload.aboutMe || "").trim();
+  if (aboutMe.length > 300) {
+    throw new ApiError(400, "About me must be 300 characters or less.");
+  }
+  return { aboutMe };
+}
+
 function cleanMessagePayload(payload) {
   const requestId = String(payload.requestId || "").trim();
   const content = String(payload.content || "").trim();
@@ -563,6 +628,20 @@ function cleanMessagePayload(payload) {
   }
 
   return { requestId, content };
+}
+
+function cleanJoinRequestPayload(payload) {
+  const requestId = String(payload.requestId || "").trim();
+  const introMessage = String(payload.introMessage || "").trim();
+
+  if (!requestId) {
+    throw new ApiError(400, "requestId is required.");
+  }
+  if (introMessage.length > 200) {
+    throw new ApiError(400, "Join intro message must be 200 characters or less.");
+  }
+
+  return { requestId, introMessage };
 }
 
 function cleanPostPayload(payload) {
@@ -727,7 +806,7 @@ function mutateStore(mutator) {
     return result;
   });
 
-  runtime.writeChain = operation.catch(() => {});
+  runtime.writeChain = operation.catch(() => { });
   return operation;
 }
 
@@ -837,13 +916,27 @@ async function storageListRequests(mode = null) {
 
   const store = await readStore();
   const usersById = new Map(store.users.map((entry) => [entry.id, entry]));
+  const pendingByRequest = new Map();
+  for (const joinRequest of store.joinRequests) {
+    if (joinRequest.status !== "pending") {
+      continue;
+    }
+    pendingByRequest.set(joinRequest.requestId, Number(pendingByRequest.get(joinRequest.requestId) || 0) + 1);
+  }
   return store.requests
     .filter((entry) => (mode ? entry.mode === mode : true))
     .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
     .map((entry) => ({
       ...entry,
+      description: String(entry.description || ""),
       createdByName:
         (entry.createdBy && usersById.get(entry.createdBy) && usersById.get(entry.createdBy).displayName) || "Member",
+      createdByVerified: Boolean(
+        entry.createdBy && usersById.get(entry.createdBy) && usersById.get(entry.createdBy).emailVerified
+      ),
+      matchedUserName:
+        (entry.matchedUserId && usersById.get(entry.matchedUserId) && usersById.get(entry.matchedUserId).displayName) || null,
+      pendingJoinCount: Number(pendingByRequest.get(entry.id) || 0),
     }));
 }
 
@@ -858,9 +951,17 @@ async function storageFindRequestById(requestId) {
     return null;
   }
   const owner = request.createdBy ? store.users.find((entry) => entry.id === request.createdBy) : null;
+  const matchedUser = request.matchedUserId ? store.users.find((entry) => entry.id === request.matchedUserId) : null;
+  const pendingJoinCount = store.joinRequests.filter(
+    (entry) => entry.requestId === request.id && entry.status === "pending"
+  ).length;
   return {
     ...request,
+    description: String(request.description || ""),
     createdByName: owner ? owner.displayName : "Member",
+    createdByVerified: Boolean(owner && owner.emailVerified),
+    matchedUserName: matchedUser ? matchedUser.displayName : null,
+    pendingJoinCount,
   };
 }
 
@@ -884,6 +985,7 @@ async function storageCreateRequest(payload, actorUserId = null) {
     const request = {
       id: `req-${store.nextRequestId}`,
       ...payload,
+      description: String(payload.description || ""),
       status: "open",
       matchedUserId: null,
       matchedCompanionId: null,
@@ -1040,6 +1142,249 @@ async function storageMatchRequestWithUser({ requestId, matchedUserId, actorUser
       request,
       event,
       feed: buildFeed(store, request.mode, 8),
+    };
+  });
+}
+
+async function storageCompleteRequest({ requestId, userId, outcome }) {
+  if (usingPostgres()) {
+    return runtime.postgresStore.completeRequest({ requestId, userId, outcome });
+  }
+
+  return mutateStore((store) => {
+    const request = store.requests.find((entry) => entry.id === requestId);
+    if (!request || request.status !== "matched") return null;
+
+    if (String(request.createdBy) === String(userId)) {
+      request.posterOutcome = outcome;
+    } else if (String(request.matchedUserId) === String(userId) || String(request.matchedCompanionId) === String(userId)) {
+      request.peerOutcome = outcome;
+    } else {
+      return null;
+    }
+
+    request.completedAt = request.completedAt || new Date().toISOString();
+    return request;
+  });
+}
+
+async function storageRateCompanion({ requestId, userId, meetAgain }) {
+  if (usingPostgres()) {
+    return runtime.postgresStore.rateCompanion({ requestId, userId, meetAgain });
+  }
+
+  return mutateStore((store) => {
+    const request = store.requests.find((entry) => entry.id === requestId);
+    if (!request || request.status !== "matched") return null;
+
+    if (String(request.createdBy) === String(userId)) {
+      request.posterMeetAgain = meetAgain;
+    } else if (String(request.matchedUserId) === String(userId) || String(request.matchedCompanionId) === String(userId)) {
+      request.peerMeetAgain = meetAgain;
+    } else {
+      return null;
+    }
+
+    return request;
+  });
+}
+
+async function storageCreateJoinRequest({ requestId, joinerUserId, introMessage = "" }) {
+  if (usingPostgres()) {
+    return runtime.postgresStore.createJoinRequest({ requestId, joinerUserId, introMessage });
+  }
+
+  return mutateStore((store) => {
+    const request = store.requests.find((entry) => entry.id === requestId);
+    if (!request) {
+      return null;
+    }
+
+    const now = new Date().toISOString();
+    const existing = store.joinRequests.find(
+      (entry) => entry.requestId === requestId && entry.joinerUserId === joinerUserId
+    );
+    if (existing) {
+      existing.introMessage = String(introMessage || "");
+      existing.status = "pending";
+      existing.updatedAt = now;
+      return {
+        id: existing.id,
+        requestId: existing.requestId,
+        joinerUserId: existing.joinerUserId,
+        introMessage: existing.introMessage,
+        status: existing.status,
+        createdAt: existing.createdAt,
+        updatedAt: existing.updatedAt,
+      };
+    }
+
+    const joinRequest = {
+      id: `jr-${store.nextJoinRequestId}`,
+      requestId,
+      joinerUserId,
+      introMessage: String(introMessage || ""),
+      status: "pending",
+      createdAt: now,
+      updatedAt: now,
+    };
+    store.nextJoinRequestId += 1;
+    store.joinRequests.unshift(joinRequest);
+
+    const event = {
+      id: `evt-${store.nextEventId}`,
+      type: "join-request",
+      requestId,
+      companionId: null,
+      actorUserId: joinerUserId,
+      metadata: {
+        introMessage: joinRequest.introMessage,
+      },
+      createdAt: now,
+    };
+    store.nextEventId += 1;
+    store.events.unshift(event);
+    if (store.events.length > 500) {
+      store.events = store.events.slice(0, 500);
+    }
+
+    return {
+      id: joinRequest.id,
+      requestId: joinRequest.requestId,
+      joinerUserId: joinRequest.joinerUserId,
+      introMessage: joinRequest.introMessage,
+      status: joinRequest.status,
+      createdAt: joinRequest.createdAt,
+      updatedAt: joinRequest.updatedAt,
+    };
+  });
+}
+
+async function storageListPendingJoinRequests(requestId) {
+  if (usingPostgres()) {
+    return runtime.postgresStore.listPendingJoinRequests(requestId);
+  }
+
+  const store = await readStore();
+  const usersById = new Map(store.users.map((entry) => [entry.id, entry]));
+  const items = store.joinRequests
+    .filter((entry) => entry.requestId === requestId && entry.status === "pending")
+    .sort((left, right) => new Date(left.createdAt) - new Date(right.createdAt));
+
+  return items.map((entry) => {
+    const user = usersById.get(entry.joinerUserId);
+    const badges = computeUserBadgesFromStore(store, entry.joinerUserId);
+    return {
+      id: entry.id,
+      requestId: entry.requestId,
+      joinerUserId: entry.joinerUserId,
+      introMessage: String(entry.introMessage || ""),
+      createdAt: entry.createdAt,
+      displayName: user ? user.displayName : "Member",
+      badges,
+    };
+  });
+}
+
+async function storageAcceptJoinRequest({ requestId, joinerUserId, actorUserId }) {
+  if (usingPostgres()) {
+    return runtime.postgresStore.acceptJoinRequest({ requestId, joinerUserId, actorUserId });
+  }
+
+  return mutateStore((store) => {
+    const request = store.requests.find((entry) => entry.id === requestId);
+    if (!request || request.status !== "open") {
+      return null;
+    }
+
+    const pendingJoin = store.joinRequests.find(
+      (entry) => entry.requestId === requestId && entry.joinerUserId === joinerUserId && entry.status === "pending"
+    );
+    if (!pendingJoin) {
+      return null;
+    }
+
+    const now = new Date().toISOString();
+    request.status = "matched";
+    request.matchedUserId = joinerUserId;
+    request.matchedCompanionId = null;
+    request.matchedAt = now;
+
+    for (const joinRequest of store.joinRequests) {
+      if (joinRequest.requestId !== requestId || joinRequest.status !== "pending") {
+        continue;
+      }
+      joinRequest.status = joinRequest.joinerUserId === joinerUserId ? "accepted" : "declined";
+      joinRequest.updatedAt = now;
+    }
+
+    const event = {
+      id: `evt-${store.nextEventId}`,
+      type: "join-match",
+      requestId,
+      companionId: null,
+      actorUserId,
+      metadata: { matchedUserId: joinerUserId },
+      createdAt: now,
+    };
+    store.nextEventId += 1;
+    store.events.unshift(event);
+    if (store.events.length > 500) {
+      store.events = store.events.slice(0, 500);
+    }
+
+    return {
+      request,
+      event,
+      acceptedJoinRequest: {
+        id: pendingJoin.id,
+        requestId: pendingJoin.requestId,
+        joinerUserId: pendingJoin.joinerUserId,
+        introMessage: String(pendingJoin.introMessage || ""),
+        status: "accepted",
+      },
+    };
+  });
+}
+
+async function storageDeclineJoinRequest({ requestId, joinerUserId, actorUserId }) {
+  if (usingPostgres()) {
+    return runtime.postgresStore.declineJoinRequest({ requestId, joinerUserId, actorUserId });
+  }
+
+  return mutateStore((store) => {
+    const target = store.joinRequests.find(
+      (entry) => entry.requestId === requestId && entry.joinerUserId === joinerUserId && entry.status === "pending"
+    );
+    if (!target) {
+      return null;
+    }
+
+    const now = new Date().toISOString();
+    target.status = "declined";
+    target.updatedAt = now;
+
+    const event = {
+      id: `evt-${store.nextEventId}`,
+      type: "join-decline",
+      requestId,
+      companionId: null,
+      actorUserId,
+      metadata: { declinedUserId: joinerUserId },
+      createdAt: now,
+    };
+    store.nextEventId += 1;
+    store.events.unshift(event);
+    if (store.events.length > 500) {
+      store.events = store.events.slice(0, 500);
+    }
+
+    return {
+      id: target.id,
+      requestId: target.requestId,
+      joinerUserId: target.joinerUserId,
+      status: target.status,
+      updatedAt: target.updatedAt,
     };
   });
 }
@@ -1320,6 +1665,21 @@ async function storageUpdateUserPassword({ userId, passwordHash }) {
   });
 }
 
+async function storageUpdateUserAboutMe({ userId, aboutMe }) {
+  if (usingPostgres()) {
+    return runtime.postgresStore.updateUserAboutMe({ userId, aboutMe });
+  }
+
+  return mutateStore((store) => {
+    const user = store.users.find((entry) => entry.id === userId);
+    if (!user) {
+      return null;
+    }
+    user.aboutMe = String(aboutMe || "");
+    return user;
+  });
+}
+
 async function storageListMessagesForRequest(requestId) {
   if (usingPostgres()) {
     return runtime.postgresStore.listMessagesForRequest(requestId);
@@ -1467,6 +1827,7 @@ async function storageGetPublicProfile(userId) {
     userId: user.id,
     displayName: user.displayName,
     joinDate: user.createdAt,
+    aboutMe: String(user.aboutMe || ""),
     badges: {
       verified: Boolean(user.emailVerified),
       reliabilityScore,
@@ -1956,6 +2317,31 @@ async function handleApi(req, res, url) {
     return;
   }
 
+  if (req.method === "GET" && pathname === "/api/account/settings") {
+    const user = await authenticateRequest(req, { optional: false });
+    sendJson(res, 200, {
+      settings: {
+        aboutMe: String(user.aboutMe || ""),
+      },
+    });
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/account/settings") {
+    const actor = await authenticateRequest(req, { optional: false });
+    const body = await parseJsonBody(req);
+    const payload = cleanAccountSettingsPayload(body);
+    const updatedUser = await storageUpdateUserAboutMe({
+      userId: actor.id,
+      aboutMe: payload.aboutMe,
+    });
+    if (!updatedUser) {
+      throw new ApiError(404, "User not found.");
+    }
+    sendJson(res, 200, { user: sanitizeUser(updatedUser) });
+    return;
+  }
+
   if (req.method === "GET" && pathname === "/api/bootstrap") {
     const mode = parseMode(searchParams.get("mode"));
     const payload = await storageGetBootstrap(mode);
@@ -1975,8 +2361,13 @@ async function handleApi(req, res, url) {
     const modeParam = searchParams.get("mode");
     const mode = modeParam ? parseMode(modeParam) : null;
     const createdBy = String(searchParams.get("createdBy") || "").trim();
+    const participantId = String(searchParams.get("participantId") || "").trim();
     let requests = await storageListRequests(mode);
-    if (createdBy) {
+    if (participantId) {
+      requests = requests.filter(
+        (entry) => String(entry.createdBy || "") === participantId || String(entry.matchedUserId || "") === participantId
+      );
+    } else if (createdBy) {
       requests = requests.filter((entry) => entry.createdBy === createdBy);
     }
     sendJson(res, 200, { requests });
@@ -2046,6 +2437,27 @@ async function handleApi(req, res, url) {
     return;
   }
 
+  if (req.method === "GET" && pathname === "/api/requests/join-requests") {
+    const actor = await authenticateRequest(req, { optional: false });
+    requireVerifiedUser(actor);
+    const requestId = String(searchParams.get("requestId") || "").trim();
+    if (!requestId) {
+      throw new ApiError(400, "requestId is required.");
+    }
+
+    const request = await storageFindRequestById(requestId);
+    if (!request) {
+      throw new ApiError(404, "Request not found.");
+    }
+    if (actor.role !== "admin" && String(request.createdBy || "") !== String(actor.id)) {
+      throw new ApiError(403, "Only the request poster can review join requests.");
+    }
+
+    const joinRequests = await storageListPendingJoinRequests(requestId);
+    sendJson(res, 200, { request, joinRequests });
+    return;
+  }
+
   if (req.method === "GET" && pathname === "/api/requests/session") {
     const actor = await authenticateRequest(req, { optional: false });
     requireVerifiedUser(actor);
@@ -2110,11 +2522,8 @@ async function handleApi(req, res, url) {
     const actor = await authenticateRequest(req, { optional: false });
     requireVerifiedUser(actor);
     const body = await parseJsonBody(req);
-    const requestId = String(body.requestId || "").trim();
-
-    if (!requestId) {
-      throw new ApiError(400, "requestId is required.");
-    }
+    const payload = cleanJoinRequestPayload(body);
+    const requestId = payload.requestId;
 
     const targetRequest = await storageFindRequestById(requestId);
     if (!targetRequest) {
@@ -2132,38 +2541,61 @@ async function handleApi(req, res, url) {
         sendJson(res, 200, { request: targetRequest, messages, alreadyMatched: true });
         return;
       }
-      throw new ApiError(409, "This request is already matched.");
+      throw new ApiError(409, "This request has been filled or the poster passed.");
     }
     if (targetRequest.status !== "open") {
-      throw new ApiError(409, "This request is no longer open.");
+      throw new ApiError(409, "This request has been filled or the poster passed.");
     }
 
-    const matched = await storageMatchRequestWithUser({
+    const joinRequest = await storageCreateJoinRequest({
       requestId,
-      matchedUserId: actor.id,
+      joinerUserId: actor.id,
+      introMessage: payload.introMessage,
+    });
+    if (!joinRequest) {
+      throw new ApiError(409, "Could not send join request.");
+    }
+
+    sendJson(res, 201, {
+      request: targetRequest,
+      joinRequest,
+      pendingReview: true,
+    });
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/actions/join/decline") {
+    const actor = await authenticateRequest(req, { optional: false });
+    requireVerifiedUser(actor);
+    const body = await parseJsonBody(req);
+    const requestId = String(body.requestId || "").trim();
+    const joinUserId = String(body.joinUserId || "").trim();
+
+    if (!requestId || !joinUserId) {
+      throw new ApiError(400, "requestId and joinUserId are required.");
+    }
+
+    const request = await storageFindRequestById(requestId);
+    if (!request) {
+      throw new ApiError(404, "Request not found.");
+    }
+    if (actor.role !== "admin" && String(request.createdBy || "") !== String(actor.id)) {
+      throw new ApiError(403, "Only the request poster can decline join requests.");
+    }
+    if (request.status !== "open") {
+      throw new ApiError(409, "This request has been filled or the poster passed.");
+    }
+
+    const declined = await storageDeclineJoinRequest({
+      requestId,
+      joinerUserId: joinUserId,
       actorUserId: actor.id,
     });
-    if (!matched) {
-      const latest = await storageFindRequestById(requestId);
-      if (latest && latest.matchedUserId === actor.id) {
-        const messages = await storageListMessagesForRequest(latest.id);
-        sendJson(res, 200, { request: latest, messages, alreadyMatched: true });
-        return;
-      }
-      throw new ApiError(409, "This request was matched by another user.");
+    if (!declined) {
+      throw new ApiError(404, "Join request not found.");
     }
 
-    const owner = await storageFindUserById(matched.request.createdBy);
-    const ownerName = owner ? owner.displayName || owner.email : "Request owner";
-    const peerName = actor.displayName || actor.email || "Companion";
-    await seedUserMatchConversation({
-      request: matched.request,
-      ownerName,
-      peerName,
-    });
-
-    const messages = await storageListMessagesForRequest(requestId);
-    sendJson(res, 201, { ...matched, messages });
+    sendJson(res, 200, { declined: true });
     return;
   }
 
@@ -2174,15 +2606,54 @@ async function handleApi(req, res, url) {
     }
     const body = await parseJsonBody(req);
     const requestId = String(body.requestId || "").trim();
+    const joinUserId = String(body.joinUserId || "").trim();
     const companionId = String(body.companionId || "").trim();
 
-    if (!requestId || !companionId) {
-      throw new ApiError(400, "requestId and companionId are required.");
+    if (!requestId) {
+      throw new ApiError(400, "requestId is required.");
     }
 
     const request = await storageFindRequestById(requestId);
     if (!request) {
       throw new ApiError(404, "Request not found.");
+    }
+    if (joinUserId) {
+      if (!actor || (actor.role !== "admin" && String(request.createdBy || "") !== String(actor.id))) {
+        throw new ApiError(403, "Only the request poster can accept join requests.");
+      }
+      if (request.status !== "open") {
+        throw new ApiError(409, "This request has been filled or the poster passed.");
+      }
+
+      const acceptedJoin = await storageAcceptJoinRequest({
+        requestId,
+        joinerUserId: joinUserId,
+        actorUserId: actor.id,
+      });
+      if (!acceptedJoin) {
+        throw new ApiError(409, "Could not accept this join request.");
+      }
+
+      const owner = await storageFindUserById(acceptedJoin.request.createdBy);
+      const joiner = await storageFindUserById(joinUserId);
+      const ownerName = owner ? owner.displayName || owner.email : "Request owner";
+      const peerName = joiner ? joiner.displayName || joiner.email : "Companion";
+      await seedUserMatchConversation({
+        request: acceptedJoin.request,
+        ownerName,
+        peerName,
+      });
+
+      const messages = await storageListMessagesForRequest(requestId);
+      sendJson(res, 200, {
+        ...acceptedJoin,
+        messages,
+      });
+      return;
+    }
+
+    if (!companionId) {
+      throw new ApiError(400, "companionId is required.");
     }
     if (request.status !== "open") {
       throw new ApiError(409, "This request is no longer open for matching.");
@@ -2214,6 +2685,59 @@ async function handleApi(req, res, url) {
       ...accepted,
       messages,
     });
+    return;
+  }
+
+  if (req.method === "POST" && pathname.match(/^\/api\/requests\/[^/]+\/complete$/)) {
+    const actor = await authenticateRequest(req, { optional: false });
+    requireVerifiedUser(actor);
+    const parts = pathname.split("/");
+    const requestId = parts[3];
+    const body = await parseJsonBody(req);
+    const outcome = String(body.outcome || "").trim();
+
+    if (!requestId || !outcome) {
+      throw new ApiError(400, "requestId and outcome are required.");
+    }
+
+    const request = await storageFindRequestById(requestId);
+    if (!request) {
+      throw new ApiError(404, "Request not found.");
+    }
+    requireRequestAccess(actor, request);
+
+    const updated = await storageCompleteRequest({ requestId, userId: actor.id, outcome });
+    if (!updated) {
+      throw new ApiError(400, "Could not complete this request. You may not be a participant.");
+    }
+
+    sendJson(res, 200, { request: updated });
+    return;
+  }
+
+  if (req.method === "POST" && pathname.match(/^\/api\/requests\/[^/]+\/rate$/)) {
+    const actor = await authenticateRequest(req, { optional: false });
+    requireVerifiedUser(actor);
+    const parts = pathname.split("/");
+    const requestId = parts[3];
+    const body = await parseJsonBody(req);
+    if (typeof body.meetAgain !== "boolean") {
+      throw new ApiError(400, "meetAgain boolean is required.");
+    }
+    const meetAgain = body.meetAgain;
+
+    const request = await storageFindRequestById(requestId);
+    if (!request) {
+      throw new ApiError(404, "Request not found.");
+    }
+    requireRequestAccess(actor, request);
+
+    const updated = await storageRateCompanion({ requestId, userId: actor.id, meetAgain });
+    if (!updated) {
+      throw new ApiError(400, "Could not rate. You may not be a participant.");
+    }
+
+    sendJson(res, 200, { request: updated });
     return;
   }
 

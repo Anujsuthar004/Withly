@@ -74,18 +74,24 @@ function mapCompanionRow(row) {
 }
 
 function mapRequestRow(row) {
-  const time = row.time instanceof Date ? row.time.toISOString() : String(row.time);
+  const time = row.time ? (row.time instanceof Date ? row.time.toISOString() : String(row.time)) : "";
   const createdAt = row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at);
   const matchedAt = row.matched_at
     ? row.matched_at instanceof Date
       ? row.matched_at.toISOString()
       : String(row.matched_at)
     : null;
+  const completedAt = row.completed_at
+    ? row.completed_at instanceof Date
+      ? row.completed_at.toISOString()
+      : String(row.completed_at)
+    : null;
 
   return {
     id: row.id,
     mode: row.mode,
     title: row.title,
+    description: String(row.description || ""),
     category: row.category,
     time,
     location: row.location,
@@ -98,8 +104,16 @@ function mapRequestRow(row) {
     matchedCompanionId: row.matched_companion_id || null,
     matchedAt,
     createdAt,
+    completedAt,
+    posterOutcome: row.poster_outcome || null,
+    posterMeetAgain: typeof row.poster_meet_again === "boolean" ? row.poster_meet_again : null,
+    peerOutcome: row.peer_outcome || null,
+    peerMeetAgain: typeof row.peer_meet_again === "boolean" ? row.peer_meet_again : null,
     createdBy: row.created_by || null,
     createdByName: row.created_by_name || null,
+    createdByVerified: typeof row.created_by_verified === "boolean" ? row.created_by_verified : null,
+    matchedUserName: row.matched_user_name || null,
+    pendingJoinCount: Number(row.pending_join_count || 0),
   };
 }
 
@@ -130,6 +144,7 @@ function mapUserRow(row) {
     createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
     passwordHash: row.password_hash,
     googleSub: row.google_sub || null,
+    aboutMe: String(row.about_me || ""),
     emailVerified: typeof row.email_verified === "boolean" ? row.email_verified : true,
     emailVerifiedAt: row.email_verified_at
       ? row.email_verified_at instanceof Date
@@ -191,12 +206,22 @@ class PostgresStore {
         requests.id,
         requests.mode,
         requests.title,
+        requests.description,
         requests.category,
         requests.time,
         requests.location,
         requests.tags,
         requests.verified_only,
-        users.display_name as created_by_name
+        users.display_name as created_by_name,
+        users.email_verified as created_by_verified,
+        coalesce(
+          (
+            select count(*)::int
+            from request_join_requests jr
+            where jr.request_id = requests.id and jr.status = 'pending'
+          ),
+          0
+        ) as pending_join_count
       from requests
       left join users on users.id = requests.created_by
       where requests.mode = $1 and requests.status = 'open'
@@ -211,35 +236,63 @@ class PostgresStore {
       mode: row.mode,
       title: row.title,
       category: row.category,
+      description: String(row.description || ""),
       location: row.location,
       timeText: timeText(row.time),
       tags: normalizeTags(row.tags),
       verifiedOnly: Boolean(row.verified_only),
       postedByName: row.created_by_name || "Member",
+      pendingJoinCount: Number(row.pending_join_count || 0),
     }));
   }
 
   async listRequests(mode = null) {
     const query = mode
       ? {
-          text: `
-          select requests.*, users.display_name as created_by_name
+        text: `
+          select
+            requests.*,
+            owners.display_name as created_by_name,
+            owners.email_verified as created_by_verified,
+            matched.display_name as matched_user_name,
+            coalesce(
+              (
+                select count(*)::int
+                from request_join_requests jr
+                where jr.request_id = requests.id and jr.status = 'pending'
+              ),
+              0
+            ) as pending_join_count
           from requests
-          left join users on users.id = requests.created_by
+          left join users owners on owners.id = requests.created_by
+          left join users matched on matched.id = requests.matched_user_id
           where requests.mode = $1
           order by requests.created_at desc
           `,
-          values: [mode],
-        }
+        values: [mode],
+      }
       : {
-          text: `
-          select requests.*, users.display_name as created_by_name
+        text: `
+          select
+            requests.*,
+            owners.display_name as created_by_name,
+            owners.email_verified as created_by_verified,
+            matched.display_name as matched_user_name,
+            coalesce(
+              (
+                select count(*)::int
+                from request_join_requests jr
+                where jr.request_id = requests.id and jr.status = 'pending'
+              ),
+              0
+            ) as pending_join_count
           from requests
-          left join users on users.id = requests.created_by
+          left join users owners on owners.id = requests.created_by
+          left join users matched on matched.id = requests.matched_user_id
           order by requests.created_at desc
           `,
-          values: [],
-        };
+        values: [],
+      };
 
     const result = await this.pool.query(query);
     return result.rows.map(mapRequestRow);
@@ -248,9 +301,22 @@ class PostgresStore {
   async findRequestById(requestId) {
     const result = await this.pool.query(
       `
-      select requests.*, users.display_name as created_by_name
+      select
+        requests.*,
+        owners.display_name as created_by_name,
+        owners.email_verified as created_by_verified,
+        matched.display_name as matched_user_name,
+        coalesce(
+          (
+            select count(*)::int
+            from request_join_requests jr
+            where jr.request_id = requests.id and jr.status = 'pending'
+          ),
+          0
+        ) as pending_join_count
       from requests
-      left join users on users.id = requests.created_by
+      left join users owners on owners.id = requests.created_by
+      left join users matched on matched.id = requests.matched_user_id
       where requests.id = $1
       limit 1
       `,
@@ -297,21 +363,22 @@ class PostgresStore {
   }
 
   async createRequest(payload, actorUserId = null) {
-    const safeTime = new Date(payload.time);
-    const requestTime = Number.isNaN(safeTime.getTime()) ? new Date() : safeTime;
+    const safeTime = payload.time ? new Date(payload.time) : null;
+    const requestTime = safeTime && !Number.isNaN(safeTime.getTime()) ? safeTime : null;
 
     const result = await this.pool.query(
       `
       insert into requests (
-        mode, title, category, time, location, radius_km, tags,
+        mode, title, description, category, time, location, radius_km, tags,
         verified_only, check_in, status, created_by
       )
-      values ($1,$2,$3,$4,$5,$6,$7,$8,$9,'open',$10)
+      values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'open',$11)
       returning *
       `,
       [
         payload.mode,
         payload.title,
+        String(payload.description || ""),
         payload.category,
         requestTime,
         payload.location,
@@ -325,9 +392,22 @@ class PostgresStore {
 
     const hydratedResult = await this.pool.query(
       `
-      select requests.*, users.display_name as created_by_name
+      select
+        requests.*,
+        owners.display_name as created_by_name,
+        owners.email_verified as created_by_verified,
+        matched.display_name as matched_user_name,
+        coalesce(
+          (
+            select count(*)::int
+            from request_join_requests jr
+            where jr.request_id = requests.id and jr.status = 'pending'
+          ),
+          0
+        ) as pending_join_count
       from requests
-      left join users on users.id = requests.created_by
+      left join users owners on owners.id = requests.created_by
+      left join users matched on matched.id = requests.matched_user_id
       where requests.id = $1
       limit 1
       `,
@@ -424,6 +504,176 @@ class PostgresStore {
       event,
       feed: await this.getFeed(request.mode, 8),
     };
+  }
+
+  async createJoinRequest({ requestId, joinerUserId, introMessage = "" }) {
+    const result = await this.pool.query(
+      `
+      insert into request_join_requests (request_id, joiner_user_id, intro_message, status, updated_at)
+      values ($1, $2, $3, 'pending', now())
+      on conflict (request_id, joiner_user_id)
+      do update set
+        intro_message = excluded.intro_message,
+        status = 'pending',
+        updated_at = now()
+      returning
+        id,
+        request_id as "requestId",
+        joiner_user_id as "joinerUserId",
+        intro_message as "introMessage",
+        status,
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      `,
+      [requestId, joinerUserId, String(introMessage || "")]
+    );
+
+    await this.createEvent({
+      type: "join-request",
+      requestId,
+      companionId: null,
+      actorUserId: joinerUserId,
+      metadata: {
+        introMessage: String(introMessage || ""),
+      },
+    });
+    return result.rows[0];
+  }
+
+  async listPendingJoinRequests(requestId) {
+    const result = await this.pool.query(
+      `
+      select
+        jr.id,
+        jr.request_id as "requestId",
+        jr.joiner_user_id as "joinerUserId",
+        jr.intro_message as "introMessage",
+        jr.created_at as "createdAt",
+        users.display_name as "displayName"
+      from request_join_requests jr
+      join users on users.id = jr.joiner_user_id
+      where jr.request_id = $1
+        and jr.status = 'pending'
+      order by jr.created_at asc
+      `,
+      [requestId]
+    );
+
+    const joinRequests = [];
+    for (const row of result.rows) {
+      const profile = await this.getPublicProfile(row.joinerUserId);
+      joinRequests.push({
+        ...row,
+        badges: profile ? profile.badges : { verified: false, reliabilityScore: 0, completionRate: 0 },
+      });
+    }
+    return joinRequests;
+  }
+
+  async acceptJoinRequest({ requestId, joinerUserId, actorUserId = null }) {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+
+      const pending = await client.query(
+        `
+        select id
+        from request_join_requests
+        where request_id = $1
+          and joiner_user_id = $2
+          and status = 'pending'
+        limit 1
+        `,
+        [requestId, joinerUserId]
+      );
+      if (pending.rowCount === 0) {
+        await client.query("rollback");
+        return null;
+      }
+
+      const requestResult = await client.query(
+        `
+        update requests
+        set status = 'matched',
+            matched_user_id = $2,
+            matched_companion_id = null,
+            matched_at = now(),
+            updated_at = now()
+        where id = $1
+          and status = 'open'
+        returning *
+        `,
+        [requestId, joinerUserId]
+      );
+      if (requestResult.rowCount === 0) {
+        await client.query("rollback");
+        return null;
+      }
+
+      await client.query(
+        `
+        update request_join_requests
+        set status = case when joiner_user_id = $2 then 'accepted' else 'declined' end,
+            updated_at = now()
+        where request_id = $1
+          and status = 'pending'
+        `,
+        [requestId, joinerUserId]
+      );
+
+      await client.query(
+        `
+        insert into request_events (type, request_id, companion_id, actor_user_id, metadata)
+        values ('join-match', $1, null, $2, $3)
+        `,
+        [requestId, actorUserId, { matchedUserId: joinerUserId }]
+      );
+
+      await client.query("commit");
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
+
+    const request = await this.findRequestById(requestId);
+    return {
+      request,
+      feed: await this.getFeed(request.mode, 8),
+    };
+  }
+
+  async declineJoinRequest({ requestId, joinerUserId, actorUserId = null }) {
+    const result = await this.pool.query(
+      `
+      update request_join_requests
+      set status = 'declined',
+          updated_at = now()
+      where request_id = $1
+        and joiner_user_id = $2
+        and status = 'pending'
+      returning
+        id,
+        request_id as "requestId",
+        joiner_user_id as "joinerUserId",
+        status,
+        updated_at as "updatedAt"
+      `,
+      [requestId, joinerUserId]
+    );
+    if (result.rowCount === 0) {
+      return null;
+    }
+
+    await this.createEvent({
+      type: "join-decline",
+      requestId,
+      companionId: null,
+      actorUserId,
+      metadata: { declinedUserId: joinerUserId },
+    });
+    return result.rows[0];
   }
 
   async createUser({ email, passwordHash, displayName }) {
@@ -751,6 +1001,23 @@ class PostgresStore {
     return mapUserRow(result.rows[0]);
   }
 
+  async updateUserAboutMe({ userId, aboutMe }) {
+    const result = await this.pool.query(
+      `
+      update users
+      set about_me = $2,
+          updated_at = now()
+      where id = $1
+      returning *
+      `,
+      [userId, String(aboutMe || "")]
+    );
+    if (result.rowCount === 0) {
+      return null;
+    }
+    return mapUserRow(result.rows[0]);
+  }
+
   async listMessagesForRequest(requestId) {
     const result = await this.pool.query(
       `
@@ -805,7 +1072,7 @@ class PostgresStore {
   async listReports(status = null) {
     const query = status
       ? {
-          text: `
+        text: `
           select
             reports.id,
             reports.reporter_user_id as "reporterUserId",
@@ -824,10 +1091,10 @@ class PostgresStore {
           where reports.status = $1
           order by reports.created_at desc
           `,
-          values: [status],
-        }
+        values: [status],
+      }
       : {
-          text: `
+        text: `
           select
             reports.id,
             reports.reporter_user_id as "reporterUserId",
@@ -845,8 +1112,8 @@ class PostgresStore {
           left join users on users.id = reports.reporter_user_id
           order by reports.created_at desc
           `,
-          values: [],
-        };
+        values: [],
+      };
 
     const result = await this.pool.query(query);
     return result.rows;
@@ -938,7 +1205,7 @@ class PostgresStore {
   async getPublicProfile(userId) {
     const userResult = await this.pool.query(
       `
-      select id, display_name, email_verified, created_at
+      select id, display_name, email_verified, created_at, about_me
       from users
       where id = $1
       limit 1
@@ -997,6 +1264,7 @@ class PostgresStore {
       userId: user.id,
       displayName: user.display_name,
       joinDate: user.created_at instanceof Date ? user.created_at.toISOString() : String(user.created_at),
+      aboutMe: String(user.about_me || ""),
       badges: {
         verified: Boolean(user.email_verified),
         reliabilityScore,
@@ -1010,6 +1278,63 @@ class PostgresStore {
       },
       requests: requestsResult.rows.map(mapRequestRow),
     };
+  }
+
+  async completeRequest({ requestId, userId, outcome }) {
+    const request = await this.findRequestById(requestId);
+    if (!request || request.status !== 'matched') return null;
+
+    let updateField = "";
+    if (String(request.createdBy) === String(userId)) {
+      updateField = "poster_outcome";
+    } else if (String(request.matchedUserId) === String(userId) || String(request.matchedCompanionId) === String(userId)) {
+      updateField = "peer_outcome";
+    } else {
+      return null;
+    }
+
+    const result = await this.pool.query(
+      `
+      update requests
+      set ${updateField} = $2,
+          completed_at = coalesce(completed_at, now()),
+          updated_at = now()
+      where id = $1
+      returning *
+      `,
+      [requestId, outcome]
+    );
+
+    if (result.rowCount === 0) return null;
+    return mapRequestRow(result.rows[0]);
+  }
+
+  async rateCompanion({ requestId, userId, meetAgain }) {
+    const request = await this.findRequestById(requestId);
+    if (!request || request.status !== 'matched') return null;
+
+    let updateField = "";
+    if (String(request.createdBy) === String(userId)) {
+      updateField = "poster_meet_again";
+    } else if (String(request.matchedUserId) === String(userId) || String(request.matchedCompanionId) === String(userId)) {
+      updateField = "peer_meet_again";
+    } else {
+      return null;
+    }
+
+    const result = await this.pool.query(
+      `
+      update requests
+      set ${updateField} = $2,
+          updated_at = now()
+      where id = $1
+      returning *
+      `,
+      [requestId, meetAgain]
+    );
+
+    if (result.rowCount === 0) return null;
+    return mapRequestRow(result.rows[0]);
   }
 
   async close() {

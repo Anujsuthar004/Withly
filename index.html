@@ -112,6 +112,27 @@
               <button id="refreshFeedBtn" class="ghost small" type="button">Refresh</button>
             </div>
 
+            <div class="area-filter-row">
+              <label class="area-input-wrap" for="viewerAreaInput">
+                <span>Your area</span>
+                <input id="viewerAreaInput" type="text" placeholder="Enter your neighbourhood" autocomplete="off" />
+              </label>
+              <label class="area-radius-wrap" for="viewerAreaRadius">
+                <span>Radius</span>
+                <select id="viewerAreaRadius">
+                  <option value="1">1 km</option>
+                  <option value="3">3 km</option>
+                  <option value="5">5 km</option>
+                  <option value="10">10 km</option>
+                  <option value="25">25 km</option>
+                  <option value="any">Any</option>
+                </select>
+              </label>
+              <button id="updateAreaFilterBtn" class="ghost small" type="button">Update</button>
+            </div>
+            <p class="area-privacy-note">We never ask for your device location. You control what area you share.</p>
+            <p id="areaUnsetBanner" class="area-unset-banner hidden">Set your area above to see what's happening near you.</p>
+
             <div class="feed-toggle" role="tablist" aria-label="Feed mode">
               <button id="feedToggleRequests" class="filter-chip active" type="button" role="tab" aria-selected="true">Requests</button>
               <button id="feedTogglePosts" class="filter-chip" type="button" role="tab" aria-selected="false">Posts</button>
@@ -156,6 +177,7 @@
             <li>SOS and emergency contact escalation flow</li>
             <li>Reliability score with no-show and incident weighting</li>
           </ul>
+          <p class="safety-privacy-line">We never ask for your device location. You choose your area.</p>
 
           <button id="checkInBtn" class="secondary" disabled type="button">Start Check-In Session</button>
           <p id="checkInStatus" class="status hidden"></p>
@@ -193,49 +215,61 @@
 
         <form id="requestForm" class="request-form">
           <label>
-            <span id="titleLabel">Event or hangout title</span>
-            <input type="text" id="title" placeholder="Night market + food walk" required />
+            <span id="titleLabel">Title</span>
+            <input type="text" id="title" placeholder="Passport office run, need company" required />
           </label>
 
-          <div class="two-col">
-            <label>
-              Category
-              <select id="category" required></select>
-            </label>
-            <label>
-              Start time
-              <input type="datetime-local" id="time" required />
-            </label>
-          </div>
+          <label>
+            Description
+            <textarea
+              id="description"
+              maxlength="500"
+              rows="4"
+              placeholder="Tell people what you're doing, where you're going, what you're like, what you're bringing. The more real, the better."
+              required
+            ></textarea>
+          </label>
 
           <div class="location-row">
             <label class="location-stack">
-              <span id="locationLabel">Meetup area</span>
-              <input type="text" id="location" placeholder="Bandra West" required />
+              <span id="locationLabel">Your area</span>
+              <input type="text" id="location" placeholder="Andheri West, Bandra, Powai..." required />
               <div class="radius-inline">
                 <div class="radius-head">
-                  <span>Distance radius</span>
+                  <span>Who can see this post</span>
                   <span id="radiusValue">8 km</span>
                 </div>
-                <input type="range" id="radius" min="1" max="30" value="8" step="1" />
+                <p id="radiusAudienceText" class="radius-audience">People within 8 km of your area</p>
+                <input type="range" id="radius" min="1" max="25" value="8" step="1" />
               </div>
             </label>
           </div>
 
           <label>
-            <span id="tagsLabel">Vibe tags</span>
-            <input type="text" id="tags" placeholder="chill, foodie, outgoing" required />
+            <span>When (optional - leave blank if spontaneous)</span>
+            <input type="datetime-local" id="time" />
           </label>
 
-          <div class="check-wrap">
-            <label class="checkbox-field">
-              <input type="checkbox" id="verifiedOnly" checked />
-              <span>Verified companions only</span>
-            </label>
-            <label class="checkbox-field">
-              <input type="checkbox" id="checkIn" checked />
-              <span>Enable live safety check-ins</span>
-            </label>
+          <label>
+            <span>Add photos or video (optional)</span>
+            <input id="requestMedia" type="file" accept="image/*,video/*" disabled />
+            <span class="field-note">Coming soon</span>
+          </label>
+
+          <div class="safety-options-wrap">
+            <button id="safetyOptionsToggleBtn" class="ghost small" type="button" aria-expanded="false">
+              Safety options ▾
+            </button>
+            <div id="safetyOptionsPanel" class="check-wrap hidden">
+              <label class="checkbox-field">
+                <input type="checkbox" id="verifiedOnly" checked />
+                <span>Verified companions only</span>
+              </label>
+              <label class="checkbox-field">
+                <input type="checkbox" id="checkIn" checked />
+                <span>Enable live safety check-ins</span>
+              </label>
+            </div>
           </div>
 
           <div class="form-actions">
@@ -277,6 +311,45 @@
       </section>
     </div>
 
+    <div class="modal-shell hidden" id="joinPromptModal" aria-hidden="true">
+      <div class="modal-backdrop" id="joinPromptBackdrop"></div>
+      <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="joinPromptTitle">
+        <div class="modal-head">
+          <h2 id="joinPromptTitle">Send Join Request</h2>
+          <button id="joinPromptCloseBtn" class="ghost small" type="button" aria-label="Close join prompt">Close</button>
+        </div>
+        <p id="joinPromptRequestTitle" class="card-copy"></p>
+        <form id="joinPromptForm" class="auth-form">
+          <label>
+            <span id="joinPromptLabel">Say something to the poster</span>
+            <input
+              id="joinIntroInput"
+              type="text"
+              maxlength="200"
+              placeholder="Why do you want to join? What are you like?"
+              autocomplete="off"
+            />
+          </label>
+          <div class="form-actions">
+            <button id="joinPromptSubmitBtn" class="primary" type="submit">Send Join Request</button>
+            <button id="joinPromptCancelBtn" class="ghost" type="button">Cancel</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <div class="modal-shell hidden" id="joinReviewModal" aria-hidden="true">
+      <div class="modal-backdrop" id="joinReviewBackdrop"></div>
+      <section class="modal-card profile-modal-card" role="dialog" aria-modal="true" aria-labelledby="joinReviewTitle">
+        <div class="modal-head">
+          <h2 id="joinReviewTitle">People Who Want To Join</h2>
+          <button id="joinReviewCloseBtn" class="ghost small" type="button" aria-label="Close join requests">Close</button>
+        </div>
+        <p id="joinReviewSubtitle" class="card-copy"></p>
+        <div id="joinReviewList" class="stack"></div>
+      </section>
+    </div>
+
     <div class="modal-shell hidden" id="profileModal" aria-hidden="true">
       <div class="modal-backdrop" id="profileBackdrop"></div>
       <section class="modal-card profile-modal-card" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
@@ -313,6 +386,9 @@
               <p class="value" id="publicProfileCompletion">--</p>
             </article>
           </div>
+          <p id="publicProfileAbout" class="profile-about">
+            Tell people a bit about yourself - who you are, what you're into, what to expect.
+          </p>
         </article>
 
         <div id="profileTabsWrap" class="feed-toggle" role="tablist" aria-label="Profile tabs">
@@ -441,6 +517,30 @@
         <div class="auth-divider"><span>or</span></div>
         <button id="googleAuthBtn" class="secondary auth-google-btn" type="button">Continue with Google</button>
         <p id="googleAuthHint" class="status hidden"></p>
+      </section>
+    </div>
+
+    <div class="modal-shell hidden" id="settingsModal" aria-hidden="true">
+      <div class="modal-backdrop" id="settingsBackdrop"></div>
+      <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+        <div class="modal-head">
+          <h2 id="settingsModalTitle">Account Settings</h2>
+          <button id="settingsCloseBtn" class="ghost small" type="button" aria-label="Close account settings">Close</button>
+        </div>
+        <form id="settingsForm" class="auth-form">
+          <label>
+            About me
+            <textarea
+              id="settingsAboutMe"
+              maxlength="300"
+              rows="4"
+              placeholder="Tell people a bit about yourself — who you are, what you're into, what to expect."
+            ></textarea>
+          </label>
+          <div class="form-actions">
+            <button id="settingsSaveBtn" class="primary" type="submit">Save</button>
+          </div>
+        </form>
       </section>
     </div>
 
