@@ -55,7 +55,6 @@ const FALLBACK_DATA = {
       category: "music",
       location: "Lower Parel",
       time: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-      tags: ["music", "chill", "new-friends"],
       verifiedOnly: true,
       status: "open",
       createdBy: "u-demo-1",
@@ -68,7 +67,6 @@ const FALLBACK_DATA = {
       category: "hospital",
       location: "Andheri East",
       time: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
-      tags: ["hospital", "calm", "support"],
       verifiedOnly: true,
       status: "open",
       createdBy: "u-demo-2",
@@ -81,7 +79,6 @@ const FALLBACK_DATA = {
       userId: "u-demo-1",
       displayName: "Rhea",
       text: "Great experience at a public event. Clear meetup point and ETA check-ins helped a lot.",
-      tags: ["music", "new-friends"],
       visibility: "public",
       helpfulCount: 3,
       createdAt: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
@@ -91,7 +88,6 @@ const FALLBACK_DATA = {
       userId: "u-demo-2",
       displayName: "Ishita",
       text: "Errand companionship felt easy today. Planning details upfront made the flow smooth.",
-      tags: ["errand", "support"],
       visibility: "public",
       helpfulCount: 1,
       createdAt: new Date(Date.now() - 95 * 60 * 1000).toISOString(),
@@ -201,7 +197,6 @@ const dom = {
   refreshFeedBtn: document.querySelector("#refreshFeedBtn"),
   viewerAreaInput: document.querySelector("#viewerAreaInput"),
   viewerAreaRadius: document.querySelector("#viewerAreaRadius"),
-  updateAreaFilterBtn: document.querySelector("#updateAreaFilterBtn"),
   areaUnsetBanner: document.querySelector("#areaUnsetBanner"),
   feedToggleRequests: document.querySelector("#feedToggleRequests"),
   feedTogglePosts: document.querySelector("#feedTogglePosts"),
@@ -1006,9 +1001,7 @@ function requestCardHtml(request) {
         <h3 class="request-title">${escapeHtml(request.title || "Untitled request")}</h3>
         <span class="tag lane-${escapeHtml(lane)}">${laneLabel}</span>
       </div>
-      <p class="request-description ${canExpand && !expanded ? "clamped" : ""}">
-        ${escapeHtml(hasDescription ? fullDescription : "No description added yet.")}
-      </p>
+      ${hasDescription ? `<p class="request-description ${canExpand && !expanded ? "clamped" : ""}">${escapeHtml(fullDescription)}</p>` : ""}
       ${canExpand
       ? `<button class="text-link text-link-small" type="button" data-action="toggle-request-description" data-request-id="${escapeHtml(
         requestId
@@ -1028,7 +1021,6 @@ function requestCardHtml(request) {
       : ""
     }
       <div class="meta">
-        ${tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("")}
         ${request.verifiedOnly ? '<span class="tag">Verified-only</span>' : ""}
       </div>
       <div class="item-actions">
@@ -1064,7 +1056,6 @@ function postCardHtml(post) {
     }
       ${post.mediaAttached ? '<div class="image-placeholder" aria-hidden="true">Media attached (preview coming soon)</div>' : ""}
       <div class="meta">
-        ${tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("")}
         ${post.visibility === "verified-only" ? '<span class="tag">Verified audience</span>' : ""}
       </div>
       <div class="item-actions">
@@ -1202,8 +1193,8 @@ function renderMyRequestsSummary() {
           : ""
         }
           <div class="item-actions">
-            <button class="ghost small" type="button" data-action="activate-request" data-request-id="${escapeHtml(entry.id)}">Open Session</button>
             ${entry.status === "open" ? `<button class="secondary" type="button" data-action="find-matches" data-request-id="${escapeHtml(entry.id)}">Find Matches</button>` : ""}
+            <button class="ghost small" type="button" data-action="activate-request" data-request-id="${escapeHtml(entry.id)}">View</button>
           </div>
         </article>
       `;
@@ -1408,7 +1399,6 @@ function renderMatches() {
           </div>
           <p>Reliability ${escapeHtml(String(entry.reliability))}% • ${escapeHtml(String(entry.completed))} sessions</p>
           <div class="meta">
-            ${tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("")}
             ${entry.verified ? '<span class="tag">Verified</span>' : '<span class="tag">Unverified</span>'}
           </div>
           <div class="item-actions">
@@ -2548,14 +2538,10 @@ function wireEvents() {
   dom.feedToggleRequests.addEventListener("click", () => setFeedMode("requests"));
   dom.feedTogglePosts.addEventListener("click", () => setFeedMode("posts"));
 
-  dom.updateAreaFilterBtn.addEventListener("click", () => {
-    applyAreaFilterFromControls();
-  });
-  dom.viewerAreaInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      applyAreaFilterFromControls();
-    }
+  let areaUpdateTimeout;
+  dom.viewerAreaInput.addEventListener("input", () => {
+    clearTimeout(areaUpdateTimeout);
+    areaUpdateTimeout = setTimeout(applyAreaFilterFromControls, 500);
   });
   dom.viewerAreaRadius.addEventListener("change", () => {
     applyAreaFilterFromControls();
