@@ -843,23 +843,136 @@ textarea {
   bottom: 0;
   z-index: 18;
   display: none;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.42rem;
-  padding: 0.52rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.36rem;
+  padding: 0.48rem;
   border-top: 1px solid #e0d3c0;
-  background: rgba(255, 253, 248, 0.94);
-  backdrop-filter: blur(8px);
+  background: rgba(255, 253, 248, 0.96);
+  backdrop-filter: blur(10px);
 }
 
 .mobile-nav a {
   text-decoration: none;
   text-align: center;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   color: #5a666a;
   border: 1px solid #e9dbc9;
   border-radius: 10px;
-  padding: 0.38rem 0.3rem;
+  padding: 0.44rem 0.22rem;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: #fff;
+  position: relative;
+}
+
+.mobile-nav a.active {
+  background: var(--teal);
+  color: #fff;
+  border-color: var(--teal);
+}
+
+.match-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--coral);
+  display: inline-block;
+  margin-left: 4px;
+  animation: pulse-dot 1.6s ease infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.mobile-match-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(22, 37, 47, 0.48);
+  backdrop-filter: blur(3px);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+.mobile-match-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mobile-match-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 42;
+  max-height: 88vh;
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -8px 32px rgba(20, 30, 38, 0.18);
+  transform: translateY(100%);
+  transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mobile-match-panel.open {
+  transform: translateY(0);
+}
+
+.mobile-match-panel .panel-drag {
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+  cursor: grab;
+}
+
+.mobile-match-panel .panel-drag::before {
+  content: '';
+  width: 36px;
+  height: 4px;
+  border-radius: 4px;
+  background: #c1b8a8;
+}
+
+.mobile-match-panel .panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.mobile-match-panel .panel-head h3 {
+  margin: 0;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.1rem;
+}
+
+.mobile-match-panel .panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.8rem 1rem 1rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-match-panel .chat-list {
+  max-height: none;
+  min-height: 200px;
+}
+
+.mobile-match-panel .chat-form {
+  position: sticky;
+  bottom: 0;
+  padding: 0.6rem 1rem;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  grid-template-columns: 1fr auto;
 }
 
 .modal-shell {
@@ -1327,11 +1440,27 @@ input[type="range"]::-moz-range-thumb {
 
   .app-layout {
     grid-template-columns: 1fr;
+    gap: 0.8rem;
   }
 
-  .left-rail,
+  .left-rail {
+    position: static;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    padding: 0;
+  }
+
+  .left-rail .session-block {
+    display: none;
+  }
+
   .safety-panel {
     display: none;
+  }
+
+  .mobile-match-panel {
+    display: flex;
   }
 
   .command-row,
@@ -1339,10 +1468,13 @@ input[type="range"]::-moz-range-thumb {
   .two-col,
   .profile-grid,
   .admin-overview-grid,
-  .chat-form,
   .feed-toggle,
   .auth-toggle {
     grid-template-columns: 1fr;
+  }
+
+  .chat-form {
+    grid-template-columns: 1fr auto;
   }
 
   .form-actions {
@@ -1352,6 +1484,33 @@ input[type="range"]::-moz-range-thumb {
 
   .mobile-nav {
     display: grid;
+  }
+
+  .primary,
+  .secondary,
+  .ghost {
+    min-height: 44px;
+  }
+
+  .item-actions {
+    flex-wrap: wrap;
+  }
+
+  .item-actions button {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .feed-card {
+    padding: 0.8rem;
+  }
+
+  .card-copy {
+    font-size: 0.84rem;
+  }
+
+  .item {
+    padding: 0.75rem;
   }
 
   .toast {

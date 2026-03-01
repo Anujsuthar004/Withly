@@ -337,6 +337,13 @@ const dom = {
   adminUsersList: document.querySelector("#adminUsersList"),
   adminRequestsList: document.querySelector("#adminRequestsList"),
 
+  mobileMatchTab: document.querySelector("#mobileMatchTab"),
+  mobileMatchDot: document.querySelector("#mobileMatchDot"),
+  mobileMatchOverlay: document.querySelector("#mobileMatchOverlay"),
+  mobileMatchPanel: document.querySelector("#mobileMatchPanel"),
+  mobileMatchCloseBtn: document.querySelector("#mobileMatchCloseBtn"),
+  mobileMatchBody: document.querySelector("#mobileMatchBody"),
+
   toast: document.querySelector("#toast"),
 };
 
@@ -1327,10 +1334,61 @@ function generateMatchActionsHtml(request, joinedAsPeer) {
   `;
 }
 
+/* ---- Mobile Match Panel ---- */
+
+function isMobileView() {
+  return window.innerWidth <= 820;
+}
+
+function openMobileMatchPanel() {
+  if (!dom.mobileMatchPanel) return;
+  syncMobileMatchPanel();
+  dom.mobileMatchOverlay.classList.add("open");
+  dom.mobileMatchPanel.classList.add("open");
+  dom.mobileMatchPanel.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+
+function closeMobileMatchPanel() {
+  if (!dom.mobileMatchPanel) return;
+  dom.mobileMatchOverlay.classList.remove("open");
+  dom.mobileMatchPanel.classList.remove("open");
+  dom.mobileMatchPanel.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+}
+
+function syncMobileMatchPanel() {
+  if (!dom.mobileMatchBody) return;
+  const sessionBlock = document.querySelector(".session-block");
+  if (sessionBlock) {
+    dom.mobileMatchBody.innerHTML = sessionBlock.innerHTML;
+    // Re-wire chat form inside the mobile panel
+    const mobileChatForm = dom.mobileMatchBody.querySelector("#chatForm");
+    if (mobileChatForm) {
+      mobileChatForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const input = dom.mobileMatchBody.querySelector("#chatInput");
+        if (!input) return;
+        const text = input.value.trim();
+        if (!text) return;
+        input.value = "";
+        await sendChatMessage(text);
+        syncMobileMatchPanel();
+      });
+    }
+  }
+}
+
+function updateMobileMatchDot() {
+  if (!dom.mobileMatchDot) return;
+  const hasMatch = state.activeRequest && state.activeRequest.status === "matched";
+  dom.mobileMatchDot.classList.toggle("hidden", !hasMatch);
+}
+
 function renderMatches() {
   dom.matchSessionBanner.classList.add("hidden");
   dom.matchSessionBanner.textContent = "";
-
+  updateMobileMatchDot();
   if (!state.activeRequest) {
     dom.emptyState.textContent = "Post or join a request to start a session.";
     dom.matchList.innerHTML = "";
@@ -2015,7 +2073,10 @@ async function acceptJoinApplicant(requestId, joinUserId) {
     closeJoinReviewModal();
     await refreshFeed();
     refreshSessionWorkspace();
-    showToast("Join request accepted. Shared chat is now active.");
+    showToast("🎉 Match confirmed! Chat is now active.");
+    if (isMobileView()) {
+      openMobileMatchPanel();
+    }
   } catch (error) {
     if (handleApiAuthError(error)) {
       return;
@@ -2096,7 +2157,10 @@ async function acceptCompanion(companionId) {
     closeMatchModal();
     await refreshFeed();
     refreshSessionWorkspace();
-    showToast("Companion accepted.");
+    showToast("🎉 Match confirmed! Chat is now active.");
+    if (isMobileView()) {
+      openMobileMatchPanel();
+    }
   } catch (error) {
     if (handleApiAuthError(error)) {
       return;
@@ -2700,6 +2764,19 @@ function wireEvents() {
     await sendChatMessage(dom.chatInput.value);
     dom.chatInput.value = "";
   });
+
+  if (dom.mobileMatchTab) {
+    dom.mobileMatchTab.addEventListener("click", (event) => {
+      event.preventDefault();
+      openMobileMatchPanel();
+    });
+  }
+  if (dom.mobileMatchCloseBtn) {
+    dom.mobileMatchCloseBtn.addEventListener("click", closeMobileMatchPanel);
+  }
+  if (dom.mobileMatchOverlay) {
+    dom.mobileMatchOverlay.addEventListener("click", closeMobileMatchPanel);
+  }
 
   dom.checkInBtn.addEventListener("click", () => {
     void toggleCheckIn();
