@@ -1778,7 +1778,7 @@ function buildRequestPayload() {
     time: dom.timeInput.value.trim(),
     location: dom.locationInput.value.trim(),
     radius: Number(dom.radiusInput.value || 8),
-    tags: [],
+    tags: [state.activeLane, profile.defaultCategory],
     verifiedOnly: dom.verifiedOnlyInput.checked,
     checkIn: dom.checkInInput.checked,
   };
