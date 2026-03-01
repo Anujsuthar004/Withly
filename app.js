@@ -366,7 +366,9 @@ function showToast(message) {
 }
 
 function safeApiErrorMessage(error, fallback) {
-  void error;
+  if (error && error.message && error.message !== `HTTP ${error.status}`) {
+    return error.message;
+  }
   return fallback;
 }
 
@@ -1800,6 +1802,7 @@ async function createRequest() {
       body: JSON.stringify(payload),
     });
   } catch (error) {
+    console.error("createRequest failed:", error.status, error.message, error);
     if (handleApiAuthError(error)) {
       return;
     }
