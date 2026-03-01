@@ -2119,22 +2119,22 @@ async function handleApi(req, res, url) {
       expiresAt,
     });
 
+    let emailDelivered = false;
     try {
       await sendVerificationCodeEmail({
         to: payload.email,
         code: verificationCode,
         expiresMinutes: ttlToMinutes(VERIFICATION_CODE_TTL_MS),
       });
+      emailDelivered = true;
     } catch (error) {
       console.error(`Verification email delivery failed for ${payload.email}: ${error.message}`);
-      if (IS_PRODUCTION) {
-        throw new ApiError(503, "Could not deliver verification email. Please try again.");
-      }
     }
 
     sendJson(res, 201, {
       verificationRequired: true,
       email: payload.email,
+      emailDelivered,
       ...(EXPOSE_DEV_AUTH_CODES ? { devVerificationCode: verificationCode } : {}),
     });
     return;

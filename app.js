@@ -1793,29 +1793,34 @@ async function createRequest() {
     return;
   }
 
+  let created;
   try {
-    const created = await apiFetch("/api/requests", {
+    created = await apiFetch("/api/requests", {
       method: "POST",
       body: JSON.stringify(payload),
     });
-    state.activeRequest = created.request || null;
-    state.matches = Array.isArray(created.matches) ? created.matches : [];
-    if (Array.isArray(created.feed)) {
-      // no-op, canonical feed comes from /api/requests reload
-    }
-    state.checkInStarted = false;
-    closeRequestModal();
-    await refreshFeed();
-    updateCheckInControls();
-    renderMatches();
-    renderChat();
-    showToast("Request posted.");
   } catch (error) {
     if (handleApiAuthError(error)) {
       return;
     }
     showToast(safeApiErrorMessage(error, "Could not post request."));
+    return;
   }
+
+  state.activeRequest = created.request || null;
+  state.matches = Array.isArray(created.matches) ? created.matches : [];
+  state.checkInStarted = false;
+  closeRequestModal();
+  showToast("Request posted.");
+
+  try {
+    await refreshFeed();
+  } catch {
+    // Feed refresh is best-effort; the request was already posted.
+  }
+  updateCheckInControls();
+  renderMatches();
+  renderChat();
 }
 
 async function createPost() {
