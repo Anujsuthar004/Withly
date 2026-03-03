@@ -13,6 +13,7 @@ const {
 } = require("./lib/email-sender");
 const { PostgresStore } = require("./lib/postgres-store");
 const { verifyGoogleIdToken } = require("./lib/google-auth");
+const { initWebSocket, broadcastChatMessage, broadcastMatchConfirmed } = require("./lib/websocket");
 
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_FILE = path.join(__dirname, "data", "store.json");
@@ -2645,6 +2646,16 @@ async function handleApi(req, res, url) {
       });
 
       const messages = await storageListMessagesForRequest(requestId);
+
+      // Broadcast match_confirmed via WebSocket to both users
+      broadcastMatchConfirmed({
+        requestId,
+        ownerUserId: String(acceptedJoin.request.createdBy),
+        matchedUserId: joinUserId,
+        ownerName,
+        matchedName: peerName,
+      });
+
       sendJson(res, 200, {
         ...acceptedJoin,
         messages,
@@ -2681,6 +2692,18 @@ async function handleApi(req, res, url) {
     }
 
     const messages = await storageListMessagesForRequest(requestId);
+
+    // Broadcast match_confirmed via WebSocket
+    const compOwner = await storageFindUserById(accepted.request.createdBy);
+    const compOwnerName = compOwner ? (compOwner.displayName || compOwner.email) : "Request owner";
+    broadcastMatchConfirmed({
+      requestId,
+      ownerUserId: String(accepted.request.createdBy),
+      matchedUserId: String(accepted.request.matchedUserId),
+      ownerName: compOwnerName,
+      matchedName: companion.name || "Companion",
+    });
+
     sendJson(res, 200, {
       ...accepted,
       messages,
@@ -2810,6 +2833,14 @@ async function handleApi(req, res, url) {
     });
 
     const messages = await storageListMessagesForRequest(request.id);
+
+    // Broadcast new chat message via WebSocket
+    broadcastChatMessage(
+      String(request.createdBy),
+      String(request.matchedUserId),
+      message
+    );
+
     sendJson(res, 201, { message, messages });
     return;
   }
@@ -2986,6 +3017,14 @@ async function startServer() {
   }
 
   console.log(`Email provider: ${EMAIL_PROVIDER}`);
+
+  initWebSocket(server, {
+    verifyToken,
+    tokenSecret: TOKEN_SECRET,
+    findUserById: storageFindUserById,
+  });
+  console.log("WebSocket server initialized on /ws");
+
   server.listen(PORT, () => {
     console.log(`Tag Along backend running on http://localhost:${PORT}`);
   });

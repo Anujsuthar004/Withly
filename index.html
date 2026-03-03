@@ -58,6 +58,29 @@
     </div>
   </header>
 
+  <!-- Match notification banner (desktop) -->
+  <div class="match-banner hidden" id="matchBanner">
+    <span id="matchBannerText"></span>
+    <button id="matchBannerChatBtn" class="ghost small" type="button">Open Chat →</button>
+    <button id="matchBannerClose" class="ghost small" type="button" aria-label="Close">✕</button>
+  </div>
+
+  <!-- Full-screen chat view -->
+  <section class="chat-view hidden" id="chatView" aria-label="Chat">
+    <header class="chat-view-header">
+      <button id="chatViewBackBtn" class="ghost small chat-back-btn" type="button" aria-label="Back">← Back</button>
+      <div class="chat-view-title">
+        <h3 id="chatViewTitle">Chat</h3>
+        <p id="chatViewSubtitle" class="chat-view-subtitle"></p>
+      </div>
+    </header>
+    <div class="chat-view-messages" id="chatViewMessages"></div>
+    <form class="chat-view-input" id="chatViewForm">
+      <input id="chatViewInput" type="text" maxlength="700" placeholder="Type a message..." autocomplete="off" />
+      <button class="primary" type="submit">Send</button>
+    </form>
+  </section>
+
   <main>
     <section class="hero">
       <h1 id="heroTitle">Find a plus-one for parties, events, and city hangouts.</h1>

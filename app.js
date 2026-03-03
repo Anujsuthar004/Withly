@@ -344,6 +344,19 @@ const dom = {
   mobileMatchCloseBtn: document.querySelector("#mobileMatchCloseBtn"),
   mobileMatchBody: document.querySelector("#mobileMatchBody"),
 
+  chatView: document.querySelector("#chatView"),
+  chatViewBackBtn: document.querySelector("#chatViewBackBtn"),
+  chatViewTitle: document.querySelector("#chatViewTitle"),
+  chatViewSubtitle: document.querySelector("#chatViewSubtitle"),
+  chatViewMessages: document.querySelector("#chatViewMessages"),
+  chatViewForm: document.querySelector("#chatViewForm"),
+  chatViewInput: document.querySelector("#chatViewInput"),
+
+  matchBanner: document.querySelector("#matchBanner"),
+  matchBannerText: document.querySelector("#matchBannerText"),
+  matchBannerChatBtn: document.querySelector("#matchBannerChatBtn"),
+  matchBannerClose: document.querySelector("#matchBannerClose"),
+
   toast: document.querySelector("#toast"),
 };
 
@@ -765,6 +778,7 @@ function applyAuthPayload(payload) {
   updateAuthUI();
   closeAuthModal();
   void loadData();
+  connectWebSocket();
 }
 
 function clearSession() {
@@ -774,6 +788,8 @@ function clearSession() {
   closeAccountMenu();
   closeModal("admin");
   closeSettingsModal();
+  closeChatView();
+  disconnectWebSocket();
   updateAuthUI();
   refreshSessionWorkspace();
 }
@@ -2266,6 +2282,214 @@ async function sendChatMessage(content) {
   }
 }
 
+/* ==== WebSocket Client ==== */
+
+let ws = null;
+let wsReconnectDelay = 1000;
+let wsReconnectTimer = null;
+
+function getWsUrl() {
+  const token = state.auth.token;
+  if (!token) return null;
+
+  // In production (Vercel), connect directly to Railway
+  // In dev, connect to the same localhost server
+  const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+
+  if (isLocalhost) {
+    return `${protocol}//${window.location.host}/ws?token=${encodeURIComponent(token)}`;
+  }
+
+  // Production: connect directly to Railway backend
+  return `wss://tag-along-production.up.railway.app/ws?token=${encodeURIComponent(token)}`;
+}
+
+function connectWebSocket() {
+  if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) {
+    return;
+  }
+
+  const url = getWsUrl();
+  if (!url) return;
+
+  try {
+    ws = new WebSocket(url);
+  } catch {
+    return;
+  }
+
+  ws.onopen = () => {
+    wsReconnectDelay = 1000;
+    console.log("WebSocket connected");
+  };
+
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      handleWsMessage(data);
+    } catch { /* ignore malformed */ }
+  };
+
+  ws.onclose = () => {
+    ws = null;
+    scheduleWsReconnect();
+  };
+
+  ws.onerror = () => {
+    if (ws) ws.close();
+  };
+}
+
+function scheduleWsReconnect() {
+  if (wsReconnectTimer) clearTimeout(wsReconnectTimer);
+  if (!state.auth.token) return;
+  wsReconnectTimer = setTimeout(() => {
+    connectWebSocket();
+    wsReconnectDelay = Math.min(wsReconnectDelay * 1.5, 30000);
+  }, wsReconnectDelay);
+}
+
+function disconnectWebSocket() {
+  if (wsReconnectTimer) clearTimeout(wsReconnectTimer);
+  if (ws) {
+    ws.onclose = null;
+    ws.close();
+    ws = null;
+  }
+}
+
+function handleWsMessage(data) {
+  if (data.type === "chat_message") {
+    // Append message to state if not already present
+    const msg = data.message;
+    if (!msg) return;
+    const exists = state.chatMessages.some(
+      (m) => m.id === msg.id || (m.content === msg.content && m.senderUserId === msg.senderUserId && m.createdAt === msg.createdAt)
+    );
+    if (!exists) {
+      state.chatMessages.push(msg);
+    }
+    // Re-render if chat view is open
+    if (!dom.chatView.classList.contains("hidden")) {
+      renderChatView();
+    }
+    // Also update sidebar chat
+    renderChat();
+    // Sync mobile panel if open
+    if (dom.mobileMatchPanel && dom.mobileMatchPanel.classList.contains("open")) {
+      syncMobileMatchPanel();
+    }
+    return;
+  }
+
+  if (data.type === "match_confirmed") {
+    showMatchBanner(data.matchedWith, data.requestId);
+    // Refresh session workspace to show the match
+    void refreshSessionWorkspace();
+    return;
+  }
+}
+
+/* ==== Full-Screen Chat View ==== */
+
+function openChatView(requestIdOverride) {
+  const request = requestIdOverride
+    ? state.feed.find((r) => r.id === requestIdOverride) || state.activeRequest
+    : getActiveChatRequest();
+  if (!request) {
+    showToast("No matched request to chat in.");
+    return;
+  }
+
+  // Set the active request so messages load for it
+  state.activeRequest = request;
+
+  // Update header
+  const otherName = getMatchedUserName(request);
+  dom.chatViewTitle.textContent = request.title || "Chat";
+  dom.chatViewSubtitle.textContent = otherName ? `with ${otherName}` : "";
+
+  // Show the view
+  dom.chatView.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+
+  // Close mobile panel if open
+  closeMobileMatchPanel();
+
+  // Load messages and render
+  loadChatMessages().then(() => renderChatView());
+}
+
+function closeChatView() {
+  dom.chatView.classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+function renderChatView() {
+  if (!dom.chatViewMessages) return;
+
+  if (!Array.isArray(state.chatMessages) || state.chatMessages.length === 0) {
+    dom.chatViewMessages.innerHTML = `<div class="chat-msg system"><div class="chat-msg-body">No messages yet. Say hello!</div></div>`;
+    return;
+  }
+
+  dom.chatViewMessages.innerHTML = state.chatMessages
+    .map((msg) => {
+      const isSystem = msg.senderType === "system";
+      const isSelf = !isSystem && state.auth.user && String(msg.senderUserId) === String(state.auth.user.id);
+      const sender = isSystem ? "Tag Along" : (msg.senderName || "Member");
+      const cssClass = isSystem ? "system" : (isSelf ? "self" : "");
+      return `
+        <div class="chat-msg ${cssClass}">
+          <span class="chat-msg-meta">${escapeHtml(sender)} · ${escapeHtml(formatRelativeTime(msg.createdAt))}</span>
+          <div class="chat-msg-body">${escapeHtml(msg.content || "")}</div>
+        </div>
+      `;
+    })
+    .join("");
+
+  // Auto-scroll to bottom
+  dom.chatViewMessages.scrollTop = dom.chatViewMessages.scrollHeight;
+}
+
+function getMatchedUserName(request) {
+  if (!request) return "";
+  const isOwner = state.auth.user && String(request.createdBy) === String(state.auth.user.id);
+  // If I'm the owner, show matched user name; if I'm the joiner, show owner name
+  if (isOwner) {
+    return request.matchedDisplayName || request.matchedUserName || "";
+  }
+  return request.ownerDisplayName || request.ownerName || "";
+}
+
+/* ==== Match Notification Banner ==== */
+
+let matchBannerTimer = null;
+
+function showMatchBanner(matchedWith, requestId) {
+  if (!dom.matchBanner) return;
+
+  dom.matchBannerText.textContent = `🎉 You matched with ${matchedWith || "someone"}!`;
+  dom.matchBanner.classList.remove("hidden");
+  state._matchBannerRequestId = requestId;
+
+  // Also show toast for mobile
+  showToast(`🎉 Match confirmed with ${matchedWith || "someone"}!`);
+  updateMobileMatchDot();
+
+  if (matchBannerTimer) clearTimeout(matchBannerTimer);
+  matchBannerTimer = setTimeout(() => {
+    dom.matchBanner.classList.add("hidden");
+  }, 8000);
+}
+
+function hideMatchBanner() {
+  if (!dom.matchBanner) return;
+  dom.matchBanner.classList.add("hidden");
+  if (matchBannerTimer) clearTimeout(matchBannerTimer);
+}
+
 async function toggleCheckIn() {
   if (!state.activeRequest) {
     showToast("Select an active request first.");
@@ -2310,14 +2534,8 @@ function refreshSessionWorkspace() {
 }
 
 function openSessionChat() {
-  if (dom.sessionChat.classList.contains("hidden")) {
-    showToast("Chat unlocks after a real user match is confirmed.");
-    return;
-  }
-  dom.sessionChat.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  if (dom.chatInput && !dom.chatForm.classList.contains("hidden")) {
-    dom.chatInput.focus();
-  }
+  // Open the dedicated full-screen chat view
+  openChatView();
 }
 
 async function loadProfile(userId) {
@@ -2778,6 +2996,24 @@ function wireEvents() {
     dom.mobileMatchOverlay.addEventListener("click", closeMobileMatchPanel);
   }
 
+  // Chat view events
+  dom.chatViewBackBtn.addEventListener("click", closeChatView);
+  dom.chatViewForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const text = dom.chatViewInput.value.trim();
+    if (!text) return;
+    dom.chatViewInput.value = "";
+    await sendChatMessage(text);
+    renderChatView();
+  });
+
+  // Match banner events
+  dom.matchBannerClose.addEventListener("click", hideMatchBanner);
+  dom.matchBannerChatBtn.addEventListener("click", () => {
+    hideMatchBanner();
+    openChatView(state._matchBannerRequestId);
+  });
+
   dom.checkInBtn.addEventListener("click", () => {
     void toggleCheckIn();
   });
@@ -2988,6 +3224,7 @@ async function init() {
   window.setTimeout(() => initializeGoogleAuth(), 1000);
 
   await restoreSession();
+  connectWebSocket();
   await loadData();
   await bootstrapProfileRoute();
 
