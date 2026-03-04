@@ -2427,30 +2427,46 @@ function openChatView(requestIdOverride) {
   // Load messages and render
   loadChatMessages().then(() => renderChatView());
 
-  // Start polling for new messages (fallback when WS is unavailable)
+  // Ensure global polling is running
   startChatPolling();
 }
 
 function closeChatView() {
   dom.chatView.classList.add("hidden");
   document.body.style.overflow = "";
-  stopChatPolling();
+  // Don't stop polling here — other chat surfaces may still be visible
 }
+
+/* ==== Global Chat Polling (works for sidebar, mobile panel, and chat view) ==== */
 
 let chatPollTimer = null;
 
 function startChatPolling() {
-  stopChatPolling();
+  // Only poll if there's a matched active request
+  const request = getActiveChatRequest();
+  if (!request) {
+    stopChatPolling();
+    return;
+  }
+  if (chatPollTimer) return; // already running
   chatPollTimer = setInterval(async () => {
-    if (dom.chatView.classList.contains("hidden")) {
+    const req = getActiveChatRequest();
+    if (!req) {
       stopChatPolling();
       return;
     }
     try {
       await loadChatMessages();
-      renderChatView();
+      // Update ALL visible chat surfaces
+      renderChat();
+      if (!dom.chatView.classList.contains("hidden")) {
+        renderChatView();
+      }
+      if (dom.mobileMatchPanel && dom.mobileMatchPanel.classList.contains("open")) {
+        syncMobileMatchPanel();
+      }
     } catch { /* ignore polling errors */ }
-  }, 5000);
+  }, 4000);
 }
 
 function stopChatPolling() {
@@ -2565,6 +2581,7 @@ function refreshSessionWorkspace() {
   renderMatches();
   renderChat();
   updateCheckInControls();
+  startChatPolling();
 }
 
 function openSessionChat() {
