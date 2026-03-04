@@ -358,6 +358,9 @@ const dom = {
   matchBannerClose: document.querySelector("#matchBannerClose"),
 
   toast: document.querySelector("#toast"),
+
+  desktopMatchLink: document.querySelector("#desktopMatchLink"),
+  desktopMatchDot: document.querySelector("#desktopMatchDot"),
 };
 
 let toastTimeoutId = null;
@@ -1396,9 +1399,13 @@ function syncMobileMatchPanel() {
 }
 
 function updateMobileMatchDot() {
-  if (!dom.mobileMatchDot) return;
   const hasMatch = state.activeRequest && state.activeRequest.status === "matched";
-  dom.mobileMatchDot.classList.toggle("hidden", !hasMatch);
+  if (dom.mobileMatchDot) {
+    dom.mobileMatchDot.classList.toggle("hidden", !hasMatch);
+  }
+  if (dom.desktopMatchLink) {
+    dom.desktopMatchLink.classList.toggle("hidden", !hasMatch);
+  }
 }
 
 function renderMatches() {
@@ -2419,11 +2426,38 @@ function openChatView(requestIdOverride) {
 
   // Load messages and render
   loadChatMessages().then(() => renderChatView());
+
+  // Start polling for new messages (fallback when WS is unavailable)
+  startChatPolling();
 }
 
 function closeChatView() {
   dom.chatView.classList.add("hidden");
   document.body.style.overflow = "";
+  stopChatPolling();
+}
+
+let chatPollTimer = null;
+
+function startChatPolling() {
+  stopChatPolling();
+  chatPollTimer = setInterval(async () => {
+    if (dom.chatView.classList.contains("hidden")) {
+      stopChatPolling();
+      return;
+    }
+    try {
+      await loadChatMessages();
+      renderChatView();
+    } catch { /* ignore polling errors */ }
+  }, 5000);
+}
+
+function stopChatPolling() {
+  if (chatPollTimer) {
+    clearInterval(chatPollTimer);
+    chatPollTimer = null;
+  }
 }
 
 function renderChatView() {
@@ -3013,6 +3047,13 @@ function wireEvents() {
     hideMatchBanner();
     openChatView(state._matchBannerRequestId);
   });
+
+  if (dom.desktopMatchLink) {
+    dom.desktopMatchLink.addEventListener("click", (event) => {
+      event.preventDefault();
+      openChatView();
+    });
+  }
 
   dom.checkInBtn.addEventListener("click", () => {
     void toggleCheckIn();

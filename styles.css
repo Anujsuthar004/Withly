@@ -126,6 +126,25 @@ h2 {
   color: var(--slate);
 }
 
+.desktop-match-link {
+  position: relative;
+  font-weight: 600;
+}
+
+.desktop-match-link:not(.hidden) {
+  color: var(--teal);
+}
+
+.desktop-match-link .match-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e74c3c;
+  vertical-align: super;
+  animation: pulse-dot 1.5s infinite;
+}
+
 .nav-tagline {
   margin: 0;
   text-align: center;
