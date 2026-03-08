@@ -30,7 +30,6 @@ import {
 } from "@/app/workspace/actions";
 import { ChatRoom } from "@/components/chat-room";
 import { RequestComposer } from "@/components/request-composer";
-import { SiteFooter } from "@/components/site-footer";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SUPPORT_EMAIL, hasSupabaseEnv } from "@/lib/env";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -121,6 +120,14 @@ export function WorkspaceShell({
   const joinedRequestIds = new Set(
     snapshot.myRequests.filter((entry) => entry.status === "matched" || entry.status === "completed").map((entry) => entry.id)
   );
+  const hasFeed = filteredFeed.length > 0;
+  const hasMyRequests = snapshot.myRequests.length > 0;
+  const hasJoinQueue = snapshot.incomingJoinRequests.length > 0;
+  const hasActiveSession = Boolean(snapshot.activeSession);
+  const actionableAdminDashboard =
+    adminDashboard && (adminDashboard.reports.length > 0 || adminDashboard.deletionRequests.length > 0)
+      ? adminDashboard
+      : null;
 
   function getCompletionDraft(requestId: string) {
     return completionDrafts[requestId] ?? defaultCompletionDraft;
@@ -367,7 +374,7 @@ export function WorkspaceShell({
             <div className="panel-heading">
               <div>
                 <p className="kicker">Discovery Feed</p>
-                <h3>Only safe public fields are exposed here.</h3>
+                <h3>Discover requests nearby.</h3>
               </div>
               <span className="status-dot">
                 <Compass size={16} />
@@ -375,16 +382,24 @@ export function WorkspaceShell({
               </span>
             </div>
 
-            <label className="search-input">
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search by mood, area, or tags"
-              />
-            </label>
+            {hasFeed ? (
+              <label className="search-input">
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search by mood, area, or tags"
+                />
+              </label>
+            ) : null}
 
             <div className="feed-list">
+              {!hasFeed ? (
+                <div className="empty-card">
+                  No requests are live yet. Post the first one from the left column or check back after more members join.
+                </div>
+              ) : null}
+
               {filteredFeed.map((request) => {
                 const joined = joinedRequestIds.has(request.id);
 
@@ -472,7 +487,7 @@ export function WorkspaceShell({
             <div className="panel-heading">
               <div>
                 <p className="kicker">Your Requests</p>
-                <h3>Private state, post-session controls, and safety actions.</h3>
+                <h3>Your requests, matches, and follow-up controls.</h3>
               </div>
               <span className="status-dot">
                 <BellRing size={16} />
@@ -481,6 +496,12 @@ export function WorkspaceShell({
             </div>
 
             <div className="summary-list">
+              {!hasMyRequests ? (
+                <div className="empty-card">
+                  Nothing posted yet. Use the composer to publish your first request and build your private queue here.
+                </div>
+              ) : null}
+
               {snapshot.myRequests.map((request) => {
                 const completionDraft = getCompletionDraft(request.id);
                 const reportDraft = getReportDraft(request.id, request.partnerId);
@@ -661,7 +682,8 @@ export function WorkspaceShell({
         </div>
 
         <div className="workspace-right">
-          <section className="panel review-panel">
+          {hasJoinQueue ? (
+            <section className="panel review-panel">
             <div className="panel-heading">
               <div>
                 <p className="kicker">Join Review</p>
@@ -741,13 +763,15 @@ export function WorkspaceShell({
                 </article>
               ))}
             </div>
-          </section>
+            </section>
+          ) : null}
 
-          <section className="panel session-panel">
+          {hasActiveSession ? (
+            <section className="panel session-panel">
             <div className="panel-heading">
               <div>
                 <p className="kicker">Active Session</p>
-                <h3>Realtime chat stays private to participants.</h3>
+                <h3>Private chat for confirmed sessions.</h3>
               </div>
               <span className="status-dot">
                 <MessageCircleMore size={16} />
@@ -779,13 +803,14 @@ export function WorkspaceShell({
             ) : (
               <div className="empty-card">Your next confirmed session will appear here with private chat access.</div>
             )}
-          </section>
+            </section>
+          ) : null}
 
           <section className="panel account-panel">
             <div className="panel-heading">
               <div>
                 <p className="kicker">Account</p>
-                <h3>Export data or remove your account cleanly.</h3>
+                <h3>Account data and deletion.</h3>
               </div>
               <span className="status-dot">
                 <UserMinus size={16} />
@@ -885,44 +910,44 @@ export function WorkspaceShell({
             </div>
           </section>
 
-          {adminDashboard ? (
+          {actionableAdminDashboard ? (
             <section className="panel admin-panel">
               <div className="panel-heading">
                 <div>
                   <p className="kicker">Moderation</p>
-                  <h3>Reports, deletion requests, and platform health.</h3>
+                  <h3>Open moderation queue.</h3>
                 </div>
                 <span className="status-dot">
                   <ShieldCheck size={16} />
-                  {adminDashboard.overview.reportsOpen} reports open
+                  {actionableAdminDashboard.overview.reportsOpen} reports open
                 </span>
               </div>
 
               <div className="admin-overview-grid">
                 <article className="admin-stat-card">
                   <span>Users</span>
-                  <strong>{adminDashboard.overview.usersTotal}</strong>
+                  <strong>{actionableAdminDashboard.overview.usersTotal}</strong>
                 </article>
                 <article className="admin-stat-card">
                   <span>Open requests</span>
-                  <strong>{adminDashboard.overview.openRequests}</strong>
+                  <strong>{actionableAdminDashboard.overview.openRequests}</strong>
                 </article>
                 <article className="admin-stat-card">
                   <span>Matched</span>
-                  <strong>{adminDashboard.overview.matchedRequests}</strong>
+                  <strong>{actionableAdminDashboard.overview.matchedRequests}</strong>
                 </article>
                 <article className="admin-stat-card">
                   <span>Deletion queue</span>
-                  <strong>{adminDashboard.overview.deletionRequestsOpen}</strong>
+                  <strong>{actionableAdminDashboard.overview.deletionRequestsOpen}</strong>
                 </article>
               </div>
 
               <div className="review-list">
-                {adminDashboard.reports.length === 0 ? (
+                {actionableAdminDashboard.reports.length === 0 ? (
                   <div className="empty-card">No reports in queue.</div>
                 ) : null}
 
-                {adminDashboard.reports.map((report) => (
+                {actionableAdminDashboard.reports.map((report) => (
                   <article key={report.id} className="review-card">
                     <div className="summary-head">
                       <div>
@@ -990,11 +1015,11 @@ export function WorkspaceShell({
                   </article>
                 ))}
 
-                {adminDashboard.deletionRequests.length === 0 ? (
+                {actionableAdminDashboard.deletionRequests.length === 0 ? (
                   <div className="empty-card">No account deletion requests in queue.</div>
                 ) : null}
 
-                {adminDashboard.deletionRequests.map((entry) => (
+                {actionableAdminDashboard.deletionRequests.map((entry) => (
                   <article key={entry.id} className="review-card">
                     <div className="summary-head">
                       <div>
@@ -1053,8 +1078,6 @@ export function WorkspaceShell({
           ) : null}
         </div>
       </section>
-
-      <SiteFooter />
     </main>
   );
 }

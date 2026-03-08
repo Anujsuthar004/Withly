@@ -5,10 +5,9 @@ import { SUPPORT_EMAIL } from "@/lib/env";
 export function SiteFooter() {
   return (
     <footer className="site-footer">
-      <div>
-        <p className="kicker">Public Release Basics</p>
-        <h3>Safety, privacy, and support should be one click away.</h3>
-      </div>
+      <Link href="/" className="site-footer-brand">
+        Tag Along
+      </Link>
 
       <nav className="footer-links" aria-label="Footer">
         <Link href="/legal/privacy">Privacy</Link>

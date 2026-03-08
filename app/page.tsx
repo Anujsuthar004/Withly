@@ -62,44 +62,46 @@ export default async function HomePage() {
         <AuthPanel />
       </section>
 
-      <section className="preview-section">
-        <div className="section-title">
-          <p className="kicker">Preview Feed</p>
-          <h2>Only safe public fields are shown before sign-in.</h2>
-          <p>
-            {hasSupabaseEnv
-              ? "This preview is sourced from the database via a sanitized RPC."
-              : "Supabase keys are not configured yet, so this page is rendering a safe local preview."}
-          </p>
-        </div>
+      {feed.length > 0 ? (
+        <section className="preview-section">
+          <div className="section-title">
+            <p className="kicker">Open Requests</p>
+            <h2>A small public window into what is active right now.</h2>
+            <p>
+              {hasSupabaseEnv
+                ? "Only a sanitized subset of request fields is shown before sign-in."
+                : "Supabase keys are not configured yet, so this page is rendering a safe local preview."}
+            </p>
+          </div>
 
-        <div className="preview-grid">
-          {feed.map((request) => (
-            <article key={request.id} className={`request-card lane-${request.lane}`}>
-              <div className="request-card-top">
-                <div>
-                  <span className="request-lane">{request.lane === "social" ? "Social" : "Errand"}</span>
-                  <h3>{request.title}</h3>
+          <div className="preview-grid">
+            {feed.map((request) => (
+              <article key={request.id} className={`request-card lane-${request.lane}`}>
+                <div className="request-card-top">
+                  <div>
+                    <span className="request-lane">{request.lane === "social" ? "Social" : "Errand"}</span>
+                    <h3>{request.title}</h3>
+                  </div>
+                  {request.verifiedOnly ? <span className="mini-chip">Verified only</span> : null}
                 </div>
-                {request.verifiedOnly ? <span className="mini-chip">Verified only</span> : null}
-              </div>
-              <p className="request-description">{request.description}</p>
-              <div className="request-meta">
-                <span>{request.areaLabel}</span>
-                <span>{formatDateTime(request.meetupAt)}</span>
-                <span>{request.hostDisplayName}</span>
-              </div>
-              <div className="tag-row">
-                {request.tags.map((tag) => (
-                  <span key={tag} className="tag-chip">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
+                <p className="request-description">{request.description}</p>
+                <div className="request-meta">
+                  <span>{request.areaLabel}</span>
+                  <span>{formatDateTime(request.meetupAt)}</span>
+                  <span>{request.hostDisplayName}</span>
+                </div>
+                <div className="tag-row">
+                  {request.tags.map((tag) => (
+                    <span key={tag} className="tag-chip">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <SiteFooter />
     </main>
