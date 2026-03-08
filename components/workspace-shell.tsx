@@ -368,711 +368,717 @@ export function WorkspaceShell({
           <RequestComposer preview={preview} onStatus={setStatus} />
         </div>
 
-        <div className="workspace-main">
-          <section className="panel feed-panel">
-            <div className="panel-heading">
-              <div>
-                <p className="kicker">Discovery Feed</p>
-                <h3>Discover requests nearby.</h3>
-              </div>
-              <span className="status-dot">
-                <Compass size={16} />
-                {filteredFeed.length} live requests
-              </span>
-            </div>
-
-            {hasFeed ? (
-              <label className="search-input">
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search by mood, area, or tags"
-                />
-              </label>
-            ) : null}
-
-            <div className="feed-list">
-              {!hasFeed ? (
-                <div className="empty-card">
-                  No requests are live yet. Post the first one from the left column or check back after more members join.
+        <div className="workspace-content">
+          <div className="workspace-main">
+            <section className="panel feed-panel">
+              <div className="panel-heading">
+                <div>
+                  <p className="kicker">Discovery Feed</p>
+                  <h3>Discover requests nearby.</h3>
                 </div>
-              ) : null}
-
-              {filteredFeed.map((request) => {
-                const joined = joinedRequestIds.has(request.id);
-
-                return (
-                  <article key={request.id} className={`request-card lane-${request.lane}`}>
-                    <div className="request-card-top">
-                      <div>
-                        <span className="request-lane">{request.lane === "social" ? "Social" : "Errand"}</span>
-                        <h4>{request.title}</h4>
-                      </div>
-                      {request.verifiedOnly ? (
-                        <span className="mini-chip">
-                          <ShieldAlert size={14} />
-                          Verified only
-                        </span>
-                      ) : null}
-                    </div>
-
-                    <p className="request-description">{request.description}</p>
-
-                    <div className="request-meta">
-                      <span>{request.areaLabel}</span>
-                      <span>{formatDateTime(request.meetupAt)}</span>
-                      <span>{request.hostDisplayName}</span>
-                    </div>
-
-                    <div className="tag-row">
-                      {request.tags.map((tag) => (
-                        <span key={tag} className="tag-chip">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="join-box">
-                      <textarea
-                        rows={2}
-                        value={joinDrafts[request.id] ?? ""}
-                        onChange={(event) =>
-                          setJoinDrafts((current) => ({ ...current, [request.id]: event.target.value }))
-                        }
-                        placeholder="Add a short intro so the request owner knows why you're a fit."
-                        maxLength={220}
-                        disabled={preview || joined || joinBusyId === request.id}
-                      />
-
-                      <button
-                        className="primary-button compact"
-                        type="button"
-                        disabled={preview || joined || joinBusyId === request.id}
-                        onClick={() => {
-                          setJoinBusyId(request.id);
-
-                          void (async () => {
-                            const result = await submitJoinRequestAction({
-                              requestId: request.id,
-                              introMessage: joinDrafts[request.id] ?? "",
-                            });
-
-                            setStatus(result.message);
-                            setJoinBusyId(null);
-                            if (result.ok) {
-                              setJoinDrafts((current) => ({ ...current, [request.id]: "" }));
-                              router.refresh();
-                            }
-                          })();
-                        }}
-                      >
-                        {preview
-                          ? "Preview mode only"
-                          : joined
-                            ? "Already matched"
-                            : joinBusyId === request.id
-                              ? "Sending..."
-                              : "Request to Join"}
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-
-          <section className="panel request-list-panel">
-            <div className="panel-heading">
-              <div>
-                <p className="kicker">Your Requests</p>
-                <h3>Your requests, matches, and follow-up controls.</h3>
+                <span className="status-dot">
+                  <Compass size={16} />
+                  {filteredFeed.length} live requests
+                </span>
               </div>
-              <span className="status-dot">
-                <BellRing size={16} />
-                {snapshot.myRequests.length} tracked
-              </span>
-            </div>
 
-            <div className="summary-list">
-              {!hasMyRequests ? (
-                <div className="empty-card">Nothing posted yet. Use the composer to publish your first request.</div>
+              {hasFeed ? (
+                <label className="search-input">
+                  <input
+                    type="search"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Search by mood, area, or tags"
+                  />
+                </label>
               ) : null}
 
-              {snapshot.myRequests.map((request) => {
-                const completionDraft = getCompletionDraft(request.id);
-                const reportDraft = getReportDraft(request.id, request.partnerId);
-                const reportKey = reportKeyFor(request.id, request.partnerId);
-                const canComplete = (request.status === "matched" || request.status === "completed") && !request.userOutcome;
+              <div className="feed-list">
+                {!hasFeed ? (
+                  <div className="empty-card">
+                    No requests are live yet. Post the first one from the left column or check back after more members
+                    join.
+                  </div>
+                ) : null}
 
-                return (
-                  <article key={request.id} className="summary-card">
-                    <div className="summary-head">
-                      <div>
-                        <span className="request-lane">{request.lane === "social" ? "Social" : "Errand"}</span>
-                        <h4>{request.title}</h4>
+                {filteredFeed.map((request) => {
+                  const joined = joinedRequestIds.has(request.id);
+
+                  return (
+                    <article key={request.id} className={`request-card lane-${request.lane}`}>
+                      <div className="request-card-top">
+                        <div>
+                          <span className="request-lane">{request.lane === "social" ? "Social" : "Errand"}</span>
+                          <h4>{request.title}</h4>
+                        </div>
+                        {request.verifiedOnly ? (
+                          <span className="mini-chip">
+                            <ShieldAlert size={14} />
+                            Verified only
+                          </span>
+                        ) : null}
                       </div>
-                      <span className={`status-pill status-${request.status}`}>{request.status}</span>
-                    </div>
 
-                    <p>{request.areaLabel}</p>
+                      <p className="request-description">{request.description}</p>
 
-                    <div className="summary-meta">
-                      <span>{formatDateTime(request.meetupAt)}</span>
-                      <span>{formatRelativeTime(request.lastActivityAt)}</span>
-                      <span>{request.pendingJoinCount} pending</span>
-                      {request.partnerDisplayName ? <span>with {request.partnerDisplayName}</span> : null}
-                    </div>
-
-                    {request.userOutcome ? (
-                      <div className="summary-callout">
-                        You marked this session as {request.userOutcome}.
-                        {request.userOutcome === "completed"
-                          ? request.userMeetAgain
-                            ? " You would meet again."
-                            : " You would not meet again."
-                          : " A report can still be filed if follow-up is needed."}
+                      <div className="request-meta">
+                        <span>{request.areaLabel}</span>
+                        <span>{formatDateTime(request.meetupAt)}</span>
+                        <span>{request.hostDisplayName}</span>
                       </div>
-                    ) : null}
 
-                    {canComplete ? (
-                      <details className="action-disclosure">
-                        <summary>Complete and rate this session</summary>
-                        <div className="disclosure-body">
-                          <div className="grid-two">
+                      <div className="tag-row">
+                        {request.tags.map((tag) => (
+                          <span key={tag} className="tag-chip">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="join-box">
+                        <textarea
+                          rows={2}
+                          value={joinDrafts[request.id] ?? ""}
+                          onChange={(event) =>
+                            setJoinDrafts((current) => ({ ...current, [request.id]: event.target.value }))
+                          }
+                          placeholder="Add a short intro so the request owner knows why you're a fit."
+                          maxLength={220}
+                          disabled={preview || joined || joinBusyId === request.id}
+                        />
+
+                        <button
+                          className="primary-button compact"
+                          type="button"
+                          disabled={preview || joined || joinBusyId === request.id}
+                          onClick={() => {
+                            setJoinBusyId(request.id);
+
+                            void (async () => {
+                              const result = await submitJoinRequestAction({
+                                requestId: request.id,
+                                introMessage: joinDrafts[request.id] ?? "",
+                              });
+
+                              setStatus(result.message);
+                              setJoinBusyId(null);
+                              if (result.ok) {
+                                setJoinDrafts((current) => ({ ...current, [request.id]: "" }));
+                                router.refresh();
+                              }
+                            })();
+                          }}
+                        >
+                          {preview
+                            ? "Preview mode only"
+                            : joined
+                              ? "Already matched"
+                              : joinBusyId === request.id
+                                ? "Sending..."
+                                : "Request to Join"}
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="panel request-list-panel">
+              <div className="panel-heading">
+                <div>
+                  <p className="kicker">Your Requests</p>
+                  <h3>Your requests, matches, and follow-up controls.</h3>
+                </div>
+                <span className="status-dot">
+                  <BellRing size={16} />
+                  {snapshot.myRequests.length} tracked
+                </span>
+              </div>
+
+              <div className="summary-list">
+                {!hasMyRequests ? (
+                  <div className="empty-card">Nothing posted yet. Use the composer to publish your first request.</div>
+                ) : null}
+
+                {snapshot.myRequests.map((request) => {
+                  const completionDraft = getCompletionDraft(request.id);
+                  const reportDraft = getReportDraft(request.id, request.partnerId);
+                  const reportKey = reportKeyFor(request.id, request.partnerId);
+                  const canComplete =
+                    (request.status === "matched" || request.status === "completed") && !request.userOutcome;
+
+                  return (
+                    <article key={request.id} className="summary-card">
+                      <div className="summary-head">
+                        <div>
+                          <span className="request-lane">{request.lane === "social" ? "Social" : "Errand"}</span>
+                          <h4>{request.title}</h4>
+                        </div>
+                        <span className={`status-pill status-${request.status}`}>{request.status}</span>
+                      </div>
+
+                      <p>{request.areaLabel}</p>
+
+                      <div className="summary-meta">
+                        <span>{formatDateTime(request.meetupAt)}</span>
+                        <span>{formatRelativeTime(request.lastActivityAt)}</span>
+                        <span>{request.pendingJoinCount} pending</span>
+                        {request.partnerDisplayName ? <span>with {request.partnerDisplayName}</span> : null}
+                      </div>
+
+                      {request.userOutcome ? (
+                        <div className="summary-callout">
+                          You marked this session as {request.userOutcome}.
+                          {request.userOutcome === "completed"
+                            ? request.userMeetAgain
+                              ? " You would meet again."
+                              : " You would not meet again."
+                            : " A report can still be filed if follow-up is needed."}
+                        </div>
+                      ) : null}
+
+                      {canComplete ? (
+                        <details className="action-disclosure">
+                          <summary>Complete and rate this session</summary>
+                          <div className="disclosure-body">
+                            <div className="grid-two">
+                              <label>
+                                Outcome
+                                <select
+                                  value={completionDraft.outcome}
+                                  onChange={(event) =>
+                                    updateCompletionDraft(request.id, {
+                                      outcome: event.target.value as CompletionDraft["outcome"],
+                                    })
+                                  }
+                                  disabled={preview || completionBusyId === request.id}
+                                >
+                                  <option value="completed">Completed safely</option>
+                                  <option value="issue">There was an issue</option>
+                                </select>
+                              </label>
+
+                              <label className="toggle-card">
+                                <input
+                                  type="checkbox"
+                                  checked={completionDraft.meetAgain}
+                                  onChange={(event) =>
+                                    updateCompletionDraft(request.id, { meetAgain: event.target.checked })
+                                  }
+                                  disabled={preview || completionBusyId === request.id}
+                                />
+                                <span>
+                                  <ShieldCheck size={16} />
+                                  I would meet this person again
+                                </span>
+                              </label>
+                            </div>
+
+                            <button
+                              className="primary-button compact"
+                              type="button"
+                              disabled={preview || completionBusyId === request.id}
+                              onClick={() => {
+                                void handleCompletionSubmit(request.id);
+                              }}
+                            >
+                              {preview
+                                ? "Preview mode only"
+                                : completionBusyId === request.id
+                                  ? "Saving..."
+                                  : "Save completion note"}
+                            </button>
+                          </div>
+                        </details>
+                      ) : null}
+
+                      {request.partnerId ? (
+                        <details className="action-disclosure">
+                          <summary>Report or block partner</summary>
+                          <div className="disclosure-body">
                             <label>
-                              Outcome
-                              <select
-                                value={completionDraft.outcome}
+                              Reason
+                              <input
+                                type="text"
+                                value={reportDraft.reason}
                                 onChange={(event) =>
-                                  updateCompletionDraft(request.id, {
-                                    outcome: event.target.value as CompletionDraft["outcome"],
-                                  })
+                                  updateReportDraft(request.id, request.partnerId, { reason: event.target.value })
                                 }
-                                disabled={preview || completionBusyId === request.id}
-                              >
-                                <option value="completed">Completed safely</option>
-                                <option value="issue">There was an issue</option>
-                              </select>
+                                minLength={4}
+                                maxLength={80}
+                                placeholder="Missed meetup, unsafe behavior, harassment..."
+                                disabled={preview || reportBusyId === reportKey}
+                              />
+                            </label>
+
+                            <label>
+                              Details
+                              <textarea
+                                rows={3}
+                                value={reportDraft.details}
+                                onChange={(event) =>
+                                  updateReportDraft(request.id, request.partnerId, { details: event.target.value })
+                                }
+                                maxLength={1200}
+                                placeholder="Share facts, timing, and what follow-up is needed."
+                                disabled={preview || reportBusyId === reportKey}
+                              />
                             </label>
 
                             <label className="toggle-card">
                               <input
                                 type="checkbox"
-                                checked={completionDraft.meetAgain}
+                                checked={reportDraft.blockTarget}
                                 onChange={(event) =>
-                                  updateCompletionDraft(request.id, { meetAgain: event.target.checked })
+                                  updateReportDraft(request.id, request.partnerId, { blockTarget: event.target.checked })
                                 }
-                                disabled={preview || completionBusyId === request.id}
+                                disabled={preview || reportBusyId === reportKey}
                               />
                               <span>
-                                <ShieldCheck size={16} />
-                                I would meet this person again
+                                <Flag size={16} />
+                                Also block this user after reporting
                               </span>
                             </label>
+
+                            <div className="button-row">
+                              <button
+                                className="secondary-button compact"
+                                type="button"
+                                disabled={preview || blockBusyId === request.partnerId}
+                                onClick={() => {
+                                  void handleBlockUser(request.partnerId);
+                                }}
+                              >
+                                {preview
+                                  ? "Preview mode only"
+                                  : blockBusyId === request.partnerId
+                                    ? "Blocking..."
+                                    : "Block now"}
+                              </button>
+                              <button
+                                className="primary-button compact"
+                                type="button"
+                                disabled={preview || reportBusyId === reportKey}
+                                onClick={() => {
+                                  void handleReportSubmit(request.id, request.partnerId);
+                                }}
+                              >
+                                {preview
+                                  ? "Preview mode only"
+                                  : reportBusyId === reportKey
+                                    ? "Submitting..."
+                                    : "Submit report"}
+                              </button>
+                            </div>
                           </div>
-
-                          <button
-                            className="primary-button compact"
-                            type="button"
-                            disabled={preview || completionBusyId === request.id}
-                            onClick={() => {
-                              void handleCompletionSubmit(request.id);
-                            }}
-                          >
-                            {preview
-                              ? "Preview mode only"
-                              : completionBusyId === request.id
-                                ? "Saving..."
-                                : "Save completion note"}
-                          </button>
-                        </div>
-                      </details>
-                    ) : null}
-
-                    {request.partnerId ? (
-                      <details className="action-disclosure">
-                        <summary>Report or block partner</summary>
-                        <div className="disclosure-body">
-                          <label>
-                            Reason
-                            <input
-                              type="text"
-                              value={reportDraft.reason}
-                              onChange={(event) =>
-                                updateReportDraft(request.id, request.partnerId, { reason: event.target.value })
-                              }
-                              minLength={4}
-                              maxLength={80}
-                              placeholder="Missed meetup, unsafe behavior, harassment..."
-                              disabled={preview || reportBusyId === reportKey}
-                            />
-                          </label>
-
-                          <label>
-                            Details
-                            <textarea
-                              rows={3}
-                              value={reportDraft.details}
-                              onChange={(event) =>
-                                updateReportDraft(request.id, request.partnerId, { details: event.target.value })
-                              }
-                              maxLength={1200}
-                              placeholder="Share facts, timing, and what follow-up is needed."
-                              disabled={preview || reportBusyId === reportKey}
-                            />
-                          </label>
-
-                          <label className="toggle-card">
-                            <input
-                              type="checkbox"
-                              checked={reportDraft.blockTarget}
-                              onChange={(event) =>
-                                updateReportDraft(request.id, request.partnerId, { blockTarget: event.target.checked })
-                              }
-                              disabled={preview || reportBusyId === reportKey}
-                            />
-                            <span>
-                              <Flag size={16} />
-                              Also block this user after reporting
-                            </span>
-                          </label>
-
-                          <div className="button-row">
-                            <button
-                              className="secondary-button compact"
-                              type="button"
-                              disabled={preview || blockBusyId === request.partnerId}
-                              onClick={() => {
-                                void handleBlockUser(request.partnerId);
-                              }}
-                            >
-                              {preview
-                                ? "Preview mode only"
-                                : blockBusyId === request.partnerId
-                                  ? "Blocking..."
-                                  : "Block now"}
-                            </button>
-                            <button
-                              className="primary-button compact"
-                              type="button"
-                              disabled={preview || reportBusyId === reportKey}
-                              onClick={() => {
-                                void handleReportSubmit(request.id, request.partnerId);
-                              }}
-                            >
-                              {preview
-                                ? "Preview mode only"
-                                : reportBusyId === reportKey
-                                  ? "Submitting..."
-                                  : "Submit report"}
-                            </button>
-                          </div>
-                        </div>
-                      </details>
-                    ) : null}
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-        </div>
-
-        <div className="workspace-right">
-          {hasJoinQueue ? (
-            <section className="panel review-panel">
-            <div className="panel-heading">
-              <div>
-                <p className="kicker">Join Review</p>
-                <h3>Review the people who want to join.</h3>
+                        </details>
+                      ) : null}
+                    </article>
+                  );
+                })}
               </div>
-              <span className="status-dot">
-                <ShieldAlert size={16} />
-                Pending replies
-              </span>
-            </div>
-
-            <div className="review-list">
-              {snapshot.incomingJoinRequests.length === 0 ? (
-                <div className="empty-card">No pending join requests right now.</div>
-              ) : null}
-
-              {snapshot.incomingJoinRequests.map((entry) => (
-                <article key={entry.id} className="review-card">
-                  <div className="summary-head">
-                    <div>
-                      <h4>{entry.joinerDisplayName}</h4>
-                      <p>{entry.requestTitle}</p>
-                    </div>
-                    <span className="mini-chip">{formatRelativeTime(entry.createdAt)}</span>
-                  </div>
-                  <p className="review-about">{entry.joinerAboutMe || "No public bio yet."}</p>
-                  <blockquote>{entry.introMessage || "No intro included."}</blockquote>
-
-                  <div className="button-row">
-                    <button
-                      className="secondary-button compact"
-                      type="button"
-                      disabled={preview || reviewBusyId === entry.id}
-                      onClick={() => {
-                        setReviewBusyId(entry.id);
-
-                        void (async () => {
-                          const result = await reviewJoinRequestAction({
-                            joinRequestId: entry.id,
-                            decision: "declined",
-                          });
-
-                          setStatus(result.message);
-                          setReviewBusyId(null);
-                          if (result.ok) {
-                            router.refresh();
-                          }
-                        })();
-                      }}
-                    >
-                      {preview ? "Preview mode only" : reviewBusyId === entry.id ? "Working..." : "Decline"}
-                    </button>
-                    <button
-                      className="primary-button compact"
-                      type="button"
-                      disabled={preview || reviewBusyId === entry.id}
-                      onClick={() => {
-                        setReviewBusyId(entry.id);
-
-                        void (async () => {
-                          const result = await reviewJoinRequestAction({
-                            joinRequestId: entry.id,
-                            decision: "accepted",
-                          });
-
-                          setStatus(result.message);
-                          setReviewBusyId(null);
-                          if (result.ok) {
-                            router.refresh();
-                          }
-                        })();
-                      }}
-                    >
-                      {preview ? "Preview mode only" : reviewBusyId === entry.id ? "Working..." : "Accept"}
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
             </section>
-          ) : null}
+          </div>
 
-          {hasActiveSession ? (
-            <section className="panel session-panel">
-            <div className="panel-heading">
-              <div>
-                <p className="kicker">Active Session</p>
-                <h3>Chat for confirmed plans.</h3>
-              </div>
-              <span className="status-dot">
-                <MessageCircleMore size={16} />
-                Live chat
-              </span>
-            </div>
-
-            <div className="summary-callout summary-callout-teal">
-              Keep first meetups in public places, confirm an exact landmark in chat, and contact{" "}
-              <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> for urgent moderation help.
-            </div>
-
-            {snapshot.activeSession ? (
-              <>
-                <div className="session-summary">
-                  <h4>{snapshot.activeSession.requestTitle}</h4>
-                  <p>
-                    {snapshot.activeSession.partnerDisplayName} • {snapshot.activeSession.areaLabel} •{" "}
-                    {formatDateTime(snapshot.activeSession.meetupAt)}
-                  </p>
+          <div className="workspace-right">
+            {hasJoinQueue ? (
+              <section className="panel review-panel">
+                <div className="panel-heading">
+                  <div>
+                    <p className="kicker">Join Review</p>
+                    <h3>Review the people who want to join.</h3>
+                  </div>
+                  <span className="status-dot">
+                    <ShieldAlert size={16} />
+                    Pending replies
+                  </span>
                 </div>
-                <ChatRoom
-                  requestId={snapshot.activeSession.requestId}
-                  currentUserId={snapshot.profile.id}
-                  initialMessages={snapshot.activeSession.messages}
-                  onStatus={setStatus}
-                />
-              </>
-            ) : (
-              <div className="empty-card">Your next confirmed plan will appear here with chat access.</div>
-            )}
-            </section>
-          ) : null}
 
-          <section className="panel account-panel">
-            <div className="panel-heading">
-              <div>
-                <p className="kicker">Account</p>
-                <h3>Account data and deletion.</h3>
-              </div>
-              <span className="status-dot">
-                <UserMinus size={16} />
-                Data rights
-              </span>
-            </div>
+                <div className="review-list">
+                  {snapshot.incomingJoinRequests.length === 0 ? (
+                    <div className="empty-card">No pending join requests right now.</div>
+                  ) : null}
 
-            <div className="action-stack">
-              <div className="summary-callout">
-                Download a copy of your profile, requests, messages, reports, and block records before deleting your
-                account.
-              </div>
+                  {snapshot.incomingJoinRequests.map((entry) => (
+                    <article key={entry.id} className="review-card">
+                      <div className="summary-head">
+                        <div>
+                          <h4>{entry.joinerDisplayName}</h4>
+                          <p>{entry.requestTitle}</p>
+                        </div>
+                        <span className="mini-chip">{formatRelativeTime(entry.createdAt)}</span>
+                      </div>
+                      <p className="review-about">{entry.joinerAboutMe || "No public bio yet."}</p>
+                      <blockquote>{entry.introMessage || "No intro included."}</blockquote>
 
-              <button
-                className="ghost-button"
-                type="button"
-                disabled={preview}
-                onClick={() => {
-                  if (preview) {
-                    setStatus("This action is only available after sign-in.");
-                    return;
-                  }
+                      <div className="button-row">
+                        <button
+                          className="secondary-button compact"
+                          type="button"
+                          disabled={preview || reviewBusyId === entry.id}
+                          onClick={() => {
+                            setReviewBusyId(entry.id);
 
-                  window.location.href = "/api/account/export";
-                }}
-              >
-                <Download size={16} />
-                {preview ? "Preview mode only" : "Download account export"}
-              </button>
+                            void (async () => {
+                              const result = await reviewJoinRequestAction({
+                                joinRequestId: entry.id,
+                                decision: "declined",
+                              });
 
-              <form
-                className="stack-form"
-                onSubmit={(event) => {
-                  event.preventDefault();
+                              setStatus(result.message);
+                              setReviewBusyId(null);
+                              if (result.ok) {
+                                router.refresh();
+                              }
+                            })();
+                          }}
+                        >
+                          {preview ? "Preview mode only" : reviewBusyId === entry.id ? "Working..." : "Decline"}
+                        </button>
+                        <button
+                          className="primary-button compact"
+                          type="button"
+                          disabled={preview || reviewBusyId === entry.id}
+                          onClick={() => {
+                            setReviewBusyId(entry.id);
 
-                  if (preview) {
-                    setStatus("This action is only available after sign-in.");
-                    return;
-                  }
+                            void (async () => {
+                              const result = await reviewJoinRequestAction({
+                                joinRequestId: entry.id,
+                                decision: "accepted",
+                              });
 
-                  startAccountTransition(async () => {
-                    const result = await deleteAccountAction({
-                      confirmationText: deleteConfirmation,
-                      reason: deleteReason,
-                    });
+                              setStatus(result.message);
+                              setReviewBusyId(null);
+                              if (result.ok) {
+                                router.refresh();
+                              }
+                            })();
+                          }}
+                        >
+                          {preview ? "Preview mode only" : reviewBusyId === entry.id ? "Working..." : "Accept"}
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
-                    setStatus(result.message);
-                    if (!result.ok) {
-                      return;
-                    }
+            {hasActiveSession ? (
+              <section className="panel session-panel">
+                <div className="panel-heading">
+                  <div>
+                    <p className="kicker">Active Session</p>
+                    <h3>Chat for confirmed plans.</h3>
+                  </div>
+                  <span className="status-dot">
+                    <MessageCircleMore size={16} />
+                    Live chat
+                  </span>
+                </div>
 
-                    if (result.accountDeleted) {
-                      if (hasSupabaseEnv) {
-                        const supabase = createSupabaseBrowserClient();
-                        await supabase.auth.signOut();
-                      }
+                <div className="summary-callout summary-callout-teal">
+                  Keep first meetups in public places, confirm an exact landmark in chat, and contact{" "}
+                  <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> for urgent moderation help.
+                </div>
 
-                      router.push("/");
-                      router.refresh();
-                      return;
-                    }
+                {snapshot.activeSession ? (
+                  <>
+                    <div className="session-summary">
+                      <div>
+                        <h4>{snapshot.activeSession.requestTitle}</h4>
+                        <p>
+                          {snapshot.activeSession.partnerDisplayName} • {snapshot.activeSession.areaLabel} •{" "}
+                          {formatDateTime(snapshot.activeSession.meetupAt)}
+                        </p>
+                      </div>
+                    </div>
+                    <ChatRoom
+                      requestId={snapshot.activeSession.requestId}
+                      currentUserId={snapshot.profile.id}
+                      initialMessages={snapshot.activeSession.messages}
+                      onStatus={setStatus}
+                    />
+                  </>
+                ) : (
+                  <div className="empty-card">Your next confirmed plan will appear here with chat access.</div>
+                )}
+              </section>
+            ) : null}
 
-                    setDeleteReason("");
-                    setDeleteConfirmation("");
-                    router.refresh();
-                  });
-                }}
-              >
-                <label>
-                  Why are you leaving?
-                  <textarea
-                    rows={3}
-                    value={deleteReason}
-                    onChange={(event) => setDeleteReason(event.target.value)}
-                    maxLength={600}
-                    placeholder="Optional context for support or compliance follow-up."
-                    disabled={preview || isAccountPending}
-                  />
-                </label>
-
-                <label>
-                  Type DELETE MY ACCOUNT to confirm
-                  <input
-                    type="text"
-                    value={deleteConfirmation}
-                    onChange={(event) => setDeleteConfirmation(event.target.value)}
-                    placeholder="DELETE MY ACCOUNT"
-                    disabled={preview || isAccountPending}
-                  />
-                </label>
-
-                <button className="primary-button" type="submit" disabled={preview || isAccountPending}>
-                  <Trash2 size={16} />
-                  {preview ? "Preview mode only" : isAccountPending ? "Processing..." : "Delete my account"}
-                </button>
-              </form>
-            </div>
-          </section>
-
-          {actionableAdminDashboard ? (
-            <section className="panel admin-panel">
+            <section className="panel account-panel">
               <div className="panel-heading">
                 <div>
-                  <p className="kicker">Moderation</p>
-                  <h3>Open moderation queue.</h3>
+                  <p className="kicker">Account</p>
+                  <h3>Account data and deletion.</h3>
                 </div>
                 <span className="status-dot">
-                  <ShieldCheck size={16} />
-                  {actionableAdminDashboard.overview.reportsOpen} reports open
+                  <UserMinus size={16} />
+                  Data rights
                 </span>
               </div>
 
-              <div className="admin-overview-grid">
-                <article className="admin-stat-card">
-                  <span>Users</span>
-                  <strong>{actionableAdminDashboard.overview.usersTotal}</strong>
-                </article>
-                <article className="admin-stat-card">
-                  <span>Open requests</span>
-                  <strong>{actionableAdminDashboard.overview.openRequests}</strong>
-                </article>
-                <article className="admin-stat-card">
-                  <span>Matched</span>
-                  <strong>{actionableAdminDashboard.overview.matchedRequests}</strong>
-                </article>
-                <article className="admin-stat-card">
-                  <span>Deletion queue</span>
-                  <strong>{actionableAdminDashboard.overview.deletionRequestsOpen}</strong>
-                </article>
-              </div>
+              <div className="action-stack">
+                <div className="summary-callout">
+                  Download a copy of your profile, requests, messages, reports, and block records before deleting your
+                  account.
+                </div>
 
-              <div className="review-list">
-                {actionableAdminDashboard.reports.length === 0 ? (
-                  <div className="empty-card">No reports in queue.</div>
-                ) : null}
+                <button
+                  className="ghost-button"
+                  type="button"
+                  disabled={preview}
+                  onClick={() => {
+                    if (preview) {
+                      setStatus("This action is only available after sign-in.");
+                      return;
+                    }
 
-                {actionableAdminDashboard.reports.map((report) => (
-                  <article key={report.id} className="review-card">
-                    <div className="summary-head">
-                      <div>
-                        <h4>{report.reason}</h4>
-                        <p>
-                          {report.reporterDisplayName ?? "Unknown reporter"}
-                          {report.targetDisplayName ? ` -> ${report.targetDisplayName}` : ""}
-                        </p>
-                      </div>
-                      <span className={`status-pill status-${report.status}`}>{report.status}</span>
-                    </div>
-                    <p className="review-about">{report.details || "No additional details provided."}</p>
-                    <div className="summary-meta">
-                      <span>{formatRelativeTime(report.createdAt)}</span>
-                      {report.requestId ? <span>request {report.requestId.slice(0, 8)}</span> : null}
-                    </div>
-                    <label>
-                      Resolution note
-                      <textarea
-                        rows={3}
-                        value={moderationNotes[report.id] ?? ""}
-                        onChange={(event) =>
-                          setModerationNotes((current) => ({ ...current, [report.id]: event.target.value }))
+                    window.location.href = "/api/account/export";
+                  }}
+                >
+                  <Download size={16} />
+                  {preview ? "Preview mode only" : "Download account export"}
+                </button>
+
+                <form
+                  className="stack-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+
+                    if (preview) {
+                      setStatus("This action is only available after sign-in.");
+                      return;
+                    }
+
+                    startAccountTransition(async () => {
+                      const result = await deleteAccountAction({
+                        confirmationText: deleteConfirmation,
+                        reason: deleteReason,
+                      });
+
+                      setStatus(result.message);
+                      if (!result.ok) {
+                        return;
+                      }
+
+                      if (result.accountDeleted) {
+                        if (hasSupabaseEnv) {
+                          const supabase = createSupabaseBrowserClient();
+                          await supabase.auth.signOut();
                         }
-                        maxLength={1200}
-                        disabled={preview || moderationBusyId === report.id}
-                      />
-                    </label>
-                    <div className="button-row admin-actions">
-                      <button
-                        className="ghost-button compact"
-                        type="button"
-                        disabled={preview || moderationBusyId === report.id}
-                        onClick={() => {
-                          void handleResolveReport(report.id, "reviewing");
-                        }}
-                      >
-                        Reviewing
-                      </button>
-                      <button
-                        className="secondary-button compact"
-                        type="button"
-                        disabled={preview || moderationBusyId === report.id}
-                        onClick={() => {
-                          void handleResolveReport(report.id, "dismissed");
-                        }}
-                      >
-                        Dismiss
-                      </button>
-                      <button
-                        className="primary-button compact"
-                        type="button"
-                        disabled={preview || moderationBusyId === report.id}
-                        onClick={() => {
-                          void handleResolveReport(report.id, "resolved");
-                        }}
-                      >
-                        {preview
-                          ? "Preview mode only"
-                          : moderationBusyId === report.id
-                            ? "Saving..."
-                            : "Resolve"}
-                      </button>
-                    </div>
-                  </article>
-                ))}
 
-                {actionableAdminDashboard.deletionRequests.length === 0 ? (
-                  <div className="empty-card">No account deletion requests in queue.</div>
-                ) : null}
+                        router.push("/");
+                        router.refresh();
+                        return;
+                      }
 
-                {actionableAdminDashboard.deletionRequests.map((entry) => (
-                  <article key={entry.id} className="review-card">
-                    <div className="summary-head">
-                      <div>
-                        <h4>{entry.displayName ?? "Unknown member"}</h4>
-                        <p>{entry.status}</p>
-                      </div>
-                      <span className={`status-pill status-${entry.status}`}>{entry.status}</span>
-                    </div>
-                    <p className="review-about">{entry.reason || "No reason provided."}</p>
-                    <div className="summary-meta">
-                      <span>{formatRelativeTime(entry.createdAt)}</span>
-                      <span>user {entry.userId.slice(0, 8)}</span>
-                    </div>
-                    <label>
-                      Moderation note
-                      <textarea
-                        rows={3}
-                        value={deletionNotes[entry.id] ?? ""}
-                        onChange={(event) =>
-                          setDeletionNotes((current) => ({ ...current, [entry.id]: event.target.value }))
-                        }
-                        maxLength={1200}
-                        disabled={preview || deletionBusyId === entry.id}
-                      />
-                    </label>
-                    <div className="button-row">
-                      <button
-                        className="secondary-button compact"
-                        type="button"
-                        disabled={preview || deletionBusyId === entry.id}
-                        onClick={() => {
-                          void handleResolveDeletionRequest(entry.id, "cancelled");
-                        }}
-                      >
-                        Cancel request
-                      </button>
-                      <button
-                        className="primary-button compact"
-                        type="button"
-                        disabled={preview || deletionBusyId === entry.id}
-                        onClick={() => {
-                          void handleResolveDeletionRequest(entry.id, "resolved");
-                        }}
-                      >
-                        {preview
-                          ? "Preview mode only"
-                          : deletionBusyId === entry.id
-                            ? "Saving..."
-                            : "Mark resolved"}
-                      </button>
-                    </div>
-                  </article>
-                ))}
+                      setDeleteReason("");
+                      setDeleteConfirmation("");
+                      router.refresh();
+                    });
+                  }}
+                >
+                  <label>
+                    Why are you leaving?
+                    <textarea
+                      rows={3}
+                      value={deleteReason}
+                      onChange={(event) => setDeleteReason(event.target.value)}
+                      maxLength={600}
+                      placeholder="Optional context for support or compliance follow-up."
+                      disabled={preview || isAccountPending}
+                    />
+                  </label>
+
+                  <label>
+                    Type DELETE MY ACCOUNT to confirm
+                    <input
+                      type="text"
+                      value={deleteConfirmation}
+                      onChange={(event) => setDeleteConfirmation(event.target.value)}
+                      placeholder="DELETE MY ACCOUNT"
+                      disabled={preview || isAccountPending}
+                    />
+                  </label>
+
+                  <button className="primary-button" type="submit" disabled={preview || isAccountPending}>
+                    <Trash2 size={16} />
+                    {preview ? "Preview mode only" : isAccountPending ? "Processing..." : "Delete my account"}
+                  </button>
+                </form>
               </div>
             </section>
-          ) : null}
+
+            {actionableAdminDashboard ? (
+              <section className="panel admin-panel">
+                <div className="panel-heading">
+                  <div>
+                    <p className="kicker">Moderation</p>
+                    <h3>Open moderation queue.</h3>
+                  </div>
+                  <span className="status-dot">
+                    <ShieldCheck size={16} />
+                    {actionableAdminDashboard.overview.reportsOpen} reports open
+                  </span>
+                </div>
+
+                <div className="admin-overview-grid">
+                  <article className="admin-stat-card">
+                    <span>Users</span>
+                    <strong>{actionableAdminDashboard.overview.usersTotal}</strong>
+                  </article>
+                  <article className="admin-stat-card">
+                    <span>Open requests</span>
+                    <strong>{actionableAdminDashboard.overview.openRequests}</strong>
+                  </article>
+                  <article className="admin-stat-card">
+                    <span>Matched</span>
+                    <strong>{actionableAdminDashboard.overview.matchedRequests}</strong>
+                  </article>
+                  <article className="admin-stat-card">
+                    <span>Deletion queue</span>
+                    <strong>{actionableAdminDashboard.overview.deletionRequestsOpen}</strong>
+                  </article>
+                </div>
+
+                <div className="review-list">
+                  {actionableAdminDashboard.reports.length === 0 ? (
+                    <div className="empty-card">No reports in queue.</div>
+                  ) : null}
+
+                  {actionableAdminDashboard.reports.map((report) => (
+                    <article key={report.id} className="review-card">
+                      <div className="summary-head">
+                        <div>
+                          <h4>{report.reason}</h4>
+                          <p>
+                            {report.reporterDisplayName ?? "Unknown reporter"}
+                            {report.targetDisplayName ? ` -> ${report.targetDisplayName}` : ""}
+                          </p>
+                        </div>
+                        <span className={`status-pill status-${report.status}`}>{report.status}</span>
+                      </div>
+                      <p className="review-about">{report.details || "No additional details provided."}</p>
+                      <div className="summary-meta">
+                        <span>{formatRelativeTime(report.createdAt)}</span>
+                        {report.requestId ? <span>request {report.requestId.slice(0, 8)}</span> : null}
+                      </div>
+                      <label>
+                        Resolution note
+                        <textarea
+                          rows={3}
+                          value={moderationNotes[report.id] ?? ""}
+                          onChange={(event) =>
+                            setModerationNotes((current) => ({ ...current, [report.id]: event.target.value }))
+                          }
+                          maxLength={1200}
+                          disabled={preview || moderationBusyId === report.id}
+                        />
+                      </label>
+                      <div className="button-row admin-actions">
+                        <button
+                          className="ghost-button compact"
+                          type="button"
+                          disabled={preview || moderationBusyId === report.id}
+                          onClick={() => {
+                            void handleResolveReport(report.id, "reviewing");
+                          }}
+                        >
+                          Reviewing
+                        </button>
+                        <button
+                          className="secondary-button compact"
+                          type="button"
+                          disabled={preview || moderationBusyId === report.id}
+                          onClick={() => {
+                            void handleResolveReport(report.id, "dismissed");
+                          }}
+                        >
+                          Dismiss
+                        </button>
+                        <button
+                          className="primary-button compact"
+                          type="button"
+                          disabled={preview || moderationBusyId === report.id}
+                          onClick={() => {
+                            void handleResolveReport(report.id, "resolved");
+                          }}
+                        >
+                          {preview
+                            ? "Preview mode only"
+                            : moderationBusyId === report.id
+                              ? "Saving..."
+                              : "Resolve"}
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+
+                  {actionableAdminDashboard.deletionRequests.length === 0 ? (
+                    <div className="empty-card">No account deletion requests in queue.</div>
+                  ) : null}
+
+                  {actionableAdminDashboard.deletionRequests.map((entry) => (
+                    <article key={entry.id} className="review-card">
+                      <div className="summary-head">
+                        <div>
+                          <h4>{entry.displayName ?? "Unknown member"}</h4>
+                          <p>{entry.status}</p>
+                        </div>
+                        <span className={`status-pill status-${entry.status}`}>{entry.status}</span>
+                      </div>
+                      <p className="review-about">{entry.reason || "No reason provided."}</p>
+                      <div className="summary-meta">
+                        <span>{formatRelativeTime(entry.createdAt)}</span>
+                        <span>user {entry.userId.slice(0, 8)}</span>
+                      </div>
+                      <label>
+                        Moderation note
+                        <textarea
+                          rows={3}
+                          value={deletionNotes[entry.id] ?? ""}
+                          onChange={(event) =>
+                            setDeletionNotes((current) => ({ ...current, [entry.id]: event.target.value }))
+                          }
+                          maxLength={1200}
+                          disabled={preview || deletionBusyId === entry.id}
+                        />
+                      </label>
+                      <div className="button-row">
+                        <button
+                          className="secondary-button compact"
+                          type="button"
+                          disabled={preview || deletionBusyId === entry.id}
+                          onClick={() => {
+                            void handleResolveDeletionRequest(entry.id, "cancelled");
+                          }}
+                        >
+                          Cancel request
+                        </button>
+                        <button
+                          className="primary-button compact"
+                          type="button"
+                          disabled={preview || deletionBusyId === entry.id}
+                          onClick={() => {
+                            void handleResolveDeletionRequest(entry.id, "resolved");
+                          }}
+                        >
+                          {preview
+                            ? "Preview mode only"
+                            : deletionBusyId === entry.id
+                              ? "Saving..."
+                              : "Mark resolved"}
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+          </div>
         </div>
       </section>
     </main>
