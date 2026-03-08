@@ -5,7 +5,7 @@ import { getSupabaseServerClientOrNull } from "@/lib/supabase/server";
 export async function GET() {
   const supabase = await getSupabaseServerClientOrNull();
   if (!supabase) {
-    return NextResponse.json({ error: "Supabase is not configured." }, { status: 503 });
+    return NextResponse.json({ error: "Account export is temporarily unavailable." }, { status: 503 });
   }
 
   const {

@@ -82,8 +82,8 @@ export function WorkspaceShell({
   const router = useRouter();
   const [status, setStatus] = useState(
     preview
-      ? "Preview mode is active. Connect Supabase to unlock secure auth, RLS, moderation, and realtime chat."
-      : "Managed auth, RLS, moderation, and realtime are active."
+      ? "Preview mode is active. Sign in to post requests, review replies, and manage your account."
+      : "Your private workspace is ready."
   );
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
@@ -160,7 +160,7 @@ export function WorkspaceShell({
 
   async function handleCompletionSubmit(requestId: string) {
     if (preview) {
-      setStatus("Connect Supabase to record private completion notes.");
+      setStatus("This action is only available after sign-in.");
       return;
     }
 
@@ -181,7 +181,7 @@ export function WorkspaceShell({
 
   async function handleReportSubmit(requestId: string, targetUserId: string | null) {
     if (preview) {
-      setStatus("Connect Supabase to use reporting and blocking.");
+      setStatus("This action is only available after sign-in.");
       return;
     }
 
@@ -214,7 +214,7 @@ export function WorkspaceShell({
     }
 
     if (preview) {
-      setStatus("Connect Supabase to use blocking.");
+      setStatus("This action is only available after sign-in.");
       return;
     }
 
@@ -230,7 +230,7 @@ export function WorkspaceShell({
 
   async function handleResolveReport(reportId: string, statusValue: "reviewing" | "resolved" | "dismissed") {
     if (preview) {
-      setStatus("Connect Supabase to use admin moderation.");
+      setStatus("Admin tools are only available after sign-in.");
       return;
     }
 
@@ -250,7 +250,7 @@ export function WorkspaceShell({
 
   async function handleResolveDeletionRequest(requestId: string, statusValue: "resolved" | "cancelled") {
     if (preview) {
-      setStatus("Connect Supabase to use admin moderation.");
+      setStatus("Admin tools are only available after sign-in.");
       return;
     }
 
@@ -273,11 +273,10 @@ export function WorkspaceShell({
       <section className="workspace-hero">
         <div className="workspace-hero-copy">
           <p className="kicker">Secure Workspace</p>
-          <h1>Trust-first companionship, rebuilt for privacy and speed.</h1>
+          <h1>Your plans, replies, and next steps in one place.</h1>
           <p>
-            The legacy public endpoints and local JSON storage are gone from the runtime path. This workspace runs on
-            managed auth, cookie-backed sessions, rate-limited actions, and Supabase policies that keep sessions
-            private to participants.
+            Keep your profile current, post requests, review replies, and stay on top of confirmed plans from one
+            workspace.
           </p>
         </div>
 
@@ -289,7 +288,7 @@ export function WorkspaceShell({
           <div className="workspace-hero-stack">
             <div className="status-dot">
               <ShieldCheck size={16} />
-              {snapshot.profile.role === "admin" ? "Admin moderation enabled" : "Member workspace"}
+              {snapshot.profile.role === "admin" ? "Admin tools available" : "Member workspace"}
             </div>
             {user ? <SignOutButton /> : null}
           </div>
@@ -378,7 +377,7 @@ export function WorkspaceShell({
               </div>
               <span className="status-dot">
                 <Compass size={16} />
-                {filteredFeed.length} live fits
+                {filteredFeed.length} live requests
               </span>
             </div>
 
@@ -497,9 +496,7 @@ export function WorkspaceShell({
 
             <div className="summary-list">
               {!hasMyRequests ? (
-                <div className="empty-card">
-                  Nothing posted yet. Use the composer to publish your first request and build your private queue here.
-                </div>
+                <div className="empty-card">Nothing posted yet. Use the composer to publish your first request.</div>
               ) : null}
 
               {snapshot.myRequests.map((request) => {
@@ -687,11 +684,11 @@ export function WorkspaceShell({
             <div className="panel-heading">
               <div>
                 <p className="kicker">Join Review</p>
-                <h3>Only request owners can see these intros.</h3>
+                <h3>Review the people who want to join.</h3>
               </div>
               <span className="status-dot">
                 <ShieldAlert size={16} />
-                Private queue
+                Pending replies
               </span>
             </div>
 
@@ -771,11 +768,11 @@ export function WorkspaceShell({
             <div className="panel-heading">
               <div>
                 <p className="kicker">Active Session</p>
-                <h3>Private chat for confirmed sessions.</h3>
+                <h3>Chat for confirmed plans.</h3>
               </div>
               <span className="status-dot">
                 <MessageCircleMore size={16} />
-                Supabase Realtime
+                Live chat
               </span>
             </div>
 
@@ -801,7 +798,7 @@ export function WorkspaceShell({
                 />
               </>
             ) : (
-              <div className="empty-card">Your next confirmed session will appear here with private chat access.</div>
+              <div className="empty-card">Your next confirmed plan will appear here with chat access.</div>
             )}
             </section>
           ) : null}
@@ -820,8 +817,8 @@ export function WorkspaceShell({
 
             <div className="action-stack">
               <div className="summary-callout">
-                Download your current profile, requests, messages, reports, and block records as JSON before deleting
-                your account.
+                Download a copy of your profile, requests, messages, reports, and block records before deleting your
+                account.
               </div>
 
               <button
@@ -830,7 +827,7 @@ export function WorkspaceShell({
                 disabled={preview}
                 onClick={() => {
                   if (preview) {
-                    setStatus("Connect Supabase to export account data.");
+                    setStatus("This action is only available after sign-in.");
                     return;
                   }
 
@@ -847,7 +844,7 @@ export function WorkspaceShell({
                   event.preventDefault();
 
                   if (preview) {
-                    setStatus("Connect Supabase to manage deletion requests.");
+                    setStatus("This action is only available after sign-in.");
                     return;
                   }
 

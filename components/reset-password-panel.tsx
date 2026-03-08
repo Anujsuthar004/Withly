@@ -43,7 +43,7 @@ export function ResetPasswordPanel() {
           event.preventDefault();
 
           if (!hasSupabaseEnv) {
-            setStatus("Supabase is not configured yet.");
+            setStatus("Password reset is temporarily unavailable right now.");
             return;
           }
 

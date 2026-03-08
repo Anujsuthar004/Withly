@@ -22,11 +22,11 @@ export default async function HomePage() {
           <div className="eyebrow-row">
             <span className="eyebrow-pill">
               <ShieldCheck size={16} />
-              Privacy-first rebuild
+              Private by default
             </span>
             <span className="eyebrow-pill muted">
               <Waves size={16} />
-              Next.js + Supabase
+              Verified members
             </span>
           </div>
 
@@ -36,25 +36,25 @@ export default async function HomePage() {
             and the ones you would rather not do alone.
           </h1>
           <p>
-            Tag Along now runs on managed auth, private RLS-protected sessions, and secure realtime chat. Public
-            discovery stays minimal; participant identity and session details stay private.
+            Find company for plans, errands, and in-between moments without sharing more than you need. Browse the
+            basics first, then move into a private space once a plan is confirmed.
           </p>
 
           <div className="bullet-grid">
             <article>
               <Sparkles size={18} />
-              <strong>Managed identity</strong>
-              <span>Email verification and OAuth move to Supabase Auth.</span>
+              <strong>Verified profiles</strong>
+              <span>Confirmed accounts help keep the community accountable and easier to trust.</span>
             </article>
             <article>
               <ShieldCheck size={18} />
               <strong>Private by default</strong>
-              <span>No public request history or matched participant IDs in the feed.</span>
+              <span>Only the essentials are visible before sign-in so personal details stay protected.</span>
             </article>
             <article>
               <ArrowRight size={18} />
-              <strong>Realtime coordination</strong>
-              <span>Session chat updates over managed realtime instead of a custom WebSocket server.</span>
+              <strong>Easy coordination</strong>
+              <span>Once a plan is confirmed, you can keep messages and timing in one place.</span>
             </article>
           </div>
         </div>
@@ -69,8 +69,8 @@ export default async function HomePage() {
             <h2>A small public window into what is active right now.</h2>
             <p>
               {hasSupabaseEnv
-                ? "Only a sanitized subset of request fields is shown before sign-in."
-                : "Supabase keys are not configured yet, so this page is rendering a safe local preview."}
+                ? "Only the basic request details are shown before sign-in."
+                : "A sample preview is showing right now while account services are offline."}
             </p>
           </div>
 

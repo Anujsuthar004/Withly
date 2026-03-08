@@ -16,7 +16,7 @@ function requestMeta(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   if (!hasSupabaseEnv) {
-    return NextResponse.json({ error: "Supabase is not configured." }, { status: 503 });
+    return NextResponse.json({ error: "Account creation is temporarily unavailable." }, { status: 503 });
   }
 
   const payload = signUpSchema.safeParse(await request.json().catch(() => null));

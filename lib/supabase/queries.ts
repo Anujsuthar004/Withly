@@ -64,7 +64,7 @@ export async function getWorkspaceSnapshot() {
     return {
       snapshot: previewWorkspace,
       preview: true,
-      setupError: "Add Supabase keys to leave preview mode.",
+      setupError: "Some account features are unavailable right now, so a limited preview is showing.",
     };
   }
 
@@ -73,7 +73,7 @@ export async function getWorkspaceSnapshot() {
     return {
       snapshot: previewWorkspace,
       preview: true,
-      setupError: `Supabase schema not ready: ${error.message}`,
+      setupError: "Workspace data is temporarily unavailable, so a limited preview is showing instead.",
     };
   }
 

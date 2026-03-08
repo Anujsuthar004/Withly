@@ -9,10 +9,7 @@ export default function ResetPasswordPage() {
         <div className="hero-copy">
           <p className="kicker">Account Recovery</p>
           <h1>Set a new password and lock the old one out.</h1>
-          <p>
-            Password recovery runs through Supabase Auth. Once the recovery link lands here, you can set a new
-            password without exposing credentials to custom app code.
-          </p>
+          <p>Use the link from your email to choose a new password and get back into your account.</p>
         </div>
         <ResetPasswordPanel />
       </section>

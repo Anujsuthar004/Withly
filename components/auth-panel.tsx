@@ -22,7 +22,7 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
   const [displayName, setDisplayName] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
   const [turnstileKey, setTurnstileKey] = useState(0);
-  const [status, setStatus] = useState("Private by design. Email verification and managed sessions stay with Supabase.");
+  const [status, setStatus] = useState("Private profiles, clear plans, and one calm place to manage them.");
   const [isPending, startTransition] = useTransition();
 
   const handleAuthRefresh = useEffectEvent(() => {
@@ -50,7 +50,7 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
     event.preventDefault();
 
     if (!hasSupabaseEnv) {
-      setStatus("Supabase is not configured yet. Add the keys in .env.local to enable auth.");
+      setStatus("Sign-in is temporarily unavailable right now.");
       return;
     }
 
@@ -95,7 +95,7 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
 
   function handleForgotPassword() {
     if (!hasSupabaseEnv) {
-      setStatus("Supabase is not configured yet. Add the keys in .env.local to enable auth.");
+      setStatus("Password reset is temporarily unavailable right now.");
       return;
     }
 
@@ -132,7 +132,7 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
 
   async function handleGoogleSignIn() {
     if (!hasSupabaseEnv) {
-      setStatus("Supabase is not configured yet. Add the keys in .env.local to enable auth.");
+      setStatus("Google sign-in is temporarily unavailable right now.");
       return;
     }
 
@@ -156,20 +156,17 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
       <div className="eyebrow-row">
         <span className="eyebrow-pill">
           <ShieldCheck size={16} />
-          Managed Auth
+          Verified members
         </span>
         <span className="eyebrow-pill muted">
           <LockKeyhole size={16} />
-          Supabase Sessions
+          Private plans
         </span>
       </div>
 
       <div className="auth-copy">
-        <h2>Secure sign-in, real people, private sessions.</h2>
-        <p>
-          This rebuild moves identity, session management, and realtime onto Supabase so the browser no longer talks to
-          a custom auth stack or public JSON store.
-        </p>
+        <h2>Sign in and keep every plan in one place.</h2>
+        <p>Create an account, confirm your email, and manage requests, replies, and follow-up from one workspace.</p>
       </div>
 
       <div className="segment-control">
@@ -240,7 +237,7 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
         ) : null}
 
         <button className="primary-button" type="submit" disabled={isPending}>
-          {isPending ? "Working..." : mode === "signin" ? "Enter Workspace" : "Create Secure Account"}
+          {isPending ? "Working..." : mode === "signin" ? "Enter Workspace" : "Create Account"}
           <ArrowRight size={18} />
         </button>
       </form>

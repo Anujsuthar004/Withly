@@ -51,7 +51,7 @@ async function requireSupabaseSession() {
     return {
       supabase: null,
       user: null,
-      error: { ok: false, message: "Supabase is not configured yet. The current UI is preview-only." } satisfies ActionResult,
+      error: { ok: false, message: "This action is unavailable right now." } satisfies ActionResult,
     };
   }
 
