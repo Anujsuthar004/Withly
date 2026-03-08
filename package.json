@@ -2,14 +2,35 @@
   "name": "tag-along",
   "version": "0.1.0",
   "private": true,
-  "description": "Tag Along web app with social + errand companionship and public-launch backend foundation.",
+  "description": "Tag Along rebuilt with Next.js, TypeScript, and Supabase for secure companionship matching.",
   "scripts": {
-    "start": "node backend/scripts/migrate.js && node backend/server.js",
-    "dev": "node --watch backend/server.js",
-    "migrate": "node backend/scripts/migrate.js"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
-    "pg": "^8.12.0",
-    "ws": "^8.19.0"
+    "@supabase/ssr": "^0.9.0",
+    "@supabase/supabase-js": "^2.98.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.577.0",
+    "next": "^16.1.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.3.5",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.1.6",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }

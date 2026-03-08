@@ -1,134 +1,101 @@
-# Tag Along (Public-Launch Foundation)
+# Tag Along
 
-Tag Along is a dual-mode companionship platform:
-- Social plus-one for events and hangouts.
+Tag Along is a dual-mode companionship product for two use cases:
+- Social plus-one for events and public hangouts.
 - Errand companionship for practical support.
 
-This build includes a launch-oriented backend foundation with auth, moderation, real user-to-user messaging, and Postgres/Supabase readiness.
+This repo has been migrated to:
+- Next.js App Router
+- React 19
+- TypeScript
+- Supabase Auth
+- Supabase Postgres with RLS
+- Supabase Realtime for private session chat
 
-## What is implemented
-- Polished lane-based UX for Social vs Errand flows.
-- Live requests, ranked companions, and safety check-in interactions.
-- Real peer matching and messaging:
-  - Request owner posts a request.
-  - Another verified user taps `Join Request`.
-  - Request transitions to matched (`matchedUserId`).
-  - Shared chat opens for both users (no simulated companion replies).
-- Node API with two storage modes:
-  - `json` (local fallback/demo)
-  - `postgres` (production path, including Supabase Postgres)
-- Auth foundation:
-  - Email/password registration/login.
-  - Google sign-in.
-  - Email verification and password reset with code flows.
-  - Session token API (`/api/auth/me`).
-- Transactional email provider wiring:
-  - `resend`
-  - `postmark`
-  - `sendgrid`
-  - `console` fallback for local development
-- Admin console foundation:
-  - Overview metrics, user role controls, request status controls.
-  - First user is admin.
-  - `BOOTSTRAP_ADMIN_EMAIL` can promote a known account on startup.
-- Moderation/reporting foundation:
-  - Report creation/list/resolve endpoints.
-- Rate limiting for API and auth routes.
-- Production safety checks:
-  - `EXPOSE_DEV_AUTH_CODES` is blocked in production.
-  - Production requires real email provider (`resend|postmark|sendgrid`) and `EMAIL_FROM`.
+## Why this rebuild
 
-## Project structure
-- Frontend: `index.html`, `styles.css`, `app.js`
-- Brand assets: `assets/tagalong-app-icon.svg`
-- Backend:
-  - `backend/server.js`
-  - `backend/lib/auth.js`
-  - `backend/lib/google-auth.js`
-  - `backend/lib/email-sender.js`
-  - `backend/lib/postgres-store.js`
-  - `backend/scripts/migrate.js`
-  - `backend/sql/001_public_launch.sql`
-  - `backend/sql/002_match_accept_flow.sql`
-  - `backend/sql/003_google_auth_and_admin.sql`
-  - `backend/sql/004_messaging_and_auth_recovery.sql`
-  - `backend/sql/005_peer_user_matching.sql`
-- Demo JSON store: `backend/data/store.json`
-- Product strategy: `CONCEPT_NOTE.md`
+The previous app exposed too much through public endpoints and kept sensitive local/demo data in the repo. The new foundation prioritizes:
+- managed auth instead of custom session code
+- row-level security instead of trust-by-convention
+- sanitized public feed data instead of public full request records
+- realtime chat restricted to actual session participants
+- env-only secrets and no checked-in data store
 
-## Run locally
-```bash
-cd "/Users/anujsuthar/Documents/New project"
-npm install
-npm start
-```
-Open [http://localhost:8787](http://localhost:8787).
+## Current product surface
 
-## Postgres / Supabase setup (recommended)
+- marketing landing page with secure auth entry
+- authenticated workspace with:
+  - request composer
+  - safe discovery feed
+  - private join-review queue
+  - private matched-session chat
+- private report, block, completion, account export, and delete-account flows
+- admin moderation queue for reports and deletion requests
+- public privacy, terms, community, and safety pages
+- Supabase RPC layer for request creation, join requests, accept/decline flow, and messaging
+- database migration with tables, triggers, functions, grants, and RLS policies
+
+## Local setup
+
 1. Create a Supabase project.
-2. Copy your `DATABASE_URL`.
-3. Create `.env` from `.env.example` and set at minimum:
-- `APP_ENV=development` (or `production` on deploy)
-- `STORAGE_DRIVER=postgres`
-- `DATABASE_URL=...`
-- `AUTH_REQUIRED=true`
-- `TOKEN_SECRET=<long-random-secret>`
-- `GOOGLE_CLIENT_ID=<google-web-client-id>` (optional)
-- `BOOTSTRAP_ADMIN_EMAIL=<your-email>` (optional)
-- `EXPOSE_DEV_AUTH_CODES=false`
-4. Configure email:
-- `EMAIL_PROVIDER=resend|postmark|sendgrid` (production)
-- `EMAIL_FROM=Tag Along <no-reply@yourdomain.com>`
-- Provider key env var (`RESEND_API_KEY` or `POSTMARK_SERVER_TOKEN` or `SENDGRID_API_KEY`)
-5. Run migrations:
+2. In the Supabase SQL editor, run the migration in [supabase/migrations/20260308120000_secure_core.sql](/Users/anujsuthar/Documents/Tag-along/supabase/migrations/20260308120000_secure_core.sql).
+3. Copy [.env.example](/Users/anujsuthar/Documents/Tag-along/.env.example) to `.env.local` and fill in:
+   - `NEXT_PUBLIC_SITE_URL`
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY` for admin log/event/deletion features
+   - `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` for public anti-bot protection
+   - `NEXT_PUBLIC_SUPPORT_EMAIL`
+4. Install dependencies:
 ```bash
-npm run migrate
+npm install
 ```
-6. Start API:
+5. Start the app:
 ```bash
-npm start
+npm run dev
+```
+6. Open [http://localhost:3000](http://localhost:3000).
+
+If Supabase env vars are missing, the UI still renders in preview mode using safe mock data.
+
+## Promote an admin
+
+There is no "first user becomes admin" behavior anymore.
+
+To promote an account manually in Supabase:
+```sql
+update public.profiles
+set role = 'admin'
+where id = '<user-uuid>';
 ```
 
-## Deploy
-This repo includes:
-- `render.yaml` for Render
-- `railway.json` for Railway
+## Structure
 
-Set all required env vars in the platform dashboard, run migrations, then deploy.
+- `app/`: Next.js routes, layouts, workspace, auth callback
+- `components/`: interactive React UI
+- `lib/`: env helpers, Supabase clients, queries, validators, mock preview data
+- `supabase/migrations/`: database schema, RLS, RPCs, and realtime publication
+- `tests/`: Playwright smoke coverage for public pages and preview mode
+- `docs/`: public release, deploy, security cleanup, and ops runbook docs
+- `CONCEPT_NOTE.md`: original product framing
 
-## Core API snapshot
-- `GET /api/health`
-- `GET /api/bootstrap?mode=social|errand`
-- `GET /api/feed?mode=social|errand&limit=8`
-- `GET /api/requests?mode=social|errand`
-- `GET /api/requests/session?requestId=<id>`
-- `POST /api/requests`
-- `GET /api/matches?requestId=<id>`
-- `POST /api/actions/ping`
-- `POST /api/actions/join`
-- `POST /api/actions/accept`
-- `POST /api/checkins`
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/google`
-- `POST /api/auth/verify-email/request`
-- `POST /api/auth/verify-email/confirm`
-- `POST /api/auth/password/forgot`
-- `POST /api/auth/password/reset`
-- `GET /api/auth/me`
-- `GET /api/messages?requestId=<id>`
-- `POST /api/messages`
-- `POST /api/reports`
-- `GET /api/reports`
-- `POST /api/reports/resolve`
-- `GET /api/admin/overview`
-- `GET /api/admin/users`
-- `POST /api/admin/users/role`
-- `GET /api/admin/requests`
-- `POST /api/admin/requests/status`
+## Verification
 
-## Remaining launch work
-1. Add verification/KYC provider workflow.
-2. Add push notifications for session chat/check-ins.
-3. Add observability (error tracking, metrics, incident runbooks).
-4. Add legal/compliance flows (ToS, Privacy, consent/reporting policy).
+```bash
+npm run typecheck
+npm run lint
+npm run build
+npm run test:e2e
+```
+
+## Public release docs
+
+- [Production release checklist](/Users/anujsuthar/Documents/Tag-along/docs/PRODUCTION_RELEASE_CHECKLIST.md)
+- [Supabase and Vercel deploy](/Users/anujsuthar/Documents/Tag-along/docs/SUPABASE_VERCEL_DEPLOY.md)
+- [Security history cleanup](/Users/anujsuthar/Documents/Tag-along/docs/SECURITY_HISTORY_CLEANUP.md)
+- [Operations runbook](/Users/anujsuthar/Documents/Tag-along/docs/OPERATIONS_RUNBOOK.md)
+
+## Notes
+
+- The app is designed to keep public discovery minimal. Session details and matched identities are only available to participants through Supabase policies and secured RPCs.
+- Realtime chat requires the `request_messages` table to stay in the Supabase realtime publication. The migration handles this when the publication exists.
