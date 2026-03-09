@@ -281,7 +281,7 @@ export function WorkspaceShell({
         </div>
 
         <div className="workspace-hero-actions">
-          <div className="status-badge">
+          <div className="status-badge" role="status" aria-live="polite" aria-atomic="true">
             <Sparkles size={16} />
             {status}
           </div>

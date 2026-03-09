@@ -81,6 +81,27 @@ button {
   cursor: pointer;
 }
 
+button:focus-visible,
+a:focus-visible,
+summary:focus-visible {
+  outline: 3px solid rgba(165, 64, 45, 0.38);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 h1,
 h2,
 h3,
@@ -435,6 +456,21 @@ main {
   min-height: 42px;
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+.auth-status[data-tone="error"] {
+  color: var(--accent-strong);
+}
+
+.auth-status[data-tone="success"] {
+  color: var(--teal);
+}
+
+.input-action-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
 }
 
 .auth-link {

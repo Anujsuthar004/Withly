@@ -19,10 +19,12 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
   const [turnstileKey, setTurnstileKey] = useState(0);
   const [status, setStatus] = useState("Private profiles, clear plans, and one calm place to manage them.");
+  const [statusTone, setStatusTone] = useState<"neutral" | "success" | "error">("neutral");
   const [isPending, startTransition] = useTransition();
 
   const handleAuthRefresh = useEffectEvent(() => {
@@ -51,6 +53,7 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
 
     if (!hasSupabaseEnv) {
       setStatus("Sign-in is temporarily unavailable right now.");
+      setStatusTone("error");
       return;
     }
 
@@ -78,16 +81,19 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
 
       if (!response.ok) {
         setStatus(payload?.error ?? "Authentication failed.");
+        setStatusTone("error");
         return;
       }
 
       if (mode === "signup" && payload?.requiresEmailVerification) {
         setPassword("");
         setStatus("Account created. Check your inbox to confirm your email, then sign in.");
+        setStatusTone("success");
         return;
       }
 
       setStatus("Welcome back. Preparing your secure workspace...");
+      setStatusTone("success");
       router.push(nextPath);
       router.refresh();
     });
@@ -96,11 +102,13 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
   function handleForgotPassword() {
     if (!hasSupabaseEnv) {
       setStatus("Password reset is temporarily unavailable right now.");
+      setStatusTone("error");
       return;
     }
 
     if (!email.trim()) {
       setStatus("Enter your email first, then use password reset.");
+      setStatusTone("error");
       return;
     }
 
@@ -123,16 +131,19 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
 
       if (!response.ok) {
         setStatus(payload?.error ?? "Could not start password recovery.");
+        setStatusTone("error");
         return;
       }
 
       setStatus(payload?.message ?? "If that account exists, a reset link has been sent.");
+      setStatusTone("success");
     });
   }
 
   async function handleGoogleSignIn() {
     if (!hasSupabaseEnv) {
       setStatus("Google sign-in is temporarily unavailable right now.");
+      setStatusTone("error");
       return;
     }
 
@@ -147,8 +158,22 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
 
       if (error) {
         setStatus(error.message);
+        setStatusTone("error");
       }
     });
+  }
+
+  function switchMode(nextMode: Mode) {
+    setMode(nextMode);
+    setPassword("");
+    setIsPasswordVisible(false);
+    setCaptchaToken("");
+    setTurnstileKey((current) => current + 1);
+    setStatusTone("neutral");
+    setStatus("Private profiles, clear plans, and one calm place to manage them.");
+    if (nextMode === "signin") {
+      setDisplayName("");
+    }
   }
 
   return (
@@ -173,14 +198,18 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
         <button
           type="button"
           className={mode === "signin" ? "active" : ""}
-          onClick={() => setMode("signin")}
+          onClick={() => switchMode("signin")}
+          aria-pressed={mode === "signin"}
+          disabled={isPending}
         >
           Sign In
         </button>
         <button
           type="button"
           className={mode === "signup" ? "active" : ""}
-          onClick={() => setMode("signup")}
+          onClick={() => switchMode("signup")}
+          aria-pressed={mode === "signup"}
+          disabled={isPending}
         >
           Create Account
         </button>
@@ -195,9 +224,11 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
               placeholder="Choose the name people will see"
+              autoComplete="nickname"
               minLength={2}
               maxLength={60}
               required
+              disabled={isPending}
             />
           </label>
         ) : null}
@@ -210,21 +241,36 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
             onChange={(event) => setEmail(event.target.value)}
             placeholder="you@example.com"
             autoComplete="email"
+            autoCapitalize="none"
+            spellCheck={false}
             required
+            disabled={isPending}
           />
         </label>
 
         <label>
           Password
-          <input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Minimum 8 characters"
-            autoComplete={mode === "signin" ? "current-password" : "new-password"}
-            minLength={8}
-            required
-          />
+          <span className="input-action-row">
+            <input
+              type={isPasswordVisible ? "text" : "password"}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Minimum 8 characters"
+              autoComplete={mode === "signin" ? "current-password" : "new-password"}
+              minLength={8}
+              required
+              disabled={isPending}
+            />
+            <button
+              type="button"
+              className="ghost-button compact"
+              onClick={() => setIsPasswordVisible((current) => !current)}
+              aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+              disabled={isPending || password.length === 0}
+            >
+              {isPasswordVisible ? "Hide" : "Show"}
+            </button>
+          </span>
         </label>
 
         {hasTurnstileEnv ? (
@@ -252,7 +298,9 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
         Continue with Google
       </button>
 
-      <p className="auth-status">{status}</p>
+      <p className="auth-status" role="status" aria-live="polite" aria-atomic="true" data-tone={statusTone}>
+        {status}
+      </p>
     </section>
   );
 }
