@@ -39,6 +39,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
@@ -51,6 +52,7 @@ body {
     radial-gradient(circle at right 10% top 20%, rgba(15, 107, 97, 0.12), transparent 26%),
     radial-gradient(circle at left 8% bottom 18%, rgba(165, 64, 45, 0.16), transparent 26%),
     linear-gradient(180deg, #f9f3e8 0%, #f5ecdf 52%, #efe4d4 100%);
+  overflow-x: hidden;
 }
 
 body::before,
@@ -129,7 +131,7 @@ p {
 }
 
 main {
-  width: min(1360px, calc(100vw - 40px));
+  width: min(1360px, calc(100% - 40px));
   margin: 0 auto;
   padding: 28px 0 80px;
 }
@@ -210,7 +212,7 @@ main {
   justify-content: space-between;
   gap: 14px;
   padding: 18px 0 14px;
-  width: min(1360px, calc(100vw - 40px));
+  width: min(1360px, calc(100% - 40px));
   margin: 0 auto;
   backdrop-filter: blur(14px);
 }
@@ -237,7 +239,7 @@ main {
 }
 
 .app-content {
-  width: min(1360px, calc(100vw - 40px));
+  width: min(1360px, calc(100% - 40px));
   margin: 0 auto;
   padding: 0 0 90px;
 }
@@ -310,8 +312,8 @@ main {
   color: var(--text-soft);
 }
 
-.hero-copy > p,
-.workspace-hero-copy > p,
+.hero-copy>p,
+.workspace-hero-copy>p,
 .auth-copy p,
 .section-title p {
   max-width: 58ch;
@@ -497,9 +499,9 @@ main {
 }
 
 .input-icon-wrap,
-.grid-two > *,
-.option-grid > *,
-.button-row > * {
+.grid-two>*,
+.option-grid>*,
+.button-row>* {
   min-width: 0;
 }
 
@@ -637,7 +639,7 @@ main {
   gap: 12px;
 }
 
-.workspace-hero-stack > *,
+.workspace-hero-stack>*,
 .status-badge {
   width: 100%;
   max-width: none;
@@ -759,8 +761,8 @@ main {
   align-items: start;
 }
 
-.request-card-top > div,
-.summary-head > div {
+.request-card-top>div,
+.summary-head>div {
   min-width: 0;
   display: grid;
   gap: 8px;
@@ -834,12 +836,12 @@ main {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.button-row > .primary-button,
-.button-row > .secondary-button,
-.button-row > .ghost-button,
-.workspace-hero-stack > .primary-button,
-.workspace-hero-stack > .secondary-button,
-.workspace-hero-stack > .ghost-button {
+.button-row>.primary-button,
+.button-row>.secondary-button,
+.button-row>.ghost-button,
+.workspace-hero-stack>.primary-button,
+.workspace-hero-stack>.secondary-button,
+.workspace-hero-stack>.ghost-button {
   width: 100%;
 }
 
@@ -1153,11 +1155,11 @@ main {
 
 @media (max-width: 720px) {
   .app-topbar {
-    width: min(100vw - 20px, 100%);
+    width: calc(100% - 20px);
   }
 
   .app-content {
-    width: min(100vw - 20px, 100%);
+    width: calc(100% - 20px);
     padding-bottom: 110px;
   }
 
@@ -1196,7 +1198,7 @@ main {
   }
 
   main {
-    width: min(100vw - 20px, 100%);
+    width: calc(100% - 20px);
     padding-bottom: 36px;
   }
 
