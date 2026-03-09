@@ -8,11 +8,21 @@ import { formatDateTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage() {
+function normalizeNextPath(raw: unknown) {
+  if (typeof raw !== "string") return "/feed";
+  const value = raw.trim();
+  if (!value.startsWith("/")) return "/feed";
+  if (value.startsWith("//")) return "/feed";
+  return value;
+}
+
+export default async function HomePage({ searchParams }: { searchParams: Promise<Record<string, string | string[]>> }) {
+  const params = await searchParams;
   const { user, feed, hasSupabaseEnv } = await getLandingPageState();
+  const nextPath = normalizeNextPath(params.next);
 
   if (user) {
-    redirect("/workspace");
+    redirect(nextPath);
   }
 
   return (
@@ -59,7 +69,7 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <AuthPanel />
+        <AuthPanel nextPath={nextPath} />
       </section>
 
       {feed.length > 0 ? (

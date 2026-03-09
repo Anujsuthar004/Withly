@@ -1,0 +1,59 @@
+"use client";
+
+import Link from "next/link";
+import { MessageCircleMore } from "lucide-react";
+
+import { ChatRoom } from "@/components/chat-room";
+import type { WorkspaceSession } from "@/lib/supabase/types";
+import { SUPPORT_EMAIL } from "@/lib/env";
+import { formatDateTime } from "@/lib/utils";
+
+export function SessionPanel({
+  session,
+  currentUserId,
+  onStatus,
+}: {
+  session: WorkspaceSession;
+  currentUserId: string;
+  onStatus: (message: string) => void;
+}) {
+  return (
+    <section className="panel session-panel">
+      <div className="panel-heading">
+        <div>
+          <p className="kicker">Session</p>
+          <h3>Chat for confirmed plans.</h3>
+        </div>
+        <span className="status-dot">
+          <MessageCircleMore size={16} />
+          Live chat
+        </span>
+      </div>
+
+      <div className="summary-callout summary-callout-teal">
+        Keep first meetups in public places, confirm an exact landmark in chat, and contact{" "}
+        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> for urgent moderation help.
+      </div>
+
+      <div className="session-summary">
+        <div>
+          <h4>{session.requestTitle}</h4>
+          <p>
+            {session.partnerDisplayName} • {session.areaLabel} • {formatDateTime(session.meetupAt)}
+          </p>
+        </div>
+        <Link className="ghost-button compact" href={`/requests/${session.requestId}`}>
+          View request
+        </Link>
+      </div>
+
+      <ChatRoom
+        requestId={session.requestId}
+        currentUserId={currentUserId}
+        initialMessages={session.messages}
+        onStatus={onStatus}
+      />
+    </section>
+  );
+}
+

@@ -1,11 +1,15 @@
 import { expect, test } from "@playwright/test";
 
-test("workspace renders safe preview mode when Supabase env is absent", async ({ page }) => {
+test("public explore is reachable and legacy workspace redirects", async ({ page }) => {
   await page.goto("/workspace");
+  await expect(page).toHaveURL(/\/explore$/);
+  await expect(page.getByRole("heading", { name: /Browse open requests before you sign in/i })).toBeVisible();
 
-  await expect(page.getByRole("heading", { name: /Your plans, replies, and next steps in one place/i })).toBeVisible();
-  await expect(page.getByText(/Preview mode is active/i)).toBeVisible();
-  await expect(page.getByRole("heading", { name: /Your requests, matches, and follow-up controls/i })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /Account/i })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Preview mode only" }).first()).toBeDisabled();
+  const firstRequest = page.locator(".request-card a").first();
+  await expect(firstRequest).toBeVisible();
+  await firstRequest.click();
+  await expect(page).toHaveURL(/\/explore\/requests\/[0-9a-f-]+$/);
+
+  await page.goto("/feed");
+  await expect(page.getByRole("heading", { name: /Browse requests and open the ones you can support/i })).toBeVisible();
 });

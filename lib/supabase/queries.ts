@@ -141,3 +141,50 @@ export async function getWorkspacePageState() {
     ...workspace,
   };
 }
+
+export async function getExplorePageState(limit = 18) {
+  const feed = await getLandingFeed(limit);
+  return { feed, hasSupabaseEnv };
+}
+
+export async function getAppLayoutState() {
+  const [user, workspace] = await Promise.all([getAuthenticatedUser(), getWorkspaceSnapshot()]);
+
+  return {
+    user,
+    hasSupabaseEnv,
+    preview: workspace.preview,
+    setupError: workspace.setupError,
+    role: workspace.snapshot.profile.role,
+  };
+}
+
+export async function getFeedPageState(limit = 18) {
+  const [user, feed] = await Promise.all([getAuthenticatedUser(), getLandingFeed(limit)]);
+  return { user, feed, hasSupabaseEnv };
+}
+
+export async function getMyRequestsPageState() {
+  const [user, workspace] = await Promise.all([getAuthenticatedUser(), getWorkspaceSnapshot()]);
+  return { user, hasSupabaseEnv, ...workspace };
+}
+
+export async function getInboxPageState() {
+  const [user, workspace] = await Promise.all([getAuthenticatedUser(), getWorkspaceSnapshot()]);
+  return { user, hasSupabaseEnv, ...workspace };
+}
+
+export async function getProfilePageState() {
+  const [user, workspace] = await Promise.all([getAuthenticatedUser(), getWorkspaceSnapshot()]);
+  return { user, hasSupabaseEnv, ...workspace };
+}
+
+export async function getAccountPageState() {
+  const [user, workspace] = await Promise.all([getAuthenticatedUser(), getWorkspaceSnapshot()]);
+  return { user, hasSupabaseEnv, ...workspace };
+}
+
+export async function getAdminPageState() {
+  const [user, workspace, adminDashboard] = await Promise.all([getAuthenticatedUser(), getWorkspaceSnapshot(), getAdminDashboard()]);
+  return { user, hasSupabaseEnv, ...workspace, adminDashboard };
+}

@@ -125,7 +125,9 @@ export async function createRequestAction(input: unknown): Promise<ActionResult>
     context: { userId: auth.user.id, lane: payload.lane },
   });
   revalidatePath("/");
-  revalidatePath("/workspace");
+  revalidatePath("/explore");
+  revalidatePath("/feed");
+  revalidatePath("/requests");
   return { ok: true, message: "Request posted." };
 }
 
@@ -153,7 +155,9 @@ export async function updateProfileAction(input: unknown): Promise<ActionResult>
     return { ok: false, message: error.message };
   }
 
-  revalidatePath("/workspace");
+  revalidatePath("/profile");
+  revalidatePath("/inbox");
+  revalidatePath("/requests");
   return { ok: true, message: "Profile updated." };
 }
 
@@ -182,7 +186,8 @@ export async function submitJoinRequestAction(input: unknown): Promise<ActionRes
     return { ok: false, message: error.message };
   }
 
-  revalidatePath("/workspace");
+  revalidatePath("/feed");
+  revalidatePath(`/requests/${parsed.data.requestId}`);
   return { ok: true, message: "Join request sent." };
 }
 
@@ -211,7 +216,8 @@ export async function reviewJoinRequestAction(input: unknown): Promise<ActionRes
     return { ok: false, message: error.message };
   }
 
-  revalidatePath("/workspace");
+  revalidatePath("/inbox");
+  revalidatePath("/requests");
   return {
     ok: true,
     message: parsed.data.decision === "accepted" ? "Match confirmed." : "Join request declined.",
@@ -243,7 +249,8 @@ export async function sendMessageAction(input: unknown): Promise<ActionResult> {
     return { ok: false, message: error.message };
   }
 
-  revalidatePath("/workspace");
+  revalidatePath("/inbox");
+  revalidatePath(`/sessions/${parsed.data.requestId}`);
   return { ok: true, message: "Message sent." };
 }
 
@@ -280,7 +287,9 @@ export async function completeRequestAction(input: unknown): Promise<ActionResul
     message: "Completion update recorded.",
     context: { userId: auth.user.id, requestId: parsed.data.requestId, outcome: parsed.data.outcome },
   });
-  revalidatePath("/workspace");
+  revalidatePath("/requests");
+  revalidatePath(`/requests/${parsed.data.requestId}`);
+  revalidatePath(`/sessions/${parsed.data.requestId}`);
   return {
     ok: true,
     message: parsed.data.outcome === "completed" ? "Session marked complete." : "Issue recorded for follow-up.",
@@ -332,7 +341,9 @@ export async function createReportAction(input: unknown): Promise<ActionResult> 
       blockTarget: parsed.data.blockTarget,
     },
   });
-  revalidatePath("/workspace");
+  revalidatePath("/requests");
+  revalidatePath(`/requests/${parsed.data.requestId}`);
+  revalidatePath("/admin");
   return {
     ok: true,
     message: parsed.data.blockTarget ? "Report submitted and user blocked." : "Report submitted.",
@@ -370,7 +381,8 @@ export async function blockUserAction(input: unknown): Promise<ActionResult> {
     message: "User blocked.",
     context: { userId: auth.user.id, blockedUserId: parsed.data.userId },
   });
-  revalidatePath("/workspace");
+  revalidatePath("/requests");
+  revalidatePath("/inbox");
   return { ok: true, message: "User blocked." };
 }
 
@@ -407,7 +419,7 @@ export async function resolveDeletionRequestAction(input: unknown): Promise<Acti
     message: "Deletion request updated.",
     context: { adminUserId: auth.user.id, requestId: parsed.data.requestId, status: parsed.data.status },
   });
-  revalidatePath("/workspace");
+  revalidatePath("/admin");
   return { ok: true, message: "Deletion request updated." };
 }
 
@@ -444,7 +456,7 @@ export async function resolveReportAction(input: unknown): Promise<ActionResult>
     message: "Report updated.",
     context: { adminUserId: auth.user.id, reportId: parsed.data.reportId, status: parsed.data.status },
   });
-  revalidatePath("/workspace");
+  revalidatePath("/admin");
   return { ok: true, message: "Report updated." };
 }
 
@@ -503,6 +515,7 @@ export async function deleteAccountAction(input: unknown): Promise<ActionResult>
   });
 
   revalidatePath("/");
-  revalidatePath("/workspace");
+  revalidatePath("/account");
+  revalidatePath("/explore");
   return { ok: true, message: "Account deleted permanently.", accountDeleted: true };
 }
