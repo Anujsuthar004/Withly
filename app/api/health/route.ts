@@ -1,21 +1,20 @@
 import { NextResponse } from "next/server";
 
-import { APP_ENV, hasSupabaseAdminEnv, hasSupabaseEnv, hasTurnstileEnv } from "@/lib/env";
+import { APP_ENV, hasSupabaseAdminEnv, hasSupabaseEnv, hasTurnstileEnv, isProduction } from "@/lib/env";
 
 export async function GET() {
-  return NextResponse.json(
-    {
-      status: "ok",
-      now: new Date().toISOString(),
-      appEnv: APP_ENV,
-      hasSupabaseEnv,
-      hasSupabaseAdminEnv,
-      hasTurnstileEnv,
-    },
-    {
-      headers: {
-        "Cache-Control": "no-store",
-      },
-    }
-  );
+  const body = isProduction
+    ? { status: "ok", now: new Date().toISOString() }
+    : {
+        status: "ok",
+        now: new Date().toISOString(),
+        appEnv: APP_ENV,
+        hasSupabaseEnv,
+        hasSupabaseAdminEnv,
+        hasTurnstileEnv,
+      };
+
+  return NextResponse.json(body, {
+    headers: { "Cache-Control": "no-store" },
+  });
 }
