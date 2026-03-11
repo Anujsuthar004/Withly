@@ -27,6 +27,7 @@ import {
   reviewJoinRequestAction,
   submitJoinRequestAction,
   updateProfileAction,
+  deleteRequestAction,
 } from "@/app/workspace/actions";
 import { ChatRoom } from "@/components/chat-room";
 import { RequestComposer } from "@/components/request-composer";
@@ -106,6 +107,7 @@ export function WorkspaceShell({
   const [blockBusyId, setBlockBusyId] = useState<string | null>(null);
   const [moderationBusyId, setModerationBusyId] = useState<string | null>(null);
   const [deletionBusyId, setDeletionBusyId] = useState<string | null>(null);
+  const [requestDeletionBusyId, setRequestDeletionBusyId] = useState<string | null>(null);
   const [isProfilePending, startProfileTransition] = useTransition();
   const [isAccountPending, startAccountTransition] = useTransition();
 
@@ -261,6 +263,24 @@ export function WorkspaceShell({
       resolutionNote: deletionNotes[requestId] ?? "",
     });
     setDeletionBusyId(null);
+    setStatus(result.message);
+
+    if (result.ok) {
+      router.refresh();
+    }
+  }
+
+  async function handleDeleteRequest(requestId: string) {
+    if (preview) {
+      setStatus("This action is only available after sign-in.");
+      return;
+    }
+
+    if (!confirm("Are you sure you want to delete this request? This action cannot be undone.")) return;
+
+    setRequestDeletionBusyId(requestId);
+    const result = await deleteRequestAction({ requestId });
+    setRequestDeletionBusyId(null);
     setStatus(result.message);
 
     if (result.ok) {
@@ -674,6 +694,25 @@ export function WorkspaceShell({
                           </div>
                         </details>
                       ) : null}
+
+                      <details className="action-disclosure">
+                        <summary>Delete request</summary>
+                        <div className="disclosure-body">
+                          <p>
+                            This will permanently remove the request and any associated items.
+                            Only the request creator can perform this action.
+                          </p>
+                          <button
+                            className="secondary-button compact"
+                            type="button"
+                            disabled={preview || requestDeletionBusyId === request.id}
+                            onClick={() => void handleDeleteRequest(request.id)}
+                          >
+                            <Trash2 size={16} />
+                            {requestDeletionBusyId === request.id ? "Deleting..." : "Confirm deletion"}
+                          </button>
+                        </div>
+                      </details>
                     </article>
                   );
                 })}

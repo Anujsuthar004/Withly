@@ -10,6 +10,7 @@ import {
   PlusCircle,
   Settings,
   ShieldAlert,
+  Tag,
   UserRound,
 } from "lucide-react";
 
@@ -65,6 +66,7 @@ export function AppShell({
     <div className="app-shell">
       <aside className="app-sidebar" aria-label="Primary">
         <Link href="/feed" className="app-brand">
+          <Tag size={20} />
           Tag Along
         </Link>
 
@@ -109,7 +111,10 @@ export function AppShell({
       <div className="app-main">
         <header className="app-topbar">
           <div className="app-topbar-title">
-            <Link href="/feed" className="app-topbar-brand">Tag Along</Link>
+            <Link href="/feed" className="app-topbar-brand">
+              <Tag size={20} />
+              Tag Along
+            </Link>
             <span className="kicker">{showAdmin ? "Admin enabled" : "Member account"}</span>
           </div>
           <div className="app-topbar-actions">

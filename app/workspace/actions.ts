@@ -13,6 +13,7 @@ import {
   completeRequestSchema,
   createReportSchema,
   createRequestSchema,
+  deleteRequestSchema,
   joinRequestSchema,
   resolveDeletionRequestSchema,
   resolveReportSchema,
@@ -518,4 +519,47 @@ export async function deleteAccountAction(input: unknown): Promise<ActionResult>
   revalidatePath("/account");
   revalidatePath("/explore");
   return { ok: true, message: "Account deleted permanently.", accountDeleted: true };
+}
+
+export async function deleteRequestAction(input: unknown): Promise<ActionResult> {
+  const auth = await requireSupabaseSession();
+  if (auth.error || !auth.supabase || !auth.user) {
+    return auth.error ?? { ok: false, message: "Sign in to continue." };
+  }
+
+  const parsed = deleteRequestSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid deletion payload." };
+  }
+
+  const rateLimitError = await enforceAuthenticatedActionLimit(auth.user.id, "delete-request", 10, 10 * 60 * 1000);
+  if (rateLimitError) {
+    return rateLimitError;
+  }
+
+  const { error } = await auth.supabase.rpc("delete_request", {
+    request_id_input: parsed.data.requestId,
+  });
+
+  if (error) {
+    await logAppEvent({
+      level: "warn",
+      category: "request.delete",
+      message: "Request deletion failed.",
+      context: { userId: auth.user.id, requestId: parsed.data.requestId, error: error.message },
+    });
+    return { ok: false, message: error.message };
+  }
+
+  await logAppEvent({
+    level: "warn",
+    category: "request.delete",
+    message: "Request deleted.",
+    context: { userId: auth.user.id, requestId: parsed.data.requestId },
+  });
+  revalidatePath("/");
+  revalidatePath("/explore");
+  revalidatePath("/feed");
+  revalidatePath("/requests");
+  return { ok: true, message: "Request deleted." };
 }
