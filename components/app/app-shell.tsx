@@ -109,8 +109,8 @@ export function AppShell({
       <div className="app-main">
         <header className="app-topbar">
           <div className="app-topbar-title">
-            <span className="kicker">Workspace</span>
-            <strong>{showAdmin ? "Admin enabled" : "Member account"}</strong>
+            <Link href="/feed" className="app-topbar-brand">Tag Along</Link>
+            <span className="kicker">{showAdmin ? "Admin enabled" : "Member account"}</span>
           </div>
           <div className="app-topbar-actions">
             <Link className="ghost-button compact" href="/account">

@@ -153,6 +153,7 @@ main {
 }
 
 .app-brand {
+  align-self: start;
   text-decoration: none;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -222,10 +223,18 @@ main {
   gap: 3px;
 }
 
-.app-topbar-title strong {
+.app-topbar-title strong,
+.app-topbar-brand {
   font-family: var(--font-heading);
   letter-spacing: -0.02em;
   font-size: 1.12rem;
+}
+
+.app-topbar-brand {
+  text-decoration: none;
+  font-weight: 800;
+  color: var(--text);
+  display: none;
 }
 
 .app-topbar-actions {
@@ -1132,6 +1141,10 @@ main {
 
   .app-sidebar {
     display: none;
+  }
+
+  .app-topbar-brand {
+    display: block;
   }
 
   .hero-shell,
