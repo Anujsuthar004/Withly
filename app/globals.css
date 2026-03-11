@@ -170,7 +170,7 @@ main {
 
 .app-nav-link {
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
+  grid-template-columns: 22px minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
   text-decoration: none;
@@ -1232,4 +1232,58 @@ main {
   .footer-links {
     justify-content: flex-start;
   }
+}
+
+/* Notification badges */
+
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.app-bottom-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-badge-small {
+  position: absolute;
+  top: -5px;
+  right: -8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: white;
+  font-size: 0.6rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* Inline error for review cards */
+
+.inline-error {
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(165, 64, 45, 0.1);
+  border: 1px solid rgba(165, 64, 45, 0.18);
+  color: var(--accent-strong);
+  font-size: 0.88rem;
+  font-weight: 600;
 }

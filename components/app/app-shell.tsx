@@ -20,6 +20,7 @@ type NavItem = {
   label: string;
   icon: React.ReactNode;
   match: (pathname: string) => boolean;
+  badge?: number;
 };
 
 function isActive(pathname: string, href: string) {
@@ -30,9 +31,11 @@ function isActive(pathname: string, href: string) {
 export function AppShell({
   children,
   showAdmin,
+  inboxCount = 0,
 }: {
   children: React.ReactNode;
   showAdmin: boolean;
+  inboxCount?: number;
 }) {
   const pathname = usePathname() ?? "";
 
@@ -41,21 +44,21 @@ export function AppShell({
       { href: "/feed", label: "Feed", icon: <Compass size={18} />, match: (p) => isActive(p, "/feed") },
       { href: "/requests/new", label: "Post", icon: <PlusCircle size={18} />, match: (p) => isActive(p, "/requests/new") },
       { href: "/requests", label: "My requests", icon: <LayoutGrid size={18} />, match: (p) => isActive(p, "/requests") },
-      { href: "/inbox", label: "Inbox", icon: <Inbox size={18} />, match: (p) => isActive(p, "/inbox") },
+      { href: "/inbox", label: "Inbox", icon: <Inbox size={18} />, match: (p) => isActive(p, "/inbox"), badge: inboxCount },
       { href: "/profile", label: "Profile", icon: <UserRound size={18} />, match: (p) => isActive(p, "/profile") },
       { href: "/account", label: "Account", icon: <Settings size={18} />, match: (p) => isActive(p, "/account") },
     ],
-    []
+    [inboxCount]
   );
 
   const bottomItems = useMemo<NavItem[]>(
     () => [
       { href: "/feed", label: "Feed", icon: <Compass size={18} />, match: (p) => isActive(p, "/feed") },
       { href: "/requests/new", label: "Post", icon: <PlusCircle size={18} />, match: (p) => isActive(p, "/requests/new") },
-      { href: "/inbox", label: "Inbox", icon: <Inbox size={18} />, match: (p) => isActive(p, "/inbox") },
+      { href: "/inbox", label: "Inbox", icon: <Inbox size={18} />, match: (p) => isActive(p, "/inbox"), badge: inboxCount },
       { href: "/profile", label: "Profile", icon: <UserRound size={18} />, match: (p) => isActive(p, "/profile") },
     ],
-    []
+    [inboxCount]
   );
 
   return (
@@ -77,6 +80,11 @@ export function AppShell({
               >
                 {item.icon}
                 <span>{item.label}</span>
+                {item.badge && item.badge > 0 ? (
+                  <span className="nav-badge" aria-label={`${item.badge} pending`}>
+                    {item.badge}
+                  </span>
+                ) : null}
               </Link>
             );
           })}
@@ -126,7 +134,14 @@ export function AppShell({
               className={`app-bottom-link ${active ? "active" : ""}`}
               aria-current={active ? "page" : undefined}
             >
-              {item.icon}
+              <span className="app-bottom-icon-wrap">
+                {item.icon}
+                {item.badge && item.badge > 0 ? (
+                  <span className="nav-badge-small" aria-label={`${item.badge} pending`}>
+                    {item.badge}
+                  </span>
+                ) : null}
+              </span>
               <span>{item.label}</span>
             </Link>
           );
@@ -135,4 +150,5 @@ export function AppShell({
     </div>
   );
 }
+
 

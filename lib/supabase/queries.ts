@@ -150,12 +150,16 @@ export async function getExplorePageState(limit = 18) {
 export async function getAppLayoutState() {
   const [user, workspace] = await Promise.all([getAuthenticatedUser(), getWorkspaceSnapshot()]);
 
+  const inboxCount =
+    workspace.snapshot.incomingJoinRequests.length + (workspace.snapshot.activeSession ? 1 : 0);
+
   return {
     user,
     hasSupabaseEnv,
     preview: workspace.preview,
     setupError: workspace.setupError,
     role: workspace.snapshot.profile.role,
+    inboxCount,
   };
 }
 

@@ -1,15 +1,28 @@
 "use client";
 
-import Link from "next/link";
 import { useDeferredValue, useMemo, useState } from "react";
-import { Compass } from "lucide-react";
+import { Compass, ShieldAlert } from "lucide-react";
+import { useRouter } from "next/navigation";
 
+import { submitJoinRequestAction } from "@/app/workspace/actions";
 import type { FeedRequestCard } from "@/lib/supabase/types";
 import { formatDateTime } from "@/lib/utils";
 
-export function FeedList({ feed }: { feed: FeedRequestCard[] }) {
+export function FeedList({
+  feed,
+  preview = false,
+  onStatus,
+}: {
+  feed: FeedRequestCard[];
+  preview?: boolean;
+  onStatus?: (message: string) => void;
+}) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
+  const [joinDrafts, setJoinDrafts] = useState<Record<string, string>>({});
+  const [joinBusyId, setJoinBusyId] = useState<string | null>(null);
+  const [expandedJoinId, setExpandedJoinId] = useState<string | null>(null);
 
   const filteredFeed = useMemo(() => {
     const query = deferredSearch.trim().toLowerCase();
@@ -57,11 +70,14 @@ export function FeedList({ feed }: { feed: FeedRequestCard[] }) {
             <div className="request-card-top">
               <div>
                 <span className="request-lane">{request.lane === "social" ? "Social" : "Errand"}</span>
-                <h4>
-                  <Link href={`/requests/${request.id}`}>{request.title}</Link>
-                </h4>
+                <h4>{request.title}</h4>
               </div>
-              {request.verifiedOnly ? <span className="mini-chip">Verified only</span> : null}
+              {request.verifiedOnly ? (
+                <span className="mini-chip">
+                  <ShieldAlert size={14} />
+                  Verified only
+                </span>
+              ) : null}
             </div>
 
             <p className="request-description">{request.description}</p>
@@ -81,14 +97,63 @@ export function FeedList({ feed }: { feed: FeedRequestCard[] }) {
             </div>
 
             <div className="button-row">
-              <Link className="secondary-button compact" href={`/requests/${request.id}`}>
-                View details
-              </Link>
+              <button
+                className="primary-button compact"
+                type="button"
+                disabled={preview}
+                onClick={() => {
+                  setExpandedJoinId((current) => (current === request.id ? null : request.id));
+                }}
+              >
+                {preview ? "Sign in to join" : expandedJoinId === request.id ? "Cancel" : "Request to join"}
+              </button>
             </div>
+
+            {expandedJoinId === request.id ? (
+              <div className="join-box">
+                <textarea
+                  rows={2}
+                  value={joinDrafts[request.id] ?? ""}
+                  onChange={(event) =>
+                    setJoinDrafts((current) => ({ ...current, [request.id]: event.target.value }))
+                  }
+                  placeholder="Add a short intro so the request owner knows why you're a fit."
+                  maxLength={220}
+                  disabled={preview || joinBusyId === request.id}
+                />
+                <button
+                  className="primary-button compact"
+                  type="button"
+                  disabled={preview || joinBusyId === request.id}
+                  onClick={() => {
+                    setJoinBusyId(request.id);
+                    void (async () => {
+                      try {
+                        const result = await submitJoinRequestAction({
+                          requestId: request.id,
+                          introMessage: joinDrafts[request.id] ?? "",
+                        });
+                        onStatus?.(result.message);
+                        if (result.ok) {
+                          setJoinDrafts((current) => ({ ...current, [request.id]: "" }));
+                          setExpandedJoinId(null);
+                          router.refresh();
+                        }
+                      } catch {
+                        onStatus?.("Something went wrong. Please try again.");
+                      } finally {
+                        setJoinBusyId(null);
+                      }
+                    })();
+                  }}
+                >
+                  {joinBusyId === request.id ? "Sending..." : "Send join request"}
+                </button>
+              </div>
+            ) : null}
           </article>
         ))}
       </div>
     </section>
   );
 }
-

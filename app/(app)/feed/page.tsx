@@ -6,7 +6,8 @@ import { getFeedPageState } from "@/lib/supabase/queries";
 export const dynamic = "force-dynamic";
 
 export default async function FeedPage() {
-  const { feed } = await getFeedPageState(24);
+  const { feed, hasSupabaseEnv } = await getFeedPageState(24);
+  const preview = !hasSupabaseEnv;
 
   return (
     <div className="workspace-page">
@@ -18,7 +19,7 @@ export default async function FeedPage() {
         </p>
       </section>
 
-      <FeedList feed={feed} />
+      <FeedList feed={feed} preview={preview} />
     </div>
   );
 }

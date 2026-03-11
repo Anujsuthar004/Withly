@@ -13,6 +13,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect("/");
   }
 
-  return <AppShell showAdmin={state.role === "admin"}>{children}</AppShell>;
+  const inboxCount = state.inboxCount ?? 0;
+
+  return (
+    <AppShell showAdmin={state.role === "admin"} inboxCount={inboxCount}>
+      {children}
+    </AppShell>
+  );
 }
 

@@ -19,6 +19,34 @@ export function JoinReviewPanel({
 }) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [cardErrors, setCardErrors] = useState<Record<string, string>>({});
+
+  async function handleReview(entryId: string, decision: "accepted" | "declined") {
+    if (preview) {
+      onStatus("This action is only available after sign-in.");
+      return;
+    }
+
+    setBusyId(entryId);
+    setCardErrors((current) => ({ ...current, [entryId]: "" }));
+
+    try {
+      const result = await reviewJoinRequestAction({ joinRequestId: entryId, decision });
+      onStatus(result.message);
+
+      if (result.ok) {
+        router.refresh();
+      } else {
+        setCardErrors((current) => ({ ...current, [entryId]: result.message }));
+      }
+    } catch {
+      const errorMessage = "Something went wrong. Please refresh and try again.";
+      onStatus(errorMessage);
+      setCardErrors((current) => ({ ...current, [entryId]: errorMessage }));
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   if (entries.length === 0) {
     return (
@@ -47,7 +75,7 @@ export function JoinReviewPanel({
         </div>
         <span className="status-dot">
           <ShieldAlert size={16} />
-          Pending replies
+          {entries.length} pending
         </span>
       </div>
 
@@ -64,20 +92,18 @@ export function JoinReviewPanel({
             <p className="review-about">{entry.joinerAboutMe || "No public bio yet."}</p>
             <blockquote>{entry.introMessage || "No intro included."}</blockquote>
 
+            {cardErrors[entry.id] ? (
+              <div className="inline-error" role="alert">
+                {cardErrors[entry.id]}
+              </div>
+            ) : null}
+
             <div className="button-row">
               <button
                 className="secondary-button compact"
                 type="button"
                 disabled={preview || busyId === entry.id}
-                onClick={() => {
-                  setBusyId(entry.id);
-                  void (async () => {
-                    const result = await reviewJoinRequestAction({ joinRequestId: entry.id, decision: "declined" });
-                    onStatus(result.message);
-                    setBusyId(null);
-                    if (result.ok) router.refresh();
-                  })();
-                }}
+                onClick={() => void handleReview(entry.id, "declined")}
               >
                 {preview ? "Preview mode only" : busyId === entry.id ? "Working..." : "Decline"}
               </button>
@@ -85,15 +111,7 @@ export function JoinReviewPanel({
                 className="primary-button compact"
                 type="button"
                 disabled={preview || busyId === entry.id}
-                onClick={() => {
-                  setBusyId(entry.id);
-                  void (async () => {
-                    const result = await reviewJoinRequestAction({ joinRequestId: entry.id, decision: "accepted" });
-                    onStatus(result.message);
-                    setBusyId(null);
-                    if (result.ok) router.refresh();
-                  })();
-                }}
+                onClick={() => void handleReview(entry.id, "accepted")}
               >
                 {preview ? "Preview mode only" : busyId === entry.id ? "Working..." : "Accept"}
               </button>
@@ -104,4 +122,3 @@ export function JoinReviewPanel({
     </section>
   );
 }
-
