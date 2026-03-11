@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { SUPPORT_EMAIL } from "@/lib/env";
@@ -6,6 +7,7 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <Link href="/" className="site-footer-brand">
+        <Image src="/tagalong-app-icon.svg" alt="Tag Along Logo" width={20} height={20} />
         Tag Along
       </Link>
 

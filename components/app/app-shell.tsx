@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -10,7 +11,6 @@ import {
   PlusCircle,
   Settings,
   ShieldAlert,
-  Tag,
   UserRound,
 } from "lucide-react";
 
@@ -66,7 +66,7 @@ export function AppShell({
     <div className="app-shell">
       <aside className="app-sidebar" aria-label="Primary">
         <Link href="/feed" className="app-brand">
-          <Tag size={20} />
+          <Image src="/tagalong-app-icon.svg" alt="Tag Along Logo" width={20} height={20} />
           Tag Along
         </Link>
 
@@ -112,7 +112,7 @@ export function AppShell({
         <header className="app-topbar">
           <div className="app-topbar-title">
             <Link href="/feed" className="app-topbar-brand">
-              <Tag size={20} />
+              <Image src="/tagalong-app-icon.svg" alt="Tag Along Logo" width={20} height={20} />
               Tag Along
             </Link>
             <span className="kicker">{showAdmin ? "Admin enabled" : "Member account"}</span>

@@ -1,0 +1,26 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2D9B8A"/>
+      <stop offset="100%" stop-color="#1D7A6B"/>
+    </linearGradient>
+    <clipPath id="icon-clip">
+      <rect width="120" height="120" rx="28"/>
+    </clipPath>
+  </defs>
+  <rect width="120" height="120" rx="28" fill="url(#grad)"/>
+
+  <g clip-path="url(#icon-clip)">
+    <!-- Left figure: white -->
+    <!-- Head -->
+    <circle cx="40" cy="34" r="16" fill="#FFFFFF"/>
+    <!-- Body: rounded rectangle below head -->
+    <rect x="22" y="50" width="36" height="52" rx="18" fill="#FFFFFF"/>
+
+    <!-- Right figure: peach, drawn after so it layers on top at overlap -->
+    <!-- Head -->
+    <circle cx="76" cy="34" r="16" fill="#FFB085"/>
+    <!-- Body -->
+    <rect x="58" y="50" width="36" height="52" rx="18" fill="#FFB085"/>
+  </g>
+</svg>
