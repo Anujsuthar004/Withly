@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { submitJoinRequestAction } from "@/app/workspace/actions";
+import { deleteRequestAction, submitJoinRequestAction } from "@/app/workspace/actions";
 import { JoinReviewPanel } from "@/components/app/join-review-panel";
 import { StatusBadge } from "@/components/app/status-badge";
 import type { FeedRequestCard, WorkspaceJoinReview, WorkspaceRequest } from "@/lib/supabase/types";
@@ -39,6 +39,7 @@ export function RequestDetailPage({
   const [status, setStatus] = useState("Open request ready.");
   const [intro, setIntro] = useState("");
   const [isJoining, setIsJoining] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const titleMeta = useMemo(() => {
     const chips = [];
@@ -120,9 +121,37 @@ export function RequestDetailPage({
         ) : null}
 
         {isOwner && myRequest ? (
-          <div className="summary-callout" style={{ marginTop: 16 }}>
-            Status: <strong>{myRequest.status}</strong> · {myRequest.pendingJoinCount} pending join request(s)
-            {myRequest.partnerDisplayName ? ` · Matched with ${myRequest.partnerDisplayName}` : ""}
+          <div className="summary-callout" style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              Status: <strong>{myRequest.status}</strong> · {myRequest.pendingJoinCount} pending join request(s)
+              {myRequest.partnerDisplayName ? ` · Matched with ${myRequest.partnerDisplayName}` : ""}
+            </div>
+            <button
+              className="secondary-button compact"
+              type="button"
+              disabled={preview || isDeleting}
+              onClick={() => {
+                if (preview) {
+                  setStatus("This action is only available after sign-in.");
+                  return;
+                }
+                if (!confirm("Are you sure you want to delete this request? This action cannot be undone.")) return;
+
+                setIsDeleting(true);
+                void (async () => {
+                  const result = await deleteRequestAction({ requestId: detail.id });
+                  setStatus(result.message);
+                  setIsDeleting(false);
+                  if (result.ok) {
+                    router.push("/requests");
+                    router.refresh();
+                  }
+                })();
+              }}
+            >
+              <Trash2 size={16} />
+              {isDeleting ? "..." : "Delete Request"}
+            </button>
           </div>
         ) : null}
       </section>

@@ -1,12 +1,33 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { BellRing } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { BellRing, Trash2 } from "lucide-react";
+
+import { deleteRequestAction } from "@/app/workspace/actions";
 
 import type { WorkspaceRequest } from "@/lib/supabase/types";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils";
 
 export function MyRequestsList({ requests }: { requests: WorkspaceRequest[] }) {
+  const router = useRouter();
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  async function handleDelete(requestId: string) {
+    if (!confirm("Are you sure you want to delete this request? This action cannot be undone.")) return;
+
+    setBusyId(requestId);
+    const result = await deleteRequestAction({ requestId });
+    setBusyId(null);
+
+    if (result.ok) {
+      router.refresh();
+    } else {
+      alert(result.message);
+    }
+  }
+
   return (
     <section className="panel request-list-panel">
       <div className="panel-heading">
@@ -55,6 +76,16 @@ export function MyRequestsList({ requests }: { requests: WorkspaceRequest[] }) {
                   Open chat
                 </Link>
               ) : null}
+              <button
+                className="secondary-button compact"
+                type="button"
+                disabled={busyId === request.id}
+                onClick={() => void handleDelete(request.id)}
+                title="Delete request"
+              >
+                <Trash2 size={16} />
+                {busyId === request.id ? "..." : "Delete"}
+              </button>
             </div>
           </article>
         ))}
