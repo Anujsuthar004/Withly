@@ -59,6 +59,7 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
           Privacy-first
         </span>
       </div>
+      <p className="panel-intro">Write the plan the way you would want to receive it: calm, specific, and easy to understand at a glance.</p>
 
       <div className="lane-switch">
         {(["social", "errand"] as const).map((option) => (
@@ -110,43 +111,20 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
           });
         }}
       >
-        <label>
-          Title
-          <input
-            type="text"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder={lane === "social" ? "Rooftop set and an after-walk" : "Hospital visit and pharmacy stop"}
-            minLength={6}
-            maxLength={120}
-            required
-            disabled={preview || isPending}
-          />
-        </label>
+        <section className="form-section">
+          <div className="form-section-head">
+            <h4>Plan basics</h4>
+            <p>Name the plan clearly, then describe the tone, timing, and what would make it feel safe.</p>
+          </div>
 
-        <label>
-          Description
-          <textarea
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            placeholder="State the mood, timing, expectations, and what would make the session feel safe."
-            minLength={24}
-            maxLength={600}
-            rows={4}
-            required
-            disabled={preview || isPending}
-          />
-        </label>
-
-        <div className="grid-two">
           <label>
-            Area
+            Title
             <input
               type="text"
-              value={areaLabel}
-              onChange={(event) => setAreaLabel(event.target.value)}
-              placeholder="Neighbourhood or landmark"
-              minLength={3}
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder={lane === "social" ? "Rooftop set and an after-walk" : "Hospital visit and pharmacy stop"}
+              minLength={6}
               maxLength={120}
               required
               disabled={preview || isPending}
@@ -154,71 +132,115 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
           </label>
 
           <label>
-            Meet time
-            <div className="input-icon-wrap">
-              <CalendarClock size={16} />
+            Description
+            <textarea
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="State the mood, timing, expectations, and what would make the session feel safe."
+              minLength={24}
+              maxLength={600}
+              rows={4}
+              required
+              disabled={preview || isPending}
+            />
+          </label>
+        </section>
+
+        <section className="form-section">
+          <div className="form-section-head">
+            <h4>Logistics</h4>
+            <p>Share just enough location and timing context for the right people to know if they fit.</p>
+          </div>
+
+          <div className="grid-two">
+            <label>
+              Area
               <input
-                type="datetime-local"
-                value={meetupAt}
-                onChange={(event) => setMeetupAt(event.target.value)}
+                type="text"
+                value={areaLabel}
+                onChange={(event) => setAreaLabel(event.target.value)}
+                placeholder="Neighbourhood or landmark"
+                minLength={3}
+                maxLength={120}
+                required
                 disabled={preview || isPending}
               />
-            </div>
-          </label>
-        </div>
+            </label>
 
-        <div className="grid-two">
-          <label>
-            Discovery radius: {radiusKm} km
-            <input
-              type="range"
-              min={1}
-              max={25}
-              value={radiusKm}
-              onChange={(event) => setRadiusKm(Number(event.target.value))}
-              disabled={preview || isPending}
-            />
-          </label>
+            <label>
+              Meet time
+              <div className="input-icon-wrap">
+                <CalendarClock size={16} />
+                <input
+                  type="datetime-local"
+                  value={meetupAt}
+                  onChange={(event) => setMeetupAt(event.target.value)}
+                  disabled={preview || isPending}
+                />
+              </div>
+            </label>
+          </div>
 
-          <label>
-            Tags
-            <input
-              type="text"
-              value={tags}
-              onChange={(event) => setTags(event.target.value)}
-              placeholder="comma, separated, tags"
-              disabled={preview || isPending}
-            />
-          </label>
-        </div>
+          <div className="grid-two">
+            <label className="range-field">
+              Discovery radius: {radiusKm} km
+              <input
+                type="range"
+                min={1}
+                max={25}
+                value={radiusKm}
+                onChange={(event) => setRadiusKm(Number(event.target.value))}
+                disabled={preview || isPending}
+              />
+            </label>
 
-        <div className="option-grid">
-          <label className="toggle-card">
-            <input
-              type="checkbox"
-              checked={verifiedOnly}
-              onChange={(event) => setVerifiedOnly(event.target.checked)}
-              disabled={preview || isPending}
-            />
-            <span>
-              <Shield size={16} />
-              Verified-only responses
-            </span>
-          </label>
+            <label>
+              Tags
+              <input
+                type="text"
+                value={tags}
+                onChange={(event) => setTags(event.target.value)}
+                placeholder="comma, separated, tags"
+                disabled={preview || isPending}
+              />
+            </label>
+          </div>
+        </section>
 
-          <label className="toggle-card">
-            <input
-              type="checkbox"
-              checked={checkInEnabled}
-              onChange={(event) => setCheckInEnabled(event.target.checked)}
-              disabled={preview || isPending}
-            />
-            <span>
-              <Sparkles size={16} />
-              Check-in ready session
-            </span>
-          </label>
-        </div>
+        <section className="form-section">
+          <div className="form-section-head">
+            <h4>Safety defaults</h4>
+            <p>Set your non-negotiables up front so the conversation starts with the right expectations.</p>
+          </div>
+
+          <div className="option-grid">
+            <label className="toggle-card">
+              <input
+                type="checkbox"
+                checked={verifiedOnly}
+                onChange={(event) => setVerifiedOnly(event.target.checked)}
+                disabled={preview || isPending}
+              />
+              <span>
+                <Shield size={16} />
+                Verified-only responses
+              </span>
+            </label>
+
+            <label className="toggle-card">
+              <input
+                type="checkbox"
+                checked={checkInEnabled}
+                onChange={(event) => setCheckInEnabled(event.target.checked)}
+                disabled={preview || isPending}
+              />
+              <span>
+                <Sparkles size={16} />
+                Check-in ready session
+              </span>
+            </label>
+          </div>
+        </section>
 
         {hasTurnstileEnv ? (
           <TurnstileWidget

@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { ProfilePanel } from "@/components/app/profile-panel";
 import type { WorkspaceProfile } from "@/lib/supabase/types";
-import { StatusBadge } from "@/components/app/status-badge";
+import { WorkspacePageHeader } from "@/components/app/workspace-page-header";
 
 export function ProfilePage({
   profile,
@@ -19,9 +19,12 @@ export function ProfilePage({
 
   return (
     <div className="workspace-page">
-      <section className="workspace-hero-actions" style={{ padding: 0, background: "transparent", border: 0, boxShadow: "none" }}>
-        <StatusBadge message={status} />
-      </section>
+      <WorkspacePageHeader
+        kicker="Profile"
+        title="Present yourself clearly before anyone replies."
+        intro="A calm, complete profile gives people the context they need to feel comfortable responding."
+        status={status}
+      />
       <ProfilePanel profile={profile} preview={preview} onStatus={setStatus} />
     </div>
   );

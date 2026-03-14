@@ -53,7 +53,7 @@ export default async function ExploreRequestPage({ params }: { params: Promise<{
           ))}
         </div>
 
-        <div className="button-row" style={{ marginTop: 18 }}>
+        <div className="button-row request-detail-actions">
           <Link className="primary-button" href={`/?next=${encodeURIComponent(`/requests/${request.id}`)}`}>
             Sign in to request to join
           </Link>

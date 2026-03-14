@@ -29,6 +29,7 @@ export function SessionPanel({
           Live chat
         </span>
       </div>
+      <p className="panel-intro">Once a plan is confirmed, keep the details, updates, and safety check-ins in one private thread.</p>
 
       <div className="summary-callout summary-callout-teal">
         <p>Keep first meetups in public places, confirm an exact landmark in chat, and reach out quickly if you need moderation help.</p>

@@ -40,6 +40,7 @@ export function MyRequestsList({ requests }: { requests: WorkspaceRequest[] }) {
           {requests.length} tracked
         </span>
       </div>
+      <p className="panel-intro">Keep an eye on what is still open, what is drawing replies, and which plans are ready to move into a real conversation.</p>
 
       <div className="summary-list">
         {requests.length === 0 ? (
@@ -93,4 +94,3 @@ export function MyRequestsList({ requests }: { requests: WorkspaceRequest[] }) {
     </section>
   );
 }
-

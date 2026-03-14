@@ -36,6 +36,7 @@ export function ProfilePanel({
           {profile.homeArea || "Area not set"}
         </span>
       </div>
+      <p className="panel-intro">Keep the essentials current so people understand who they are talking to before they ever reply.</p>
 
       <form
         className="stack-form"
@@ -51,39 +52,48 @@ export function ProfilePanel({
           });
         }}
       >
-        <label>
-          Display name
-          <input
-            type="text"
-            value={form.displayName}
-            onChange={(event) => setForm((current) => ({ ...current, displayName: event.target.value }))}
-            minLength={2}
-            maxLength={60}
-            disabled={preview || isPending}
-          />
-        </label>
+        <section className="form-section">
+          <div className="form-section-head">
+            <h4>Public details</h4>
+            <p>Make this recognisable, calm, and honest. People should know who they are meeting in a few seconds.</p>
+          </div>
 
-        <label>
-          About you
-          <textarea
-            rows={3}
-            value={form.aboutMe}
-            onChange={(event) => setForm((current) => ({ ...current, aboutMe: event.target.value }))}
-            maxLength={300}
-            disabled={preview || isPending}
-          />
-        </label>
+          <div className="grid-two">
+            <label>
+              Display name
+              <input
+                type="text"
+                value={form.displayName}
+                onChange={(event) => setForm((current) => ({ ...current, displayName: event.target.value }))}
+                minLength={2}
+                maxLength={60}
+                disabled={preview || isPending}
+              />
+            </label>
 
-        <label>
-          Home area
-          <input
-            type="text"
-            value={form.homeArea}
-            onChange={(event) => setForm((current) => ({ ...current, homeArea: event.target.value }))}
-            maxLength={120}
-            disabled={preview || isPending}
-          />
-        </label>
+            <label>
+              Home area
+              <input
+                type="text"
+                value={form.homeArea}
+                onChange={(event) => setForm((current) => ({ ...current, homeArea: event.target.value }))}
+                maxLength={120}
+                disabled={preview || isPending}
+              />
+            </label>
+          </div>
+
+          <label>
+            About you
+            <textarea
+              rows={3}
+              value={form.aboutMe}
+              onChange={(event) => setForm((current) => ({ ...current, aboutMe: event.target.value }))}
+              maxLength={300}
+              disabled={preview || isPending}
+            />
+          </label>
+        </section>
 
         <button className="secondary-button" type="submit" disabled={preview || isPending}>
           {preview ? "Preview mode only" : isPending ? "Saving..." : "Save profile"}
@@ -92,4 +102,3 @@ export function ProfilePanel({
     </section>
   );
 }
-

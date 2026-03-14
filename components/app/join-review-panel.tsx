@@ -51,16 +51,17 @@ export function JoinReviewPanel({
   if (entries.length === 0) {
     return (
       <section className="panel review-panel">
-        <div className="panel-heading">
-          <div>
-            <p className="kicker">Join review</p>
-            <h3>Review the people who want to join.</h3>
-          </div>
+      <div className="panel-heading">
+        <div>
+          <p className="kicker">Join review</p>
+          <h3>Review the people who want to join.</h3>
+        </div>
           <span className="status-dot">
             <ShieldAlert size={16} />
             No pending
           </span>
         </div>
+        <p className="panel-intro">Replies stay in one place so you can look for alignment, clarity, and any safety signals before deciding.</p>
         <div className="empty-card">No pending join requests right now.</div>
       </section>
     );
@@ -78,6 +79,7 @@ export function JoinReviewPanel({
           {entries.length} pending
         </span>
       </div>
+      <p className="panel-intro">Read each introduction with enough context to make a quick, confident decision without losing the thread.</p>
 
       <div className="review-list">
         {entries.map((entry) => (

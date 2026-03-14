@@ -19,7 +19,7 @@ export default async function RequestDetailRoute({ params }: { params: Promise<{
   if (!feedCard && !myRequest) {
     return (
       <div className="workspace-page">
-        <section className="workspace-hero-actions" style={{ padding: 0, background: "transparent", border: 0, boxShadow: "none" }}>
+        <section className="request-detail-status">
           <div className="setup-banner" role="status" aria-live="polite">
             <p className="kicker">Request</p>
             <p>{publicRequest.requestError}</p>

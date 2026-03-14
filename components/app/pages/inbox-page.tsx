@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { JoinReviewPanel } from "@/components/app/join-review-panel";
 import { SessionPanel } from "@/components/app/session-panel";
-import { StatusBadge } from "@/components/app/status-badge";
+import { WorkspacePageHeader } from "@/components/app/workspace-page-header";
 import type { WorkspaceSnapshot } from "@/lib/supabase/types";
 
 export function InboxPage({
@@ -22,11 +22,14 @@ export function InboxPage({
 
   return (
     <div className="workspace-page">
-      <section className="workspace-hero-actions" style={{ padding: 0, background: "transparent", border: 0, boxShadow: "none" }}>
-        <StatusBadge message={status} />
-      </section>
+      <WorkspacePageHeader
+        kicker="Inbox"
+        title="Keep replies moving toward a confident yes."
+        intro="Review introductions, confirm the right fit, and keep any matched plan coordinated in one place."
+        status={status}
+      />
 
-      <div className="workspace-content" style={{ gridTemplateColumns: "minmax(0, 1fr)" }}>
+      <div className="workspace-content workspace-content-single">
         {snapshot.activeSession ? (
           <SessionPanel session={snapshot.activeSession} currentUserId={snapshot.profile.id} onStatus={setStatus} />
         ) : (

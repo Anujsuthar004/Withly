@@ -57,7 +57,7 @@ export function RequestDetailPage({
 
   return (
     <div className="workspace-page">
-      <section className="workspace-hero-actions" style={{ padding: 0, background: "transparent", border: 0, boxShadow: "none" }}>
+      <section className="request-detail-status">
         <StatusBadge message={unavailableMessage || status} />
       </section>
 
@@ -89,7 +89,7 @@ export function RequestDetailPage({
         ) : null}
 
         {!isOwner ? (
-          <div className="join-box" style={{ marginTop: 16 }}>
+          <div className="join-box request-detail-join">
             <textarea
               rows={3}
               value={intro}
@@ -126,7 +126,7 @@ export function RequestDetailPage({
         ) : null}
 
         {isOwner && myRequest ? (
-          <div className="summary-callout" style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div className="summary-callout summary-callout-row">
             <div>
               Status: <strong>{myRequest.status}</strong> · {myRequest.pendingJoinCount} pending join request(s)
               {myRequest.partnerDisplayName ? ` · Matched with ${myRequest.partnerDisplayName}` : ""}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { MyRequestsList } from "@/components/app/my-requests-list";
+import { WorkspacePageHeader } from "@/components/app/workspace-page-header";
 import { getMyRequestsPageState } from "@/lib/supabase/queries";
 
 export const dynamic = "force-dynamic";
@@ -10,24 +11,18 @@ export default async function MyRequestsPage() {
 
   return (
     <div className="workspace-page">
-      <section className="section-title">
-        <p className="kicker">My requests</p>
-        <h2>Track what you’ve posted and who responded.</h2>
-        <p>See what is live, who replied, and which plans are moving toward confirmation.</p>
-        <div className="section-action-row">
+      <WorkspacePageHeader
+        kicker="My requests"
+        title="Track the plans you already put into motion."
+        intro="See which requests are still open, which ones drew replies, and which conversations are moving toward a match."
+        status={setupError && !preview ? setupError : undefined}
+        actions={
           <Link className="secondary-button compact" href="/requests/new">
             Create a request
           </Link>
-        </div>
-      </section>
-      {setupError && !preview ? (
-        <section className="setup-banner" role="status" aria-live="polite">
-          <p className="kicker">My requests</p>
-          <p>{setupError}</p>
-        </section>
-      ) : (
-        <MyRequestsList requests={snapshot.myRequests} />
-      )}
+        }
+      />
+      {setupError && !preview ? null : <MyRequestsList requests={snapshot.myRequests} />}
     </div>
   );
 }

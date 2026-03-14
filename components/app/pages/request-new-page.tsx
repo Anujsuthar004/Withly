@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { RequestComposer } from "@/components/request-composer";
-import { StatusBadge } from "@/components/app/status-badge";
+import { WorkspacePageHeader } from "@/components/app/workspace-page-header";
 
 export function RequestNewPage({ preview, initialStatus }: { preview: boolean; initialStatus?: string }) {
   const [status, setStatus] = useState(
@@ -12,10 +12,12 @@ export function RequestNewPage({ preview, initialStatus }: { preview: boolean; i
 
   return (
     <div className="workspace-page">
-      <section className="workspace-hero-actions" style={{ padding: 0, background: "transparent", border: 0, boxShadow: "none" }}>
-        <StatusBadge message={status} />
-      </section>
-
+      <WorkspacePageHeader
+        kicker="Post"
+        title="Write a plan that feels easy to trust."
+        intro="Good requests feel specific without oversharing. Set the tone, logistics, and safety defaults in one pass."
+        status={status}
+      />
       <RequestComposer preview={preview} onStatus={setStatus} />
     </div>
   );

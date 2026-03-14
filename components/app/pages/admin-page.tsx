@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { AdminPanel } from "@/components/app/admin-panel";
-import { StatusBadge } from "@/components/app/status-badge";
+import { WorkspacePageHeader } from "@/components/app/workspace-page-header";
 import type { AdminDashboard } from "@/lib/supabase/types";
 
 export function AdminPage({
@@ -17,11 +17,13 @@ export function AdminPage({
 
   return (
     <div className="workspace-page">
-      <section className="workspace-hero-actions" style={{ padding: 0, background: "transparent", border: 0, boxShadow: "none" }}>
-        <StatusBadge message={status} />
-      </section>
+      <WorkspacePageHeader
+        kicker="Admin"
+        title="Review moderation work with more context."
+        intro="See open reports, deletion requests, and platform health signals without jumping between screens."
+        status={status}
+      />
       <AdminPanel dashboard={dashboard} preview={preview} onStatus={setStatus} />
     </div>
   );
 }
-
