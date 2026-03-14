@@ -22,13 +22,17 @@ export function StaticPageShell({ kicker, title, intro, sections }: StaticPageSh
         <p className="kicker">{kicker}</p>
         <h1>{title}</h1>
         <p>{intro}</p>
-        <p className="static-page-meta">
-          Support: <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
-          {" • "}
-          <Link href="/">Home</Link>
-          {" • "}
-          <Link href="/workspace">Workspace</Link>
-        </p>
+        <div className="static-page-meta">
+          <a className="ghost-button compact" href={`mailto:${SUPPORT_EMAIL}`}>
+            Contact support
+          </a>
+          <Link className="ghost-button compact" href="/">
+            Home
+          </Link>
+          <Link className="ghost-button compact" href="/workspace">
+            Workspace
+          </Link>
+        </div>
       </section>
 
       <section className="panel static-page-panel">

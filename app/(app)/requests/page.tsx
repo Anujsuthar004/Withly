@@ -13,9 +13,12 @@ export default async function MyRequestsPage() {
       <section className="section-title">
         <p className="kicker">My requests</p>
         <h2>Track what you’ve posted and who responded.</h2>
-        <p>
-          Need to post something new? <Link href="/requests/new">Create a request</Link>.
-        </p>
+        <p>See what is live, who replied, and which plans are moving toward confirmation.</p>
+        <div className="section-action-row">
+          <Link className="secondary-button compact" href="/requests/new">
+            Create a request
+          </Link>
+        </div>
       </section>
       {setupError && !preview ? (
         <section className="setup-banner" role="status" aria-live="polite">

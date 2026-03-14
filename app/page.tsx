@@ -1,4 +1,5 @@
 import { ArrowRight, ShieldCheck, Sparkles, Waves } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AuthPanel } from "@/components/auth-panel";
@@ -43,6 +44,15 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             basics first, then move into a private space once a plan is confirmed.
           </p>
 
+          <div className="hero-action-row">
+            <a className="primary-button compact" href="#open-requests">
+              Browse open requests
+            </a>
+            <Link className="ghost-button compact" href="/safety/reporting">
+              How safety works
+            </Link>
+          </div>
+
           <div className="bullet-grid">
             <article>
               <Sparkles size={18} />
@@ -74,7 +84,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       ) : null}
 
       {feed.length > 0 ? (
-        <section className="preview-section">
+        <section className="preview-section" id="open-requests">
           <div className="section-title">
             <p className="kicker">Open Requests</p>
             <h2>A small public window into what is active right now.</h2>

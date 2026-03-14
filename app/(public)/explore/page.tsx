@@ -14,10 +14,15 @@ export default async function ExplorePage() {
       <section className="section-title">
         <p className="kicker">Explore</p>
         <h2>Browse open requests before you sign in.</h2>
-        <p>
-          You can read the basics publicly. To request to join or post your own plan,{" "}
-          <Link href="/?next=%2Ffeed">sign in</Link>.
-        </p>
+        <p>You can browse the public basics here, then move into your workspace when you want to respond or post.</p>
+        <div className="section-action-row">
+          <Link className="primary-button compact" href="/?next=%2Ffeed">
+            Sign in to respond
+          </Link>
+          <Link className="ghost-button compact" href="/">
+            Back home
+          </Link>
+        </div>
       </section>
 
       {feedError ? (
@@ -58,6 +63,11 @@ export default async function ExplorePage() {
                       {tag}
                     </span>
                   ))}
+                </div>
+                <div className="button-row card-action-row">
+                  <Link className="ghost-button compact" href={`/explore/requests/${request.id}`}>
+                    View details
+                  </Link>
                 </div>
               </article>
             ))}

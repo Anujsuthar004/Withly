@@ -31,8 +31,12 @@ export function SessionPanel({
       </div>
 
       <div className="summary-callout summary-callout-teal">
-        Keep first meetups in public places, confirm an exact landmark in chat, and contact{" "}
-        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> for urgent moderation help.
+        <p>Keep first meetups in public places, confirm an exact landmark in chat, and reach out quickly if you need moderation help.</p>
+        <div className="summary-callout-actions">
+          <a className="ghost-button compact" href={`mailto:${SUPPORT_EMAIL}`}>
+            Email support
+          </a>
+        </div>
       </div>
 
       <div className="session-summary">
@@ -56,4 +60,3 @@ export function SessionPanel({
     </section>
   );
 }
-

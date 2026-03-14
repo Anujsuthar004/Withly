@@ -21,9 +21,12 @@ export default async function FeedPage() {
       <section className="section-title">
         <p className="kicker">Feed</p>
         <h2>Browse requests and open the ones you can support.</h2>
-        <p>
-          Want to post instead? <Link href="/requests/new">Create a request</Link>.
-        </p>
+        <p>Browse what is active, then jump in with a clear intro when something fits.</p>
+        <div className="section-action-row">
+          <Link className="secondary-button compact" href="/requests/new">
+            Create a request
+          </Link>
+        </div>
       </section>
 
       {feedError ? null : <FeedList feed={feed} preview={preview} />}
