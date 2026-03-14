@@ -6,6 +6,7 @@ import { Compass, ShieldAlert, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { deleteRequestAction, submitJoinRequestAction } from "@/app/workspace/actions";
+import { StatusBadge } from "@/components/app/status-badge";
 import type { FeedRequestCard } from "@/lib/supabase/types";
 import { formatDateTime } from "@/lib/utils";
 
@@ -27,6 +28,8 @@ export function FeedList({
   const [joinBusyId, setJoinBusyId] = useState<string | null>(null);
   const [expandedJoinId, setExpandedJoinId] = useState<string | null>(null);
   const [deleteBusyId, setDeleteBusyId] = useState<string | null>(null);
+  const [dismissedRequestIds, setDismissedRequestIds] = useState<string[]>([]);
+  const [feedback, setFeedback] = useState("");
   const ownerRequestIdSet = useMemo(() => new Set(ownerRequestIds), [ownerRequestIds]);
 
   const filteredFeed = useMemo(() => {
@@ -41,9 +44,16 @@ export function FeedList({
     });
   }, [deferredSearch, feed]);
 
+  const visibleFeed = useMemo(
+    () => filteredFeed.filter((entry) => !dismissedRequestIds.includes(entry.id)),
+    [dismissedRequestIds, filteredFeed]
+  );
+
   async function handleDelete(requestId: string) {
     if (preview) {
-      onStatus?.("This action is only available after sign-in.");
+      const message = "This action is only available after sign-in.";
+      setFeedback(message);
+      onStatus?.(message);
       return;
     }
 
@@ -55,10 +65,16 @@ export function FeedList({
 
     try {
       const result = await deleteRequestAction({ requestId });
+      setFeedback(result.message);
       onStatus?.(result.message);
       if (result.ok) {
+        setDismissedRequestIds((current) => [...current, requestId]);
         router.refresh();
       }
+    } catch {
+      const message = "Could not delete this request right now. Please try again.";
+      setFeedback(message);
+      onStatus?.(message);
     } finally {
       setDeleteBusyId(null);
     }
@@ -73,7 +89,7 @@ export function FeedList({
         </div>
         <span className="status-dot">
           <Compass size={16} />
-          {filteredFeed.length} live requests
+          {visibleFeed.length} live requests
         </span>
       </div>
 
@@ -88,12 +104,14 @@ export function FeedList({
         </label>
       ) : null}
 
+      {feedback ? <StatusBadge message={feedback} /> : null}
+
       <div className="feed-list">
-        {filteredFeed.length === 0 ? (
+        {visibleFeed.length === 0 ? (
           <div className="empty-card">No matching requests. Try a broader search.</div>
         ) : null}
 
-        {filteredFeed.map((request) => (
+        {visibleFeed.map((request) => (
           <article key={request.id} className={`request-card lane-${request.lane}`}>
             <div className="request-card-top">
               <div>
