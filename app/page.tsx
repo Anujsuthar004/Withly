@@ -3,22 +3,15 @@ import { redirect } from "next/navigation";
 
 import { AuthPanel } from "@/components/auth-panel";
 import { SiteFooter } from "@/components/site-footer";
+import { normalizeNextPath } from "@/lib/navigation";
 import { getLandingPageState } from "@/lib/supabase/queries";
 import { formatDateTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-function normalizeNextPath(raw: unknown) {
-  if (typeof raw !== "string") return "/feed";
-  const value = raw.trim();
-  if (!value.startsWith("/")) return "/feed";
-  if (value.startsWith("//")) return "/feed";
-  return value;
-}
-
 export default async function HomePage({ searchParams }: { searchParams: Promise<Record<string, string | string[]>> }) {
   const params = await searchParams;
-  const { user, feed, hasSupabaseEnv } = await getLandingPageState();
+  const { user, feed, feedError, hasSupabaseEnv } = await getLandingPageState();
   const nextPath = normalizeNextPath(params.next);
 
   if (user) {
@@ -72,6 +65,14 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         <AuthPanel nextPath={nextPath} />
       </section>
 
+      {feedError ? (
+        <section className="setup-banner" role="status" aria-live="polite">
+          <p className="kicker">Open Requests</p>
+          <h2>Open requests are temporarily unavailable.</h2>
+          <p>{feedError}</p>
+        </section>
+      ) : null}
+
       {feed.length > 0 ? (
         <section className="preview-section">
           <div className="section-title">
@@ -95,11 +96,15 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
                   {request.verifiedOnly ? <span className="mini-chip">Verified only</span> : null}
                 </div>
                 <p className="request-description">{request.description}</p>
-                <div className="request-meta">
-                  <span>{request.areaLabel}</span>
-                  <span>{formatDateTime(request.meetupAt)}</span>
-                  <span>{request.hostDisplayName}</span>
-                </div>
+                {request.areaLabel || request.meetupAt || request.hostDisplayName ? (
+                  <div className="request-meta">
+                    {request.areaLabel ? <span>{request.areaLabel}</span> : null}
+                    {request.meetupAt ? <span>{formatDateTime(request.meetupAt)}</span> : null}
+                    {request.hostDisplayName ? <span>{request.hostDisplayName}</span> : null}
+                  </div>
+                ) : (
+                  <p className="request-privacy-note">Exact meetup details are shared privately after both people are aligned.</p>
+                )}
                 <div className="tag-row">
                   {request.tags.map((tag) => (
                     <span key={tag} className="tag-chip">

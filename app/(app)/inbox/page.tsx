@@ -4,7 +4,6 @@ import { getInboxPageState } from "@/lib/supabase/queries";
 export const dynamic = "force-dynamic";
 
 export default async function InboxRoute() {
-  const { snapshot, preview } = await getInboxPageState();
-  return <InboxPage snapshot={snapshot} preview={preview} />;
+  const { snapshot, preview, setupError } = await getInboxPageState();
+  return <InboxPage snapshot={snapshot} preview={preview} initialStatus={setupError || undefined} />;
 }
-

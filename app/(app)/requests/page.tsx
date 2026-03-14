@@ -6,7 +6,7 @@ import { getMyRequestsPageState } from "@/lib/supabase/queries";
 export const dynamic = "force-dynamic";
 
 export default async function MyRequestsPage() {
-  const { snapshot } = await getMyRequestsPageState();
+  const { snapshot, preview, setupError } = await getMyRequestsPageState();
 
   return (
     <div className="workspace-page">
@@ -17,8 +17,14 @@ export default async function MyRequestsPage() {
           Need to post something new? <Link href="/requests/new">Create a request</Link>.
         </p>
       </section>
-      <MyRequestsList requests={snapshot.myRequests} />
+      {setupError && !preview ? (
+        <section className="setup-banner" role="status" aria-live="polite">
+          <p className="kicker">My requests</p>
+          <p>{setupError}</p>
+        </section>
+      ) : (
+        <MyRequestsList requests={snapshot.myRequests} />
+      )}
     </div>
   );
 }
-

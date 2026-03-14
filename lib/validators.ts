@@ -5,11 +5,11 @@ export const feedRequestCardSchema = z.object({
   lane: z.enum(["social", "errand"]),
   title: z.string(),
   description: z.string(),
-  areaLabel: z.string(),
+  areaLabel: z.string().nullable(),
   meetupAt: z.string().nullable(),
   createdAt: z.string(),
   verifiedOnly: z.boolean(),
-  hostDisplayName: z.string(),
+  hostDisplayName: z.string().nullable(),
   hostVerified: z.boolean(),
   tags: z.array(z.string()),
 });

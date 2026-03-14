@@ -5,9 +5,9 @@ import { useState } from "react";
 import { RequestComposer } from "@/components/request-composer";
 import { StatusBadge } from "@/components/app/status-badge";
 
-export function RequestNewPage({ preview }: { preview: boolean }) {
+export function RequestNewPage({ preview, initialStatus }: { preview: boolean; initialStatus?: string }) {
   const [status, setStatus] = useState(
-    preview ? "Preview mode is active. Sign in to post a request." : "Share a clear plan with strong defaults."
+    initialStatus ?? (preview ? "Preview mode is active. Sign in to post a request." : "Share a clear plan with strong defaults.")
   );
 
   return (
@@ -20,4 +20,3 @@ export function RequestNewPage({ preview }: { preview: boolean }) {
     </div>
   );
 }
-

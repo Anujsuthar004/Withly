@@ -2,18 +2,30 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { SiteFooter } from "@/components/site-footer";
-import { getLandingFeed } from "@/lib/supabase/queries";
-import { formatDateTime } from "@/lib/utils";
+import { getPublicRequestDetail } from "@/lib/supabase/queries";
 
 export const dynamic = "force-dynamic";
 
 export default async function ExploreRequestPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const feed = await getLandingFeed(60);
-  const request = feed.find((entry) => entry.id === id);
+  const { request, requestError } = await getPublicRequestDetail(id);
+
+  if (!request && !requestError) {
+    notFound();
+  }
 
   if (!request) {
-    notFound();
+    return (
+      <main className="marketing-page">
+        <section className="setup-banner" role="status" aria-live="polite">
+          <p className="kicker">Request</p>
+          <h2>Request details are temporarily unavailable.</h2>
+          <p>{requestError}</p>
+        </section>
+
+        <SiteFooter />
+      </main>
+    );
   }
 
   return (
@@ -21,9 +33,7 @@ export default async function ExploreRequestPage({ params }: { params: Promise<{
       <section className="section-title">
         <p className="kicker">Request</p>
         <h2>{request.title}</h2>
-        <p>
-          {request.areaLabel} · {formatDateTime(request.meetupAt)} · Hosted by {request.hostDisplayName}
-        </p>
+        <p>Exact meetup details stay private until both people decide to continue.</p>
       </section>
 
       <section className="panel">
@@ -57,4 +67,3 @@ export default async function ExploreRequestPage({ params }: { params: Promise<{
     </main>
   );
 }
-

@@ -10,12 +10,14 @@ import type { WorkspaceSnapshot } from "@/lib/supabase/types";
 export function InboxPage({
   snapshot,
   preview,
+  initialStatus,
 }: {
   snapshot: WorkspaceSnapshot;
   preview: boolean;
+  initialStatus?: string;
 }) {
   const [status, setStatus] = useState(
-    preview ? "Preview mode is active. Sign in to review replies and chat." : "Inbox ready."
+    initialStatus ?? (preview ? "Preview mode is active. Sign in to review replies and chat." : "Inbox ready.")
   );
 
   return (
@@ -44,4 +46,3 @@ export function InboxPage({
     </div>
   );
 }
-

@@ -29,7 +29,7 @@ export function FeedList({
     if (!query) return feed;
 
     return feed.filter((entry) => {
-      const haystack = [entry.title, entry.description, entry.areaLabel, entry.hostDisplayName, entry.tags.join(" ")]
+      const haystack = [entry.title, entry.description, entry.areaLabel ?? "", entry.hostDisplayName ?? "", entry.tags.join(" ")]
         .join(" ")
         .toLowerCase();
       return haystack.includes(query);
@@ -82,11 +82,15 @@ export function FeedList({
 
             <p className="request-description">{request.description}</p>
 
-            <div className="request-meta">
-              <span>{request.areaLabel}</span>
-              <span>{formatDateTime(request.meetupAt)}</span>
-              <span>{request.hostDisplayName}</span>
-            </div>
+            {request.areaLabel || request.meetupAt || request.hostDisplayName ? (
+              <div className="request-meta">
+                {request.areaLabel ? <span>{request.areaLabel}</span> : null}
+                {request.meetupAt ? <span>{formatDateTime(request.meetupAt)}</span> : null}
+                {request.hostDisplayName ? <span>{request.hostDisplayName}</span> : null}
+              </div>
+            ) : (
+              <p className="request-privacy-note">Exact meetup details are shared privately after both people are aligned.</p>
+            )}
 
             <div className="tag-row">
               {request.tags.map((tag) => (

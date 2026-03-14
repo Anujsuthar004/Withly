@@ -1,6 +1,15 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("navigation and page accessibility", () => {
+  test("auth callback sanitizes unsafe next paths", async ({ request }) => {
+    const response = await request.get("/auth/callback?next=%2F%2Fevil.example", {
+      maxRedirects: 0,
+    });
+
+    expect(response.status()).toBe(307);
+    expect(response.headers().location).toMatch(/\/workspace$/);
+  });
+
   test("landing page has working footer links", async ({ page }) => {
     await page.goto("/");
 
@@ -26,6 +35,7 @@ test.describe("navigation and page accessibility", () => {
     // The explore page may use an h2 heading in preview mode
     await expect(page.locator("h1, h2").first()).toBeVisible();
     expect(page.url()).toContain("/explore");
+    await expect(page.getByText("Exact meetup details are shared privately after both people are aligned.").first()).toBeVisible();
   });
 
   test("unknown routes do not crash the app", async ({ page }) => {

@@ -248,6 +248,9 @@ main {
 }
 
 .app-content {
+  display: grid;
+  gap: 24px;
+  align-content: start;
   width: min(1360px, calc(100% - 40px));
   margin: 0 auto;
   padding: 0 0 90px;
@@ -830,6 +833,11 @@ main {
 .review-about,
 .request-description {
   color: var(--text-soft);
+}
+
+.request-privacy-note {
+  color: var(--muted);
+  font-size: 0.95rem;
 }
 
 .review-card blockquote {

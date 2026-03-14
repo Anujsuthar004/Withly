@@ -3,11 +3,19 @@
 import { useState } from "react";
 
 import { ProfilePanel } from "@/components/app/profile-panel";
-import { StatusBadge } from "@/components/app/status-badge";
 import type { WorkspaceProfile } from "@/lib/supabase/types";
+import { StatusBadge } from "@/components/app/status-badge";
 
-export function ProfilePage({ profile, preview }: { profile: WorkspaceProfile; preview: boolean }) {
-  const [status, setStatus] = useState(preview ? "Preview mode is active. Sign in to update your profile." : "Profile ready.");
+export function ProfilePage({
+  profile,
+  preview,
+  initialStatus,
+}: {
+  profile: WorkspaceProfile;
+  preview: boolean;
+  initialStatus?: string;
+}) {
+  const [status, setStatus] = useState(initialStatus ?? (preview ? "Preview mode is active. Sign in to update your profile." : "Profile ready."));
 
   return (
     <div className="workspace-page">
@@ -18,4 +26,3 @@ export function ProfilePage({ profile, preview }: { profile: WorkspaceProfile; p
     </div>
   );
 }
-

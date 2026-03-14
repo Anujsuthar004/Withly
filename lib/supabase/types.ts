@@ -6,11 +6,11 @@ export interface FeedRequestCard {
   lane: RequestLane;
   title: string;
   description: string;
-  areaLabel: string;
+  areaLabel: string | null;
   meetupAt: string | null;
   createdAt: string;
   verifiedOnly: boolean;
-  hostDisplayName: string;
+  hostDisplayName: string | null;
   hostVerified: boolean;
   tags: string[];
 }

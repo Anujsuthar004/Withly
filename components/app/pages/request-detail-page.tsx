@@ -15,10 +15,10 @@ type RequestDetail = {
   lane: "social" | "errand";
   title: string;
   description?: string;
-  areaLabel: string;
+  areaLabel: string | null;
   meetupAt: string | null;
   verifiedOnly: boolean;
-  hostDisplayName?: string;
+  hostDisplayName?: string | null;
   tags?: string[];
 };
 
@@ -28,12 +28,14 @@ export function RequestDetailPage({
   isOwner,
   myRequest,
   joinReviews,
+  unavailableMessage = "",
 }: {
   detail: RequestDetail;
   preview: boolean;
   isOwner: boolean;
   myRequest: WorkspaceRequest | null;
   joinReviews: WorkspaceJoinReview[];
+  unavailableMessage?: string;
 }) {
   const router = useRouter();
   const [status, setStatus] = useState("Open request ready.");
@@ -47,10 +49,16 @@ export function RequestDetailPage({
     return chips;
   }, [detail.verifiedOnly]);
 
+  const detailMeta = [
+    detail.areaLabel,
+    detail.meetupAt ? formatDateTime(detail.meetupAt) : null,
+    detail.hostDisplayName ? `Hosted by ${detail.hostDisplayName}` : null,
+  ].filter(Boolean);
+
   return (
     <div className="workspace-page">
       <section className="workspace-hero-actions" style={{ padding: 0, background: "transparent", border: 0, boxShadow: "none" }}>
-        <StatusBadge message={status} />
+        <StatusBadge message={unavailableMessage || status} />
       </section>
 
       <section className="panel">
@@ -58,10 +66,7 @@ export function RequestDetailPage({
           <div>
             <p className="kicker">{detail.lane === "social" ? "Social" : "Errand"}</p>
             <h3>{detail.title}</h3>
-            <p>
-              {detail.areaLabel} · {formatDateTime(detail.meetupAt)}
-              {detail.hostDisplayName ? ` · Hosted by ${detail.hostDisplayName}` : ""}
-            </p>
+            <p>{detailMeta.length > 0 ? detailMeta.join(" · ") : "Exact meetup details are shared privately once both people decide to move forward."}</p>
           </div>
           {titleMeta.length > 0 ? (
             <span className="mini-chip">
@@ -160,4 +165,3 @@ export function RequestDetailPage({
     </div>
   );
 }
-

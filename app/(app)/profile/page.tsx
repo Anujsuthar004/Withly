@@ -4,7 +4,6 @@ import { getWorkspaceSnapshot } from "@/lib/supabase/queries";
 export const dynamic = "force-dynamic";
 
 export default async function ProfileRoute() {
-  const { snapshot, preview } = await getWorkspaceSnapshot();
-  return <ProfilePage profile={snapshot.profile} preview={preview} />;
+  const { snapshot, preview, setupError } = await getWorkspaceSnapshot();
+  return <ProfilePage profile={snapshot.profile} preview={preview} initialStatus={setupError || undefined} />;
 }
-

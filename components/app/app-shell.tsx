@@ -33,10 +33,12 @@ export function AppShell({
   children,
   showAdmin,
   inboxCount = 0,
+  notice = "",
 }: {
   children: React.ReactNode;
   showAdmin: boolean;
   inboxCount?: number;
+  notice?: string;
 }) {
   const pathname = usePathname() ?? "";
 
@@ -126,7 +128,15 @@ export function AppShell({
           </div>
         </header>
 
-        <main className="app-content">{children}</main>
+        <main className="app-content">
+          {notice ? (
+            <div className="setup-banner" role="status" aria-live="polite">
+              <p className="kicker">System notice</p>
+              <p>{notice}</p>
+            </div>
+          ) : null}
+          {children}
+        </main>
       </div>
 
       <nav className="app-bottom-nav" aria-label="Primary (mobile)">
@@ -155,5 +165,4 @@ export function AppShell({
     </div>
   );
 }
-
 

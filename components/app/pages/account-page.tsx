@@ -5,8 +5,8 @@ import { useState } from "react";
 import { AccountPanel } from "@/components/app/account-panel";
 import { StatusBadge } from "@/components/app/status-badge";
 
-export function AccountPage({ preview }: { preview: boolean }) {
-  const [status, setStatus] = useState(preview ? "Preview mode is active. Sign in to manage your account." : "Account ready.");
+export function AccountPage({ preview, initialStatus }: { preview: boolean; initialStatus?: string }) {
+  const [status, setStatus] = useState(initialStatus ?? (preview ? "Preview mode is active. Sign in to manage your account." : "Account ready."));
 
   return (
     <div className="workspace-page">
@@ -17,4 +17,3 @@ export function AccountPage({ preview }: { preview: boolean }) {
     </div>
   );
 }
-

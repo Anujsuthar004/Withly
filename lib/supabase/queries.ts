@@ -1,21 +1,25 @@
-import { previewFeed, previewWorkspace } from "@/lib/mock-data";
-import { hasSupabaseEnv } from "@/lib/env";
+import { emptyWorkspaceSnapshot, previewFeed, previewWorkspace } from "@/lib/mock-data";
+import { hasSupabaseEnv, isProduction } from "@/lib/env";
 import type { AdminDashboard, FeedRequestCard, WorkspaceSnapshot } from "@/lib/supabase/types";
 import { getSupabaseServerClientOrNull } from "@/lib/supabase/server";
 import { adminDashboardSchema, feedRequestCardSchema, workspaceSnapshotSchema } from "@/lib/validators";
 
-function normalizeFeedPayload(payload: unknown): FeedRequestCard[] {
+const feedUnavailableMessage = "Open requests are temporarily unavailable. Please try again shortly.";
+const requestUnavailableMessage = "That request is temporarily unavailable. Please try again shortly.";
+const workspaceUnavailableMessage = "Workspace data is temporarily unavailable. Please refresh in a moment.";
+
+function normalizeFeedPayload(payload: unknown): FeedRequestCard[] | null {
   const parsed = feedRequestCardSchema.array().safeParse(payload ?? []);
   if (!parsed.success) {
-    return previewFeed;
+    return null;
   }
   return parsed.data;
 }
 
-function normalizeSnapshotPayload(payload: unknown): WorkspaceSnapshot {
+function normalizeSnapshotPayload(payload: unknown): WorkspaceSnapshot | null {
   const parsed = workspaceSnapshotSchema.safeParse(payload);
   if (!parsed.success) {
-    return previewWorkspace;
+    return null;
   }
   return parsed.data;
 }
@@ -41,10 +45,12 @@ export async function getAuthenticatedUser() {
   return user;
 }
 
-export async function getLandingFeed(limit = 8) {
+async function fetchLandingFeed(limit = 8) {
   const supabase = await getSupabaseServerClientOrNull();
   if (!supabase) {
-    return previewFeed.slice(0, limit);
+    return !isProduction
+      ? { feed: previewFeed.slice(0, limit), feedError: "" }
+      : { feed: [] as FeedRequestCard[], feedError: feedUnavailableMessage };
   }
 
   const { data, error } = await supabase.rpc("get_public_request_feed", {
@@ -52,33 +58,95 @@ export async function getLandingFeed(limit = 8) {
   });
 
   if (error) {
-    return previewFeed.slice(0, limit);
+    return { feed: [] as FeedRequestCard[], feedError: feedUnavailableMessage };
   }
 
-  return normalizeFeedPayload(data).slice(0, limit);
+  const normalized = normalizeFeedPayload(data);
+  if (!normalized) {
+    return { feed: [] as FeedRequestCard[], feedError: feedUnavailableMessage };
+  }
+
+  return { feed: normalized.slice(0, limit), feedError: "" };
+}
+
+export async function getLandingFeed(limit = 8) {
+  const { feed } = await fetchLandingFeed(limit);
+  return feed;
+}
+
+export async function getPublicRequestDetail(id: string) {
+  const supabase = await getSupabaseServerClientOrNull();
+  if (!supabase) {
+    if (!isProduction) {
+      return {
+        request: previewFeed.find((entry) => entry.id === id) ?? null,
+        requestError: "",
+      };
+    }
+
+    return {
+      request: null,
+      requestError: requestUnavailableMessage,
+    };
+  }
+
+  const { data, error } = await supabase.rpc("get_public_request_detail", {
+    request_id_input: id,
+  });
+
+  if (error) {
+    return {
+      request: null,
+      requestError: requestUnavailableMessage,
+    };
+  }
+
+  const parsed = feedRequestCardSchema.nullable().safeParse(data ?? null);
+  if (!parsed.success) {
+    return {
+      request: null,
+      requestError: requestUnavailableMessage,
+    };
+  }
+
+  return {
+    request: parsed.data,
+    requestError: "",
+  };
 }
 
 export async function getWorkspaceSnapshot() {
   const supabase = await getSupabaseServerClientOrNull();
   if (!supabase) {
     return {
-      snapshot: previewWorkspace,
-      preview: true,
-      setupError: "Some account features are unavailable right now, so a limited preview is showing.",
+      snapshot: !isProduction ? previewWorkspace : emptyWorkspaceSnapshot,
+      preview: !isProduction,
+      setupError: !isProduction
+        ? "Some account features are unavailable right now, so a limited preview is showing."
+        : workspaceUnavailableMessage,
     };
   }
 
   const { data, error } = await supabase.rpc("get_workspace_snapshot");
   if (error) {
     return {
-      snapshot: previewWorkspace,
+      snapshot: emptyWorkspaceSnapshot,
       preview: true,
-      setupError: "Workspace data is temporarily unavailable, so a limited preview is showing instead.",
+      setupError: workspaceUnavailableMessage,
+    };
+  }
+
+  const normalized = normalizeSnapshotPayload(data);
+  if (!normalized) {
+    return {
+      snapshot: emptyWorkspaceSnapshot,
+      preview: true,
+      setupError: workspaceUnavailableMessage,
     };
   }
 
   return {
-    snapshot: normalizeSnapshotPayload(data),
+    snapshot: normalized,
     preview: false,
     setupError: "",
   };
@@ -117,25 +185,27 @@ export async function getAdminDashboard() {
 }
 
 export async function getLandingPageState() {
-  const [user, feed] = await Promise.all([getAuthenticatedUser(), getLandingFeed()]);
+  const [user, landingFeed] = await Promise.all([getAuthenticatedUser(), fetchLandingFeed()]);
   return {
     user,
-    feed,
+    feed: landingFeed.feed,
+    feedError: landingFeed.feedError,
     hasSupabaseEnv,
   };
 }
 
 export async function getWorkspacePageState() {
-  const [user, feed, workspace, adminDashboard] = await Promise.all([
+  const [user, landingFeed, workspace, adminDashboard] = await Promise.all([
     getAuthenticatedUser(),
-    getLandingFeed(12),
+    fetchLandingFeed(12),
     getWorkspaceSnapshot(),
     getAdminDashboard(),
   ]);
 
   return {
     user,
-    feed,
+    feed: landingFeed.feed,
+    feedError: landingFeed.feedError,
     hasSupabaseEnv,
     adminDashboard,
     ...workspace,
@@ -143,8 +213,8 @@ export async function getWorkspacePageState() {
 }
 
 export async function getExplorePageState(limit = 18) {
-  const feed = await getLandingFeed(limit);
-  return { feed, hasSupabaseEnv };
+  const landingFeed = await fetchLandingFeed(limit);
+  return { feed: landingFeed.feed, feedError: landingFeed.feedError, hasSupabaseEnv };
 }
 
 export async function getAppLayoutState() {
@@ -164,8 +234,8 @@ export async function getAppLayoutState() {
 }
 
 export async function getFeedPageState(limit = 18) {
-  const [user, feed] = await Promise.all([getAuthenticatedUser(), getLandingFeed(limit)]);
-  return { user, feed, hasSupabaseEnv };
+  const [user, landingFeed] = await Promise.all([getAuthenticatedUser(), fetchLandingFeed(limit)]);
+  return { user, feed: landingFeed.feed, feedError: landingFeed.feedError, hasSupabaseEnv };
 }
 
 export async function getMyRequestsPageState() {

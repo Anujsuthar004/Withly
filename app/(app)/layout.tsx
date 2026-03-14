@@ -16,9 +16,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const inboxCount = state.inboxCount ?? 0;
 
   return (
-    <AppShell showAdmin={state.role === "admin"} inboxCount={inboxCount}>
+    <AppShell showAdmin={state.role === "admin"} inboxCount={inboxCount} notice={state.setupError}>
       {children}
     </AppShell>
   );
 }
-
