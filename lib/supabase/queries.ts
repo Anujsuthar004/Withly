@@ -234,8 +234,14 @@ export async function getAppLayoutState() {
 }
 
 export async function getFeedPageState(limit = 18) {
-  const [user, landingFeed] = await Promise.all([getAuthenticatedUser(), fetchLandingFeed(limit)]);
-  return { user, feed: landingFeed.feed, feedError: landingFeed.feedError, hasSupabaseEnv };
+  const [user, landingFeed, workspace] = await Promise.all([getAuthenticatedUser(), fetchLandingFeed(limit), getWorkspaceSnapshot()]);
+  return {
+    user,
+    feed: landingFeed.feed,
+    feedError: landingFeed.feedError,
+    hasSupabaseEnv,
+    ownerRequestIds: workspace.snapshot.myRequests.filter((request) => request.status === "open").map((request) => request.id),
+  };
 }
 
 export async function getMyRequestsPageState() {

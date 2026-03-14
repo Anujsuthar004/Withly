@@ -7,7 +7,7 @@ import { getFeedPageState } from "@/lib/supabase/queries";
 export const dynamic = "force-dynamic";
 
 export default async function FeedPage() {
-  const { feed, feedError, hasSupabaseEnv } = await getFeedPageState(24);
+  const { feed, feedError, hasSupabaseEnv, ownerRequestIds } = await getFeedPageState(24);
   const preview = !hasSupabaseEnv;
 
   return (
@@ -29,7 +29,7 @@ export default async function FeedPage() {
         </div>
       </section>
 
-      {feedError ? null : <FeedList feed={feed} preview={preview} />}
+      {feedError ? null : <FeedList feed={feed} preview={preview} ownerRequestIds={ownerRequestIds} />}
     </div>
   );
 }

@@ -1,20 +1,23 @@
 "use client";
 
 import { useDeferredValue, useMemo, useState } from "react";
-import { Compass, ShieldAlert } from "lucide-react";
+import Link from "next/link";
+import { Compass, ShieldAlert, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { submitJoinRequestAction } from "@/app/workspace/actions";
+import { deleteRequestAction, submitJoinRequestAction } from "@/app/workspace/actions";
 import type { FeedRequestCard } from "@/lib/supabase/types";
 import { formatDateTime } from "@/lib/utils";
 
 export function FeedList({
   feed,
   preview = false,
+  ownerRequestIds = [],
   onStatus,
 }: {
   feed: FeedRequestCard[];
   preview?: boolean;
+  ownerRequestIds?: string[];
   onStatus?: (message: string) => void;
 }) {
   const router = useRouter();
@@ -23,6 +26,8 @@ export function FeedList({
   const [joinDrafts, setJoinDrafts] = useState<Record<string, string>>({});
   const [joinBusyId, setJoinBusyId] = useState<string | null>(null);
   const [expandedJoinId, setExpandedJoinId] = useState<string | null>(null);
+  const [deleteBusyId, setDeleteBusyId] = useState<string | null>(null);
+  const ownerRequestIdSet = useMemo(() => new Set(ownerRequestIds), [ownerRequestIds]);
 
   const filteredFeed = useMemo(() => {
     const query = deferredSearch.trim().toLowerCase();
@@ -35,6 +40,29 @@ export function FeedList({
       return haystack.includes(query);
     });
   }, [deferredSearch, feed]);
+
+  async function handleDelete(requestId: string) {
+    if (preview) {
+      onStatus?.("This action is only available after sign-in.");
+      return;
+    }
+
+    if (!confirm("Are you sure you want to delete this request? This action cannot be undone.")) {
+      return;
+    }
+
+    setDeleteBusyId(requestId);
+
+    try {
+      const result = await deleteRequestAction({ requestId });
+      onStatus?.(result.message);
+      if (result.ok) {
+        router.refresh();
+      }
+    } finally {
+      setDeleteBusyId(null);
+    }
+  }
 
   return (
     <section className="panel feed-panel">
@@ -72,12 +100,15 @@ export function FeedList({
                 <span className="request-lane">{request.lane === "social" ? "Social" : "Errand"}</span>
                 <h4>{request.title}</h4>
               </div>
-              {request.verifiedOnly ? (
-                <span className="mini-chip">
-                  <ShieldAlert size={14} />
-                  Verified only
-                </span>
-              ) : null}
+              <div className="card-chip-row">
+                {ownerRequestIdSet.has(request.id) ? <span className="mini-chip">Your request</span> : null}
+                {request.verifiedOnly ? (
+                  <span className="mini-chip">
+                    <ShieldAlert size={14} />
+                    Verified only
+                  </span>
+                ) : null}
+              </div>
             </div>
 
             <p className="request-description">{request.description}</p>
@@ -100,20 +131,37 @@ export function FeedList({
               ))}
             </div>
 
-            <div className="button-row">
-              <button
-                className="primary-button compact"
-                type="button"
-                disabled={preview}
-                onClick={() => {
-                  setExpandedJoinId((current) => (current === request.id ? null : request.id));
-                }}
-              >
-                {preview ? "Sign in to join" : expandedJoinId === request.id ? "Cancel" : "Request to join"}
-              </button>
-            </div>
+            {ownerRequestIdSet.has(request.id) ? (
+              <div className="button-row">
+                <Link className="secondary-button compact" href={`/requests/${request.id}`}>
+                  Open request
+                </Link>
+                <button
+                  className="ghost-button compact danger-button"
+                  type="button"
+                  disabled={preview || deleteBusyId === request.id}
+                  onClick={() => void handleDelete(request.id)}
+                >
+                  <Trash2 size={16} />
+                  {deleteBusyId === request.id ? "Deleting..." : "Delete request"}
+                </button>
+              </div>
+            ) : (
+              <div className="button-row">
+                <button
+                  className="primary-button compact"
+                  type="button"
+                  disabled={preview}
+                  onClick={() => {
+                    setExpandedJoinId((current) => (current === request.id ? null : request.id));
+                  }}
+                >
+                  {preview ? "Sign in to join" : expandedJoinId === request.id ? "Cancel" : "Request to join"}
+                </button>
+              </div>
+            )}
 
-            {expandedJoinId === request.id ? (
+            {expandedJoinId === request.id && !ownerRequestIdSet.has(request.id) ? (
               <div className="join-box">
                 <textarea
                   rows={2}
