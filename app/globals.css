@@ -1812,6 +1812,107 @@ main {
   background: rgba(255, 251, 244, 0.82);
 }
 
+.admin-panel {
+  gap: 20px;
+}
+
+.admin-command-grid,
+.admin-signal-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-command-grid {
+  grid-template-columns: minmax(320px, 0.88fr) minmax(0, 1.12fr);
+}
+
+.admin-signal-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.admin-health-card {
+  background:
+    radial-gradient(circle at top right, rgba(165, 64, 45, 0.12), transparent 38%),
+    linear-gradient(180deg, rgba(255, 247, 242, 0.86), rgba(255, 255, 255, 0.66));
+}
+
+.admin-health-head,
+.admin-card-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-health-score {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.admin-health-score strong {
+  font-family: var(--font-heading);
+  font-size: clamp(2.7rem, 4vw, 4rem);
+  line-height: 0.88;
+}
+
+.admin-health-score span {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.admin-health-signals,
+.admin-reason-cloud,
+.admin-card-meta-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-health-pill.health-stable {
+  color: var(--teal);
+  background: rgba(15, 107, 97, 0.12);
+}
+
+.admin-health-pill.health-watch-closely {
+  color: #8e5a00;
+  background: rgba(197, 143, 37, 0.16);
+}
+
+.admin-health-pill.health-high-load,
+.admin-health-pill.health-escalated {
+  color: var(--accent-strong);
+  background: rgba(165, 64, 45, 0.14);
+}
+
+.admin-signal-card {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(44, 35, 21, 0.08);
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.admin-signal-card span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.admin-signal-card strong {
+  font-family: var(--font-heading);
+  font-size: 1.9rem;
+  line-height: 1;
+}
+
+.admin-signal-card p {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
 .action-disclosure {
   display: grid;
   gap: 14px;
@@ -1840,6 +1941,10 @@ main {
   margin-bottom: 18px;
 }
 
+.admin-overview-grid-rich {
+  margin-bottom: 0;
+}
+
 .admin-stat-card {
   display: grid;
   gap: 8px;
@@ -1855,6 +1960,42 @@ main {
 .admin-stat-card strong {
   font-size: 1.7rem;
   font-family: var(--font-heading);
+}
+
+.admin-toolbar {
+  margin-bottom: 2px;
+}
+
+.admin-review-card {
+  background: linear-gradient(180deg, rgba(255, 251, 245, 0.95), rgba(255, 255, 255, 0.74));
+}
+
+.admin-card-meta-stack {
+  justify-content: flex-end;
+}
+
+.admin-severity-pill {
+  text-transform: capitalize;
+}
+
+.severity-critical {
+  color: #a31621;
+  background: rgba(163, 22, 33, 0.12);
+}
+
+.severity-high {
+  color: var(--accent-strong);
+  background: rgba(165, 64, 45, 0.12);
+}
+
+.severity-medium {
+  color: #8e5a00;
+  background: rgba(197, 143, 37, 0.14);
+}
+
+.severity-low {
+  color: var(--teal);
+  background: rgba(15, 107, 97, 0.1);
 }
 
 .site-footer {
@@ -2030,10 +2171,15 @@ main {
   .workspace-grid,
   .workspace-content,
   .priority-board,
+  .admin-command-grid,
   .composer-shell,
   .composer-layout,
   .inbox-layout {
     grid-template-columns: 1fr;
+  }
+
+  .admin-signal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .workspace-page-header-main {
@@ -2128,6 +2274,8 @@ main {
   .lane-switch,
   .composer-steps,
   .chat-form,
+  .admin-command-grid,
+  .admin-signal-grid,
   .admin-overview-grid,
   .admin-actions,
   .join-box,
@@ -2138,7 +2286,8 @@ main {
   .request-card-top,
   .summary-head,
   .panel-heading,
-  .summary-callout-row {
+  .summary-callout-row,
+  .admin-health-head {
     flex-direction: column;
     align-items: stretch;
   }
