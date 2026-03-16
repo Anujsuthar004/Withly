@@ -862,7 +862,7 @@ main {
 
 .priority-spotlight {
   display: grid;
-  gap: 22px;
+  gap: 18px;
   padding: 30px;
   background:
     radial-gradient(circle at top right, rgba(15, 107, 97, 0.12), transparent 34%),
@@ -895,12 +895,15 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 11px 14px;
+  padding: 9px 13px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(44, 35, 21, 0.08);
   font-weight: 700;
   color: var(--text-soft);
+  font-size: 0.86rem;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .priority-action-row,
@@ -983,8 +986,8 @@ main {
 .form-section,
 .panel-section {
   display: grid;
-  gap: 16px;
-  padding: 20px;
+  gap: 14px;
+  padding: 18px;
   border-radius: 22px;
   border: 1px solid rgba(44, 35, 21, 0.08);
   background: rgba(255, 255, 255, 0.56);
@@ -1371,26 +1374,26 @@ main {
 .inbox-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.72fr);
-  gap: 22px;
+  gap: 18px;
   align-items: start;
 }
 
 .composer-form {
-  gap: 18px;
+  gap: 14px;
 }
 
 .composer-steps {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .composer-step {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 12px;
+  gap: 10px;
   align-items: start;
-  padding: 16px;
+  padding: 14px;
   border-radius: 20px;
   border: 1px solid rgba(44, 35, 21, 0.08);
   background: rgba(255, 255, 255, 0.6);
@@ -1403,8 +1406,8 @@ main {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 999px;
   background: rgba(31, 29, 26, 0.08);
   font-weight: 800;
@@ -1415,10 +1418,16 @@ main {
   display: block;
 }
 
+.composer-step strong {
+  font-size: 1rem;
+  line-height: 1.1;
+}
+
 .composer-step small {
-  margin-top: 4px;
+  margin-top: 2px;
   color: var(--muted);
-  line-height: 1.45;
+  line-height: 1.35;
+  font-size: 0.88rem;
 }
 
 .composer-step.active {
@@ -1435,11 +1444,12 @@ main {
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  margin-top: 2px;
 }
 
 .composer-preview {
   display: grid;
-  gap: 18px;
+  gap: 16px;
   align-content: start;
   position: sticky;
   top: 98px;
@@ -1448,7 +1458,7 @@ main {
 .composer-preview-card {
   display: grid;
   gap: 12px;
-  padding: 22px;
+  padding: 18px;
   border-radius: 24px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(250, 242, 232, 0.86));
   border: 1px solid rgba(44, 35, 21, 0.08);
@@ -1476,6 +1486,10 @@ main {
 .composer-checklist {
   display: grid;
   gap: 10px;
+}
+
+.composer-preview-meta {
+  padding-top: 4px;
 }
 
 .composer-checklist-item {
@@ -1507,8 +1521,8 @@ main {
   border: 1px solid rgba(44, 35, 21, 0.1);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.72);
-  min-height: 64px;
-  padding: 14px 16px;
+  min-height: 58px;
+  padding: 12px 16px;
 }
 
 .lane-switch button.active {

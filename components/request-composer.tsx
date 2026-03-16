@@ -24,17 +24,17 @@ const stepOrder = [
   {
     key: "basics",
     title: "Basics",
-    description: "Name the plan and give it the right tone.",
+    description: "Tone, context, and clarity.",
   },
   {
     key: "logistics",
     title: "Logistics",
-    description: "Share only the timing and area context people need.",
+    description: "Area, timing, and tags.",
   },
   {
     key: "safety",
     title: "Safety",
-    description: "Set defaults, review the draft, and publish.",
+    description: "Defaults and final review.",
   },
 ] as const;
 
