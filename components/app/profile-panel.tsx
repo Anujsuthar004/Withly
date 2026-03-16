@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Radar } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { updateProfileAction } from "@/app/workspace/actions";
+import { removeProfileAvatarAction, updateProfileAction, uploadProfileAvatarAction } from "@/app/workspace/actions";
+import { ProfileAvatar } from "@/components/app/profile-avatar";
 import type { WorkspaceProfile } from "@/lib/supabase/types";
 import { getProfileCompletion } from "@/lib/utils";
 
@@ -24,7 +25,80 @@ export function ProfilePanel({
     homeArea: profile.homeArea,
   });
   const [isPending, startTransition] = useTransition();
-  const progress = getProfileCompletion(form);
+  const [isAvatarPending, startAvatarTransition] = useTransition();
+  const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const previewUrlRef = useRef("");
+  const displayName = form.displayName.trim() || profile.displayName;
+  const activeAvatarUrl = avatarPreviewUrl || profile.avatarUrl;
+  const progress = getProfileCompletion({ ...form, avatarUrl: activeAvatarUrl });
+
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+      }
+    };
+  }, []);
+
+  function resetAvatarSelection() {
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = "";
+    }
+
+    setSelectedAvatarFile(null);
+    setAvatarPreviewUrl("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  function handleAvatarUpload() {
+    if (!selectedAvatarFile) {
+      onStatus("Choose a photo first.");
+      return;
+    }
+
+    startAvatarTransition(async () => {
+      try {
+        const formData = new FormData();
+        formData.set("avatar", selectedAvatarFile);
+
+        const result = await uploadProfileAvatarAction(formData);
+        onStatus(result.message);
+
+        if (result.ok) {
+          resetAvatarSelection();
+          router.refresh();
+        }
+      } catch {
+        onStatus("Could not upload the photo right now. Please try again.");
+      }
+    });
+  }
+
+  function handleAvatarRemoval() {
+    startAvatarTransition(async () => {
+      try {
+        if (selectedAvatarFile) {
+          resetAvatarSelection();
+          onStatus("Photo selection cleared.");
+          return;
+        }
+
+        const result = await removeProfileAvatarAction();
+        onStatus(result.message);
+
+        if (result.ok) {
+          router.refresh();
+        }
+      } catch {
+        onStatus("Could not update the photo right now. Please try again.");
+      }
+    });
+  }
 
   return (
     <section className="panel profile-panel">
@@ -72,6 +146,71 @@ export function ProfilePanel({
           });
         }}
       >
+        <section className="form-section profile-avatar-card">
+          <div className="profile-avatar-stack">
+            <ProfileAvatar name={displayName} url={activeAvatarUrl} size="xl" />
+            <div className="profile-avatar-copy">
+              <div className="form-section-head">
+                <h4>Profile photo</h4>
+                <p>Use a clear, recent photo so people can recognise you quickly. If you skip it, the app falls back to your initials.</p>
+              </div>
+              <div className="profile-avatar-meta">
+                <span className="mini-chip">{activeAvatarUrl ? "Photo ready" : "Initials placeholder"}</span>
+                {selectedAvatarFile ? <span className="mini-chip">{selectedAvatarFile.name}</span> : null}
+              </div>
+            </div>
+          </div>
+
+          <input
+            ref={fileInputRef}
+            id="profile-avatar-input"
+            className="sr-only"
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            onChange={(event) => {
+              const nextFile = event.target.files?.[0] ?? null;
+              if (previewUrlRef.current) {
+                URL.revokeObjectURL(previewUrlRef.current);
+                previewUrlRef.current = "";
+              }
+
+              setSelectedAvatarFile(nextFile);
+              if (nextFile) {
+                const nextPreviewUrl = URL.createObjectURL(nextFile);
+                previewUrlRef.current = nextPreviewUrl;
+                setAvatarPreviewUrl(nextPreviewUrl);
+              } else {
+                setAvatarPreviewUrl("");
+              }
+            }}
+            disabled={preview || isAvatarPending}
+          />
+
+          <div className="button-row profile-avatar-actions">
+            <label className="ghost-button compact file-picker-button" htmlFor="profile-avatar-input">
+              {selectedAvatarFile ? "Choose another photo" : "Choose photo"}
+            </label>
+            <button
+              className="secondary-button compact"
+              type="button"
+              onClick={handleAvatarUpload}
+              disabled={preview || isAvatarPending || !selectedAvatarFile}
+            >
+              {preview ? "Preview mode only" : isAvatarPending && selectedAvatarFile ? "Uploading..." : "Upload photo"}
+            </button>
+            <button
+              className="ghost-button compact danger-button"
+              type="button"
+              onClick={handleAvatarRemoval}
+              disabled={preview || isAvatarPending || (!selectedAvatarFile && !profile.avatarUrl)}
+            >
+              {preview ? "Preview mode only" : isAvatarPending ? "Working..." : selectedAvatarFile ? "Clear selection" : "Remove photo"}
+            </button>
+          </div>
+
+          <p className="profile-avatar-note">JPG, PNG, or WebP up to 4 MB.</p>
+        </section>
+
         <section className="form-section">
           <div className="form-section-head">
             <h4>Public details</h4>
@@ -115,7 +254,7 @@ export function ProfilePanel({
           </label>
         </section>
 
-        <button className="secondary-button" type="submit" disabled={preview || isPending}>
+        <button className="secondary-button" type="submit" disabled={preview || isPending || isAvatarPending}>
           {preview ? "Preview mode only" : isPending ? "Saving..." : "Save profile"}
         </button>
       </form>

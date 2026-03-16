@@ -21,6 +21,7 @@ export interface WorkspaceProfile {
   aboutMe: string;
   homeArea: string;
   role: "member" | "admin";
+  avatarUrl: string;
 }
 
 export interface WorkspaceRequest {

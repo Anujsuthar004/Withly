@@ -48,8 +48,14 @@ export function getProfileCompletion(profile: {
   displayName?: string | null;
   aboutMe?: string | null;
   homeArea?: string | null;
+  avatarUrl?: string | null;
 }) {
   const steps = [
+    {
+      id: "profile-photo",
+      label: "Profile photo",
+      done: Boolean(profile.avatarUrl?.trim()),
+    },
     {
       id: "display-name",
       label: "Display name",

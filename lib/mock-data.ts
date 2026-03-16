@@ -51,6 +51,7 @@ export const emptyWorkspaceSnapshot: WorkspaceSnapshot = {
     aboutMe: "",
     homeArea: "",
     role: "member",
+    avatarUrl: "",
   },
   myRequests: [],
   incomingJoinRequests: [],
@@ -64,6 +65,7 @@ export const previewWorkspace: WorkspaceSnapshot = {
     aboutMe: "Prefers clear plans, public spaces, and fast confirmations.",
     homeArea: "Lower Parel",
     role: "member",
+    avatarUrl: "",
   },
   myRequests: [
     {

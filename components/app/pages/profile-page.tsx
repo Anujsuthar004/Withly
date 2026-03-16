@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { ProfileAvatar } from "@/components/app/profile-avatar";
 import { ProfilePanel } from "@/components/app/profile-panel";
 import type { WorkspaceProfile } from "@/lib/supabase/types";
 import { WorkspacePageHeader } from "@/components/app/workspace-page-header";
@@ -26,7 +27,12 @@ export function ProfilePage({
         title="Present yourself clearly before anyone replies."
         intro="A calm, complete profile gives people the context they need to feel comfortable responding."
         status={status}
-        meta={<span className="mini-chip">{progress.percentage}% complete</span>}
+        meta={
+          <>
+            <ProfileAvatar name={profile.displayName} url={profile.avatarUrl} size="sm" />
+            <span className="mini-chip">{progress.percentage}% complete</span>
+          </>
+        }
       />
       <ProfilePanel profile={profile} preview={preview} onStatus={setStatus} />
     </div>

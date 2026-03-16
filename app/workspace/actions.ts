@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { ALLOWED_PROFILE_AVATAR_MIME_TYPES, createProfileAvatarPath, MAX_PROFILE_AVATAR_BYTES, PROFILE_AVATAR_BUCKET } from "@/lib/avatar";
 import { hasSupabaseAdminEnv, hasSupabaseEnv } from "@/lib/env";
 import { logAppEvent } from "@/lib/logger";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -26,6 +27,17 @@ interface ActionResult {
   ok: boolean;
   message: string;
   accountDeleted?: boolean;
+}
+
+async function ensureProfileAvatarBucket() {
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin.storage.createBucket(PROFILE_AVATAR_BUCKET, {
+    public: false,
+  });
+
+  if (error && !/already exists|duplicate/i.test(error.message)) {
+    throw error;
+  }
 }
 
 async function enforceAuthenticatedActionLimit(userId: string, action: string, limit: number, windowMs: number) {
@@ -159,7 +171,130 @@ export async function updateProfileAction(input: unknown): Promise<ActionResult>
   revalidatePath("/profile");
   revalidatePath("/inbox");
   revalidatePath("/requests");
+  revalidatePath("/feed");
   return { ok: true, message: "Profile updated." };
+}
+
+export async function uploadProfileAvatarAction(formData: FormData): Promise<ActionResult> {
+  const auth = await requireSupabaseSession();
+  if (auth.error || !auth.supabase || !auth.user) {
+    return auth.error ?? { ok: false, message: "Sign in to continue." };
+  }
+
+  if (!hasSupabaseAdminEnv) {
+    return { ok: false, message: "Photo uploads are unavailable right now." };
+  }
+
+  const fileEntry = formData.get("avatar");
+  if (!(fileEntry instanceof File) || fileEntry.size === 0) {
+    return { ok: false, message: "Choose a photo first." };
+  }
+
+  if (!ALLOWED_PROFILE_AVATAR_MIME_TYPES.has(fileEntry.type)) {
+    return { ok: false, message: "Use a JPG, PNG, or WebP image." };
+  }
+
+  if (fileEntry.size > MAX_PROFILE_AVATAR_BYTES) {
+    return { ok: false, message: "Keep the photo under 4 MB." };
+  }
+
+  try {
+    await ensureProfileAvatarBucket();
+  } catch {
+    return { ok: false, message: "Photo uploads are unavailable right now." };
+  }
+
+  const { data: profile, error: profileError } = await auth.supabase
+    .from("profiles")
+    .select("avatar_path")
+    .eq("id", auth.user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    if (/avatar_path/i.test(profileError.message)) {
+      return { ok: false, message: "Profile photos need one quick database update before they can be used." };
+    }
+    return { ok: false, message: profileError.message };
+  }
+
+  const avatarPath = createProfileAvatarPath(auth.user.id, fileEntry.name, fileEntry.type);
+  const admin = createSupabaseAdminClient();
+  const fileBuffer = Buffer.from(await fileEntry.arrayBuffer());
+
+  const { error: uploadError } = await admin.storage.from(PROFILE_AVATAR_BUCKET).upload(avatarPath, fileBuffer, {
+    contentType: fileEntry.type,
+    cacheControl: "3600",
+    upsert: false,
+  });
+
+  if (uploadError) {
+    return { ok: false, message: uploadError.message };
+  }
+
+  const { error: updateError } = await auth.supabase.from("profiles").update({ avatar_path: avatarPath }).eq("id", auth.user.id);
+
+  if (updateError) {
+    await admin.storage.from(PROFILE_AVATAR_BUCKET).remove([avatarPath]);
+    if (/avatar_path/i.test(updateError.message)) {
+      return { ok: false, message: "Profile photos need one quick database update before they can be used." };
+    }
+    return { ok: false, message: updateError.message };
+  }
+
+  if (profile?.avatar_path && profile.avatar_path !== avatarPath) {
+    await admin.storage.from(PROFILE_AVATAR_BUCKET).remove([profile.avatar_path]);
+  }
+
+  revalidatePath("/profile");
+  revalidatePath("/feed");
+  revalidatePath("/requests");
+  revalidatePath("/inbox");
+
+  return { ok: true, message: "Profile photo updated." };
+}
+
+export async function removeProfileAvatarAction(): Promise<ActionResult> {
+  const auth = await requireSupabaseSession();
+  if (auth.error || !auth.supabase || !auth.user) {
+    return auth.error ?? { ok: false, message: "Sign in to continue." };
+  }
+
+  const { data: profile, error: profileError } = await auth.supabase
+    .from("profiles")
+    .select("avatar_path")
+    .eq("id", auth.user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    if (/avatar_path/i.test(profileError.message)) {
+      return { ok: false, message: "Profile photos need one quick database update before they can be used." };
+    }
+    return { ok: false, message: profileError.message };
+  }
+
+  if (!profile?.avatar_path) {
+    return { ok: true, message: "No profile photo to remove." };
+  }
+
+  const { error: updateError } = await auth.supabase.from("profiles").update({ avatar_path: null }).eq("id", auth.user.id);
+  if (updateError) {
+    if (/avatar_path/i.test(updateError.message)) {
+      return { ok: false, message: "Profile photos need one quick database update before they can be used." };
+    }
+    return { ok: false, message: updateError.message };
+  }
+
+  if (hasSupabaseAdminEnv) {
+    const admin = createSupabaseAdminClient();
+    await admin.storage.from(PROFILE_AVATAR_BUCKET).remove([profile.avatar_path]);
+  }
+
+  revalidatePath("/profile");
+  revalidatePath("/feed");
+  revalidatePath("/requests");
+  revalidatePath("/inbox");
+
+  return { ok: true, message: "Profile photo removed." };
 }
 
 export async function submitJoinRequestAction(input: unknown): Promise<ActionResult> {

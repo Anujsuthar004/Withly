@@ -298,6 +298,35 @@ main {
   gap: 10px;
 }
 
+.app-user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 6px 8px 6px 6px;
+  border-radius: 18px;
+  border: 1px solid rgba(44, 35, 21, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 10px 24px rgba(87, 63, 29, 0.06);
+}
+
+.app-user-chip-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.app-user-chip-copy strong {
+  font-size: 0.95rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.app-user-chip-copy small {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .app-topbar-signout {
   display: none;
 }
@@ -664,6 +693,10 @@ main {
   border-radius: 15px;
 }
 
+.file-picker-button {
+  cursor: pointer;
+}
+
 .primary-button:hover,
 .secondary-button:hover,
 .ghost-button:hover {
@@ -959,6 +992,71 @@ main {
 .panel,
 .setup-banner {
   padding: 26px;
+}
+
+.profile-avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(44, 35, 21, 0.1);
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.92), transparent 55%),
+    linear-gradient(135deg, rgba(15, 107, 97, 0.2), rgba(165, 64, 45, 0.16));
+  box-shadow: 0 12px 24px rgba(87, 63, 29, 0.08);
+}
+
+.profile-avatar-sm {
+  width: 44px;
+  height: 44px;
+}
+
+.profile-avatar-md {
+  width: 56px;
+  height: 56px;
+}
+
+.profile-avatar-lg {
+  width: 72px;
+  height: 72px;
+}
+
+.profile-avatar-xl {
+  width: 104px;
+  height: 104px;
+}
+
+.profile-avatar-image {
+  object-fit: cover;
+}
+
+.profile-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 1px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--text);
+}
+
+.profile-avatar-sm .profile-avatar-fallback {
+  font-size: 0.95rem;
+}
+
+.profile-avatar-md .profile-avatar-fallback {
+  font-size: 1.1rem;
+}
+
+.profile-avatar-lg .profile-avatar-fallback {
+  font-size: 1.45rem;
+}
+
+.profile-avatar-xl .profile-avatar-fallback {
+  font-size: 2rem;
 }
 
 .panel-heading {
@@ -1612,6 +1710,38 @@ main {
   margin-bottom: 18px;
 }
 
+.profile-avatar-card {
+  gap: 16px;
+}
+
+.profile-avatar-stack {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+
+.profile-avatar-copy {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.profile-avatar-actions {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.profile-avatar-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.profile-avatar-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .profile-strength-meter {
   display: grid;
   gap: 10px;
@@ -2023,6 +2153,15 @@ main {
   .composer-actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .app-user-chip-copy {
+    display: none;
+  }
+
+  .profile-avatar-stack {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .hero-action-row > *,

@@ -14,6 +14,7 @@ import {
   UserRound,
 } from "lucide-react";
 
+import { ProfileAvatar } from "@/components/app/profile-avatar";
 import { SignOutButton } from "@/components/sign-out-button";
 
 type NavItem = {
@@ -34,11 +35,15 @@ export function AppShell({
   showAdmin,
   inboxCount = 0,
   notice = "",
+  profileName = "Member",
+  profileAvatarUrl = "",
 }: {
   children: React.ReactNode;
   showAdmin: boolean;
   inboxCount?: number;
   notice?: string;
+  profileName?: string;
+  profileAvatarUrl?: string;
 }) {
   const pathname = usePathname() ?? "";
 
@@ -135,6 +140,13 @@ export function AppShell({
             <strong>{showAdmin ? "Admin enabled" : "Member account"}</strong>
           </div>
           <div className="app-topbar-actions">
+            <div className="app-user-chip">
+              <ProfileAvatar name={profileName} url={profileAvatarUrl} size="sm" />
+              <div className="app-user-chip-copy">
+                <strong>{profileName}</strong>
+                <small>{showAdmin ? "Admin account" : "Member account"}</small>
+              </div>
+            </div>
             {inboxCount > 0 ? (
               <Link className="ghost-button compact" href="/inbox">
                 {inboxCount} waiting

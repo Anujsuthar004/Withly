@@ -1,6 +1,8 @@
 import { emptyWorkspaceSnapshot, previewFeed, previewWorkspace } from "@/lib/mock-data";
+import { PROFILE_AVATAR_BUCKET } from "@/lib/avatar";
 import { hasSupabaseEnv, isProduction } from "@/lib/env";
 import type { AdminDashboard, FeedRequestCard, WorkspaceSnapshot } from "@/lib/supabase/types";
+import { getSupabaseAdminClientOrNull } from "@/lib/supabase/admin";
 import { getSupabaseServerClientOrNull } from "@/lib/supabase/server";
 import { adminDashboardSchema, feedRequestCardSchema, workspaceSnapshotSchema } from "@/lib/validators";
 
@@ -30,6 +32,66 @@ function normalizeAdminDashboard(payload: unknown): AdminDashboard | null {
     return null;
   }
   return parsed.data;
+}
+
+async function createProfileAvatarUrl(path: string | null | undefined) {
+  if (!path) {
+    return "";
+  }
+
+  const admin = getSupabaseAdminClientOrNull();
+  if (!admin) {
+    return "";
+  }
+
+  const { data, error } = await admin.storage.from(PROFILE_AVATAR_BUCKET).createSignedUrl(path, 60 * 60 * 12);
+  if (error) {
+    return "";
+  }
+
+  return data.signedUrl;
+}
+
+async function getCurrentProfile(supabase: NonNullable<Awaited<ReturnType<typeof getSupabaseServerClientOrNull>>>, userId: string) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, display_name, about_me, home_area, role, avatar_path")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error && /avatar_path/i.test(error.message)) {
+    const fallback = await supabase
+      .from("profiles")
+      .select("id, display_name, about_me, home_area, role")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (fallback.error || !fallback.data) {
+      return null;
+    }
+
+    return {
+      id: fallback.data.id,
+      displayName: fallback.data.display_name,
+      aboutMe: fallback.data.about_me ?? "",
+      homeArea: fallback.data.home_area ?? "",
+      role: fallback.data.role,
+      avatarUrl: "",
+    };
+  }
+
+  if (error || !data) {
+    return null;
+  }
+
+  return {
+    id: data.id,
+    displayName: data.display_name,
+    aboutMe: data.about_me ?? "",
+    homeArea: data.home_area ?? "",
+    role: data.role,
+    avatarUrl: await createProfileAvatarUrl(data.avatar_path),
+  };
 }
 
 export async function getAuthenticatedUser() {
@@ -127,6 +189,10 @@ export async function getWorkspaceSnapshot() {
     };
   }
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const { data, error } = await supabase.rpc("get_workspace_snapshot");
   if (error) {
     return {
@@ -145,8 +211,15 @@ export async function getWorkspaceSnapshot() {
     };
   }
 
+  const currentProfile = user ? await getCurrentProfile(supabase, user.id) : null;
+
   return {
-    snapshot: normalized,
+    snapshot: currentProfile
+      ? {
+          ...normalized,
+          profile: currentProfile,
+        }
+      : normalized,
     preview: false,
     setupError: "",
   };
@@ -229,6 +302,8 @@ export async function getAppLayoutState() {
     preview: workspace.preview,
     setupError: workspace.setupError,
     role: workspace.snapshot.profile.role,
+    profileName: workspace.snapshot.profile.displayName,
+    profileAvatarUrl: workspace.snapshot.profile.avatarUrl,
     inboxCount,
   };
 }

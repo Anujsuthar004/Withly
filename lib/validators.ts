@@ -31,6 +31,7 @@ export const workspaceSnapshotSchema = z.object({
     aboutMe: z.string(),
     homeArea: z.string(),
     role: z.enum(["member", "admin"]),
+    avatarUrl: z.string().optional().default(""),
   }),
   myRequests: z.array(
     z.object({
