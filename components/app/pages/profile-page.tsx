@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ProfilePanel } from "@/components/app/profile-panel";
 import type { WorkspaceProfile } from "@/lib/supabase/types";
 import { WorkspacePageHeader } from "@/components/app/workspace-page-header";
+import { getProfileCompletion } from "@/lib/utils";
 
 export function ProfilePage({
   profile,
@@ -16,6 +17,7 @@ export function ProfilePage({
   initialStatus?: string;
 }) {
   const [status, setStatus] = useState(initialStatus ?? (preview ? "Preview mode is active. Sign in to update your profile." : "Profile ready."));
+  const progress = getProfileCompletion(profile);
 
   return (
     <div className="workspace-page">
@@ -24,6 +26,7 @@ export function ProfilePage({
         title="Present yourself clearly before anyone replies."
         intro="A calm, complete profile gives people the context they need to feel comfortable responding."
         status={status}
+        meta={<span className="mini-chip">{progress.percentage}% complete</span>}
       />
       <ProfilePanel profile={profile} preview={preview} onStatus={setStatus} />
     </div>

@@ -7,8 +7,8 @@ import { useRouter } from "next/navigation";
 
 import { deleteRequestAction, submitJoinRequestAction } from "@/app/workspace/actions";
 import { StatusBadge } from "@/components/app/status-badge";
-import type { FeedRequestCard } from "@/lib/supabase/types";
-import { formatDateTime } from "@/lib/utils";
+import type { FeedRequestCard, RequestLane } from "@/lib/supabase/types";
+import { formatDateTime, formatRelativeTime } from "@/lib/utils";
 
 export function FeedList({
   feed,
@@ -24,6 +24,10 @@ export function FeedList({
   const router = useRouter();
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
+  const [laneFilter, setLaneFilter] = useState<"all" | RequestLane>("all");
+  const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
+  const [hideOwnRequests, setHideOwnRequests] = useState(false);
+  const [activeTag, setActiveTag] = useState("");
   const [joinDrafts, setJoinDrafts] = useState<Record<string, string>>({});
   const [joinBusyId, setJoinBusyId] = useState<string | null>(null);
   const [expandedJoinId, setExpandedJoinId] = useState<string | null>(null);
@@ -32,22 +36,52 @@ export function FeedList({
   const [feedback, setFeedback] = useState("");
   const ownerRequestIdSet = useMemo(() => new Set(ownerRequestIds), [ownerRequestIds]);
 
+  const popularTags = useMemo(() => {
+    const counts = new Map<string, number>();
+
+    for (const entry of feed) {
+      for (const tag of entry.tags) {
+        counts.set(tag, (counts.get(tag) ?? 0) + 1);
+      }
+    }
+
+    return [...counts.entries()]
+      .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+      .slice(0, 6)
+      .map(([tag]) => tag);
+  }, [feed]);
+
   const filteredFeed = useMemo(() => {
     const query = deferredSearch.trim().toLowerCase();
-    if (!query) return feed;
 
     return feed.filter((entry) => {
+      if (laneFilter !== "all" && entry.lane !== laneFilter) return false;
+      if (showVerifiedOnly && !entry.verifiedOnly) return false;
+      if (hideOwnRequests && ownerRequestIdSet.has(entry.id)) return false;
+      if (activeTag && !entry.tags.includes(activeTag)) return false;
+
+      if (!query) return true;
+
       const haystack = [entry.title, entry.description, entry.areaLabel ?? "", entry.hostDisplayName ?? "", entry.tags.join(" ")]
         .join(" ")
         .toLowerCase();
+
       return haystack.includes(query);
     });
-  }, [deferredSearch, feed]);
+  }, [activeTag, deferredSearch, feed, hideOwnRequests, laneFilter, ownerRequestIdSet, showVerifiedOnly]);
 
   const visibleFeed = useMemo(
     () => filteredFeed.filter((entry) => !dismissedRequestIds.includes(entry.id)),
     [dismissedRequestIds, filteredFeed]
   );
+
+  const activeFilterCount = [
+    laneFilter !== "all",
+    showVerifiedOnly,
+    hideOwnRequests,
+    Boolean(activeTag),
+    Boolean(search.trim()),
+  ].filter(Boolean).length;
 
   async function handleDelete(requestId: string) {
     if (preview) {
@@ -80,6 +114,14 @@ export function FeedList({
     }
   }
 
+  function clearFilters() {
+    setLaneFilter("all");
+    setShowVerifiedOnly(false);
+    setHideOwnRequests(false);
+    setActiveTag("");
+    setSearch("");
+  }
+
   return (
     <section className="panel feed-panel">
       <div className="panel-heading">
@@ -92,23 +134,87 @@ export function FeedList({
           {visibleFeed.length} live requests
         </span>
       </div>
+      <p className="panel-intro">Search by mood, narrow the list fast, and open only the requests that feel like a real fit.</p>
 
-      {feed.length > 0 ? (
-        <label className="search-input">
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by mood, area, or tags"
-          />
-        </label>
-      ) : null}
+      <div className="feed-toolbar">
+        {feed.length > 0 ? (
+          <label className="search-input">
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search by mood, area, or tags"
+            />
+          </label>
+        ) : null}
+
+        <div className="feed-filter-row">
+          <div className="filter-pill-group" role="tablist" aria-label="Lane filters">
+            <button type="button" className={`filter-pill ${laneFilter === "all" ? "active" : ""}`} onClick={() => setLaneFilter("all")}>
+              All
+            </button>
+            <button type="button" className={`filter-pill ${laneFilter === "social" ? "active" : ""}`} onClick={() => setLaneFilter("social")}>
+              Social
+            </button>
+            <button type="button" className={`filter-pill ${laneFilter === "errand" ? "active" : ""}`} onClick={() => setLaneFilter("errand")}>
+              Errand
+            </button>
+          </div>
+
+          <div className="filter-pill-group">
+            <button
+              type="button"
+              className={`filter-pill ${showVerifiedOnly ? "active" : ""}`}
+              onClick={() => setShowVerifiedOnly((current) => !current)}
+            >
+              Verified only
+            </button>
+            <button
+              type="button"
+              className={`filter-pill ${hideOwnRequests ? "active" : ""}`}
+              onClick={() => setHideOwnRequests((current) => !current)}
+            >
+              Hide my posts
+            </button>
+            {activeFilterCount > 0 ? (
+              <button type="button" className="filter-pill" onClick={clearFilters}>
+                Clear filters
+              </button>
+            ) : null}
+          </div>
+        </div>
+
+        {popularTags.length > 0 ? (
+          <div className="filter-tag-row">
+            {popularTags.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                className={`filter-tag ${activeTag === tag ? "active" : ""}`}
+                onClick={() => setActiveTag((current) => (current === tag ? "" : tag))}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="feed-toolbar-meta">
+          <span>
+            Showing {visibleFeed.length} of {feed.length} requests
+          </span>
+          {activeFilterCount > 0 ? <span>{activeFilterCount} filter{activeFilterCount === 1 ? "" : "s"} active</span> : null}
+        </div>
+      </div>
 
       {feedback ? <StatusBadge message={feedback} /> : null}
 
       <div className="feed-list">
         {visibleFeed.length === 0 ? (
-          <div className="empty-card">No matching requests. Try a broader search.</div>
+          <div className="empty-card">
+            <strong>No requests match this view yet.</strong>
+            <span>Try clearing one filter or widening the search so more options can surface.</span>
+          </div>
         ) : null}
 
         {visibleFeed.map((request) => (
@@ -126,6 +232,7 @@ export function FeedList({
                     Verified only
                   </span>
                 ) : null}
+                <span className="mini-chip">{formatRelativeTime(request.createdAt)}</span>
               </div>
             </div>
 
@@ -143,14 +250,19 @@ export function FeedList({
 
             <div className="tag-row">
               {request.tags.map((tag) => (
-                <span key={tag} className="tag-chip">
+                <button
+                  key={tag}
+                  type="button"
+                  className={`tag-chip ${activeTag === tag ? "active" : ""}`}
+                  onClick={() => setActiveTag((current) => (current === tag ? "" : tag))}
+                >
                   {tag}
-                </span>
+                </button>
               ))}
             </div>
 
             {ownerRequestIdSet.has(request.id) ? (
-              <div className="button-row">
+              <div className="button-row request-card-actions">
                 <Link className="secondary-button compact" href={`/requests/${request.id}`}>
                   Open request
                 </Link>
@@ -165,7 +277,7 @@ export function FeedList({
                 </button>
               </div>
             ) : (
-              <div className="button-row">
+              <div className="button-row request-card-actions">
                 <button
                   className="primary-button compact"
                   type="button"

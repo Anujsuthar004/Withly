@@ -1,18 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BellRing, Trash2 } from "lucide-react";
 
 import { deleteRequestAction } from "@/app/workspace/actions";
 
-import type { WorkspaceRequest } from "@/lib/supabase/types";
+import type { RequestStatus, WorkspaceRequest } from "@/lib/supabase/types";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils";
 
 export function MyRequestsList({ requests }: { requests: WorkspaceRequest[] }) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | RequestStatus>("all");
+
+  const visibleRequests = useMemo(
+    () => requests.filter((request) => statusFilter === "all" || request.status === statusFilter),
+    [requests, statusFilter]
+  );
 
   async function handleDelete(requestId: string) {
     if (!confirm("Are you sure you want to delete this request? This action cannot be undone.")) return;
@@ -42,12 +48,37 @@ export function MyRequestsList({ requests }: { requests: WorkspaceRequest[] }) {
       </div>
       <p className="panel-intro">Keep an eye on what is still open, what is drawing replies, and which plans are ready to move into a real conversation.</p>
 
+      {requests.length > 0 ? (
+        <div className="filter-pill-group">
+          <button type="button" className={`filter-pill ${statusFilter === "all" ? "active" : ""}`} onClick={() => setStatusFilter("all")}>
+            All
+          </button>
+          {(["open", "matched", "completed", "cancelled"] as const).map((status) => (
+            <button
+              key={status}
+              type="button"
+              className={`filter-pill ${statusFilter === status ? "active" : ""}`}
+              onClick={() => setStatusFilter(status)}
+            >
+              {status}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       <div className="summary-list">
         {requests.length === 0 ? (
           <div className="empty-card">Nothing posted yet. Use “Post” to publish your first request.</div>
         ) : null}
 
-        {requests.map((request) => (
+        {requests.length > 0 && visibleRequests.length === 0 ? (
+          <div className="empty-card">
+            <strong>No requests in this state.</strong>
+            <span>Switch the filter to see the rest of your request history.</span>
+          </div>
+        ) : null}
+
+        {visibleRequests.map((request) => (
           <article key={request.id} className="summary-card">
             <div className="summary-head">
               <div>

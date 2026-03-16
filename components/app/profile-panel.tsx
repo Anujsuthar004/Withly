@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { updateProfileAction } from "@/app/workspace/actions";
 import type { WorkspaceProfile } from "@/lib/supabase/types";
+import { getProfileCompletion } from "@/lib/utils";
 
 export function ProfilePanel({
   profile,
@@ -23,6 +24,7 @@ export function ProfilePanel({
     homeArea: profile.homeArea,
   });
   const [isPending, startTransition] = useTransition();
+  const progress = getProfileCompletion(form);
 
   return (
     <section className="panel profile-panel">
@@ -37,6 +39,24 @@ export function ProfilePanel({
         </span>
       </div>
       <p className="panel-intro">Keep the essentials current so people understand who they are talking to before they ever reply.</p>
+
+      <div className="profile-progress-card">
+        <div className="profile-strength-meter" aria-label={`Profile ${progress.percentage}% complete`}>
+          <div className="profile-strength-bar">
+            <span style={{ width: `${progress.percentage}%` }} />
+          </div>
+          <strong>{progress.percentage}% complete</strong>
+        </div>
+
+        <div className="profile-strength-checklist">
+          {progress.steps.map((step) => (
+            <div key={step.id} className={`profile-strength-item ${step.done ? "done" : ""}`}>
+              <span>{step.label}</span>
+              <strong>{step.done ? "Done" : "Add it"}</strong>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <form
         className="stack-form"

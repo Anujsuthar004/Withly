@@ -43,3 +43,37 @@ export function formatRelativeTime(value: string) {
   const diffDays = Math.floor(diffHours / 24);
   return `${diffDays}d ago`;
 }
+
+export function getProfileCompletion(profile: {
+  displayName?: string | null;
+  aboutMe?: string | null;
+  homeArea?: string | null;
+}) {
+  const steps = [
+    {
+      id: "display-name",
+      label: "Display name",
+      done: Boolean(profile.displayName?.trim()),
+    },
+    {
+      id: "about-me",
+      label: "Short bio",
+      done: Boolean(profile.aboutMe?.trim()),
+    },
+    {
+      id: "home-area",
+      label: "Home area",
+      done: Boolean(profile.homeArea?.trim()),
+    },
+  ];
+
+  const completedCount = steps.filter((step) => step.done).length;
+  const percentage = Math.round((completedCount / steps.length) * 100);
+
+  return {
+    steps,
+    completedCount,
+    totalCount: steps.length,
+    percentage,
+  };
+}

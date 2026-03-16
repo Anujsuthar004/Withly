@@ -240,6 +240,9 @@ export async function getFeedPageState(limit = 18) {
     feed: landingFeed.feed,
     feedError: landingFeed.feedError,
     hasSupabaseEnv,
+    preview: workspace.preview,
+    setupError: workspace.setupError,
+    snapshot: workspace.snapshot,
     ownerRequestIds: workspace.snapshot.myRequests.filter((request) => request.status === "open").map((request) => request.id),
   };
 }

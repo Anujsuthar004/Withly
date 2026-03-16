@@ -64,13 +64,27 @@ export function AppShell({
     [inboxCount]
   );
 
+  const activeItem = [...navItems, ...(showAdmin ? [{ href: "/admin", label: "Admin", icon: null, match: (p: string) => isActive(p, "/admin") }] : [])].find(
+    (item) => item.match(pathname)
+  );
+
   return (
     <div className="app-shell">
       <aside className="app-sidebar" aria-label="Primary">
-        <Link href="/feed" className="app-brand">
-          <Image src="/tagalong-app-icon.svg" alt="Tag Along Logo" width={20} height={20} />
-          Tag Along
-        </Link>
+        <div className="app-sidebar-top">
+          <Link href="/feed" className="app-brand">
+            <Image src="/tagalong-app-icon.svg" alt="Tag Along Logo" width={20} height={20} />
+            <span className="app-brand-copy">
+              <strong>Tag Along</strong>
+              <small>Private companionship workspace</small>
+            </span>
+          </Link>
+
+          <Link className="secondary-button compact app-sidebar-cta" href="/requests/new">
+            <PlusCircle size={16} />
+            New request
+          </Link>
+        </div>
 
         <nav className="app-nav">
           {navItems.map((item) => {
@@ -117,9 +131,15 @@ export function AppShell({
               <Image src="/tagalong-app-icon.svg" alt="Tag Along Logo" width={20} height={20} />
               Tag Along
             </Link>
-            <span className="kicker">{showAdmin ? "Admin enabled" : "Member account"}</span>
+            <span className="kicker">{activeItem?.label ?? (showAdmin ? "Admin enabled" : "Member account")}</span>
+            <strong>{showAdmin ? "Admin enabled" : "Member account"}</strong>
           </div>
           <div className="app-topbar-actions">
+            {inboxCount > 0 ? (
+              <Link className="ghost-button compact" href="/inbox">
+                {inboxCount} waiting
+              </Link>
+            ) : null}
             <Link className="ghost-button compact" href="/account">
               <Settings size={16} />
               Settings
@@ -165,4 +185,3 @@ export function AppShell({
     </div>
   );
 }
-

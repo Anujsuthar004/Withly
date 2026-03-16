@@ -17,6 +17,7 @@ export function RequestNewPage({ preview, initialStatus }: { preview: boolean; i
         title="Write a plan that feels easy to trust."
         intro="Good requests feel specific without oversharing. Set the tone, logistics, and safety defaults in one pass."
         status={status}
+        meta={<span className="mini-chip">3-step flow</span>}
       />
       <RequestComposer preview={preview} onStatus={setStatus} />
     </div>
