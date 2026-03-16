@@ -89,141 +89,111 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
 
   return (
     <section className="panel composer-panel">
-      <div className="panel-heading">
-        <div>
-          <p className="kicker">Post Securely</p>
-          <h3>Craft a request with strong defaults.</h3>
-        </div>
-        <span className="status-dot">
-          <Sparkles size={16} />
-          Guided flow
-        </span>
-      </div>
-      <p className="panel-intro">Move one step at a time: set the tone first, tighten the logistics second, and publish only after the draft feels calm and clear.</p>
-
-      <div className="lane-switch">
-        {(["social", "errand"] as const).map((option) => (
-          <button
-            key={option}
-            type="button"
-            className={lane === option ? "active" : ""}
-            onClick={() => {
-              setLane(option);
-              resetForm(option);
-            }}
-          >
-            {option === "social" ? "Social Plus-One" : "Errand Companion"}
-          </button>
-        ))}
-      </div>
-
-      <div className="composer-layout">
-        <form
-          className="stack-form composer-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-
-            startTransition(async () => {
-              const result = await createRequestAction({
-                lane,
-                title,
-                description,
-                areaLabel,
-                meetupAt: meetupAt || null,
-                radiusKm,
-                tags: parsedTags,
-                verifiedOnly,
-                checkInEnabled,
-                captchaToken,
-              });
-
-              onStatus(result.message);
-              if (!result.ok) {
-                setCaptchaToken("");
-                setTurnstileKey((current) => current + 1);
-                return;
-              }
-
-              resetForm(lane);
-              router.refresh();
-            });
-          }}
-        >
-          <div className="composer-steps" role="tablist" aria-label="Request creation steps">
-            {stepOrder.map((step, index) => (
-              <button
-                key={step.key}
-                type="button"
-                className={`composer-step ${stepIndex === index ? "active" : ""} ${canMoveToStep(index) ? "" : "locked"}`}
-                onClick={() => {
-                  if (canMoveToStep(index)) {
-                    setStepIndex(index);
-                  }
-                }}
-                disabled={!canMoveToStep(index)}
-              >
-                <span>{index + 1}</span>
+      <div className="composer-shell">
+        <div className="composer-main">
+          <div className="composer-top">
+            <div className="composer-top-copy">
+              <div className="panel-heading composer-panel-heading">
                 <div>
-                  <strong>{step.title}</strong>
-                  <small>{step.description}</small>
+                  <p className="kicker">Post Securely</p>
+                  <h3>Craft a request with strong defaults.</h3>
                 </div>
-              </button>
-            ))}
+                <span className="status-dot">
+                  <Sparkles size={16} />
+                  Guided flow
+                </span>
+              </div>
+              <p className="panel-intro composer-panel-intro">
+                Move one step at a time: set the tone first, tighten the logistics second, and publish only after the
+                draft feels calm and clear.
+              </p>
+            </div>
+
+            <div className="lane-switch composer-lane-switch">
+              {(["social", "errand"] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={lane === option ? "active" : ""}
+                  onClick={() => {
+                    setLane(option);
+                    resetForm(option);
+                  }}
+                >
+                  {option === "social" ? "Social Plus-One" : "Errand Companion"}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {stepIndex === 0 ? (
-            <section className="form-section">
-              <div className="form-section-head">
-                <h4>Plan basics</h4>
-                <p>Name the plan clearly, then describe the mood, expectations, and what would make it feel safe.</p>
-              </div>
+          <form
+            className="stack-form composer-form"
+            onSubmit={(event) => {
+              event.preventDefault();
 
-              <label>
-                Title
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  placeholder={lane === "social" ? "Rooftop set and an after-walk" : "Hospital visit and pharmacy stop"}
-                  minLength={6}
-                  maxLength={120}
-                  required
-                  disabled={preview || isPending}
-                />
-              </label>
+              startTransition(async () => {
+                const result = await createRequestAction({
+                  lane,
+                  title,
+                  description,
+                  areaLabel,
+                  meetupAt: meetupAt || null,
+                  radiusKm,
+                  tags: parsedTags,
+                  verifiedOnly,
+                  checkInEnabled,
+                  captchaToken,
+                });
 
-              <label>
-                Description
-                <textarea
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  placeholder="State the mood, timing, expectations, and what would make the session feel safe."
-                  minLength={24}
-                  maxLength={600}
-                  rows={5}
-                  required
-                  disabled={preview || isPending}
-                />
-              </label>
-            </section>
-          ) : null}
+                onStatus(result.message);
+                if (!result.ok) {
+                  setCaptchaToken("");
+                  setTurnstileKey((current) => current + 1);
+                  return;
+                }
 
-          {stepIndex === 1 ? (
-            <section className="form-section">
-              <div className="form-section-head">
-                <h4>Logistics</h4>
-                <p>Share just enough area and timing context for the right people to recognize the fit quickly.</p>
-              </div>
+                resetForm(lane);
+                router.refresh();
+              });
+            }}
+          >
+            <div className="composer-steps" role="tablist" aria-label="Request creation steps">
+              {stepOrder.map((step, index) => (
+                <button
+                  key={step.key}
+                  type="button"
+                  className={`composer-step ${stepIndex === index ? "active" : ""} ${canMoveToStep(index) ? "" : "locked"}`}
+                  onClick={() => {
+                    if (canMoveToStep(index)) {
+                      setStepIndex(index);
+                    }
+                  }}
+                  disabled={!canMoveToStep(index)}
+                >
+                  <span>{index + 1}</span>
+                  <div>
+                    <strong>{step.title}</strong>
+                    <small>{step.description}</small>
+                  </div>
+                </button>
+              ))}
+            </div>
 
-              <div className="grid-two">
+            {stepIndex === 0 ? (
+              <section className="form-section">
+                <div className="form-section-head">
+                  <h4>Plan basics</h4>
+                  <p>Name the plan clearly, then describe the mood, expectations, and what would make it feel safe.</p>
+                </div>
+
                 <label>
-                  Area
+                  Title
                   <input
                     type="text"
-                    value={areaLabel}
-                    onChange={(event) => setAreaLabel(event.target.value)}
-                    placeholder="Neighbourhood or landmark"
-                    minLength={3}
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
+                    placeholder={lane === "social" ? "Rooftop set and an after-walk" : "Hospital visit and pharmacy stop"}
+                    minLength={6}
                     maxLength={120}
                     required
                     disabled={preview || isPending}
@@ -231,118 +201,157 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
                 </label>
 
                 <label>
-                  Meet time
-                  <div className="input-icon-wrap">
-                    <CalendarClock size={16} />
+                  Description
+                  <textarea
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    placeholder="State the mood, timing, expectations, and what would make the session feel safe."
+                    minLength={24}
+                    maxLength={600}
+                    rows={5}
+                    required
+                    disabled={preview || isPending}
+                  />
+                </label>
+              </section>
+            ) : null}
+
+            {stepIndex === 1 ? (
+              <section className="form-section">
+                <div className="form-section-head">
+                  <h4>Logistics</h4>
+                  <p>Share just enough area and timing context for the right people to recognize the fit quickly.</p>
+                </div>
+
+                <div className="grid-two">
+                  <label>
+                    Area
                     <input
-                      type="datetime-local"
-                      value={meetupAt}
-                      onChange={(event) => setMeetupAt(event.target.value)}
+                      type="text"
+                      value={areaLabel}
+                      onChange={(event) => setAreaLabel(event.target.value)}
+                      placeholder="Neighbourhood or landmark"
+                      minLength={3}
+                      maxLength={120}
+                      required
                       disabled={preview || isPending}
                     />
-                  </div>
-                </label>
-              </div>
+                  </label>
 
-              <div className="grid-two">
-                <label className="range-field">
-                  Discovery radius: {radiusKm} km
-                  <input
-                    type="range"
-                    min={1}
-                    max={25}
-                    value={radiusKm}
-                    onChange={(event) => setRadiusKm(Number(event.target.value))}
-                    disabled={preview || isPending}
+                  <label>
+                    Meet time
+                    <div className="input-icon-wrap">
+                      <CalendarClock size={16} />
+                      <input
+                        type="datetime-local"
+                        value={meetupAt}
+                        onChange={(event) => setMeetupAt(event.target.value)}
+                        disabled={preview || isPending}
+                      />
+                    </div>
+                  </label>
+                </div>
+
+                <div className="grid-two">
+                  <label className="range-field">
+                    Discovery radius: {radiusKm} km
+                    <input
+                      type="range"
+                      min={1}
+                      max={25}
+                      value={radiusKm}
+                      onChange={(event) => setRadiusKm(Number(event.target.value))}
+                      disabled={preview || isPending}
+                    />
+                  </label>
+
+                  <label>
+                    Tags
+                    <input
+                      type="text"
+                      value={tags}
+                      onChange={(event) => setTags(event.target.value)}
+                      placeholder="comma, separated, tags"
+                      disabled={preview || isPending}
+                    />
+                  </label>
+                </div>
+              </section>
+            ) : null}
+
+            {stepIndex === 2 ? (
+              <section className="form-section">
+                <div className="form-section-head">
+                  <h4>Safety defaults</h4>
+                  <p>Set expectations, review the draft, and only publish when the plan reads clearly end to end.</p>
+                </div>
+
+                <div className="option-grid">
+                  <label className="toggle-card">
+                    <input
+                      type="checkbox"
+                      checked={verifiedOnly}
+                      onChange={(event) => setVerifiedOnly(event.target.checked)}
+                      disabled={preview || isPending}
+                    />
+                    <span>
+                      <Shield size={16} />
+                      Verified-only responses
+                    </span>
+                  </label>
+
+                  <label className="toggle-card">
+                    <input
+                      type="checkbox"
+                      checked={checkInEnabled}
+                      onChange={(event) => setCheckInEnabled(event.target.checked)}
+                      disabled={preview || isPending}
+                    />
+                    <span>
+                      <Sparkles size={16} />
+                      Check-in ready session
+                    </span>
+                  </label>
+                </div>
+
+                {hasTurnstileEnv ? (
+                  <TurnstileWidget
+                    key={turnstileKey}
+                    siteKey={TURNSTILE_SITE_KEY}
+                    onToken={setCaptchaToken}
+                    theme="light"
                   />
-                </label>
+                ) : null}
+              </section>
+            ) : null}
 
-                <label>
-                  Tags
-                  <input
-                    type="text"
-                    value={tags}
-                    onChange={(event) => setTags(event.target.value)}
-                    placeholder="comma, separated, tags"
-                    disabled={preview || isPending}
-                  />
-                </label>
-              </div>
-            </section>
-          ) : null}
-
-          {stepIndex === 2 ? (
-            <section className="form-section">
-              <div className="form-section-head">
-                <h4>Safety defaults</h4>
-                <p>Set expectations, review the draft, and only publish when the plan reads clearly end to end.</p>
-              </div>
-
-              <div className="option-grid">
-                <label className="toggle-card">
-                  <input
-                    type="checkbox"
-                    checked={verifiedOnly}
-                    onChange={(event) => setVerifiedOnly(event.target.checked)}
-                    disabled={preview || isPending}
-                  />
-                  <span>
-                    <Shield size={16} />
-                    Verified-only responses
-                  </span>
-                </label>
-
-                <label className="toggle-card">
-                  <input
-                    type="checkbox"
-                    checked={checkInEnabled}
-                    onChange={(event) => setCheckInEnabled(event.target.checked)}
-                    disabled={preview || isPending}
-                  />
-                  <span>
-                    <Sparkles size={16} />
-                    Check-in ready session
-                  </span>
-                </label>
-              </div>
-
-              {hasTurnstileEnv ? (
-                <TurnstileWidget
-                  key={turnstileKey}
-                  siteKey={TURNSTILE_SITE_KEY}
-                  onToken={setCaptchaToken}
-                  theme="light"
-                />
-              ) : null}
-            </section>
-          ) : null}
-
-          <div className="composer-actions">
-            <button
-              className="ghost-button compact"
-              type="button"
-              disabled={stepIndex === 0 || isPending}
-              onClick={() => setStepIndex((current) => Math.max(0, current - 1))}
-            >
-              Back
-            </button>
-
-            {stepIndex < stepOrder.length - 1 ? (
+            <div className="composer-actions">
               <button
-                className="primary-button compact"
+                className="ghost-button compact"
                 type="button"
-                disabled={isPending || (stepIndex === 0 ? !basicsReady : !logisticsReady)}
-                onClick={() => setStepIndex((current) => Math.min(stepOrder.length - 1, current + 1))}
+                disabled={stepIndex === 0 || isPending}
+                onClick={() => setStepIndex((current) => Math.max(0, current - 1))}
               >
-                Continue
+                Back
               </button>
-            ) : (
-              <button className="primary-button compact" type="submit" disabled={preview || isPending}>
-                {preview ? "Preview mode only" : isPending ? "Posting..." : "Post Request"}
-              </button>
-            )}
-          </div>
-        </form>
+
+              {stepIndex < stepOrder.length - 1 ? (
+                <button
+                  className="primary-button compact"
+                  type="button"
+                  disabled={isPending || (stepIndex === 0 ? !basicsReady : !logisticsReady)}
+                  onClick={() => setStepIndex((current) => Math.min(stepOrder.length - 1, current + 1))}
+                >
+                  Continue
+                </button>
+              ) : (
+                <button className="primary-button compact" type="submit" disabled={preview || isPending}>
+                  {preview ? "Preview mode only" : isPending ? "Posting..." : "Post Request"}
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
 
         <aside className="composer-preview panel">
           <div className="form-section-head">

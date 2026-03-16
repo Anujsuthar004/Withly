@@ -1378,6 +1378,42 @@ main {
   align-items: start;
 }
 
+.composer-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.72fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.composer-main {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.composer-top {
+  display: grid;
+  gap: 14px;
+}
+
+.composer-top-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.composer-panel-heading {
+  margin-bottom: 0;
+}
+
+.composer-panel-intro {
+  margin-bottom: 0;
+  max-width: 44rem;
+}
+
+.composer-lane-switch {
+  max-width: 560px;
+}
+
 .composer-form {
   gap: 14px;
 }
@@ -1453,6 +1489,7 @@ main {
   align-content: start;
   position: sticky;
   top: 98px;
+  padding: 22px;
 }
 
 .composer-preview-card {
@@ -1863,6 +1900,7 @@ main {
   .workspace-grid,
   .workspace-content,
   .priority-board,
+  .composer-shell,
   .composer-layout,
   .inbox-layout {
     grid-template-columns: 1fr;
@@ -1883,6 +1921,10 @@ main {
   .composer-preview,
   .inbox-command-panel {
     position: static;
+  }
+
+  .composer-lane-switch {
+    max-width: none;
   }
 
   .workspace-hero-actions,
