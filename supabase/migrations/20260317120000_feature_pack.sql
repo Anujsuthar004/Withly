@@ -1,4 +1,4 @@
--- Feature Pack Migration: 12 new backend features for Tag Along
+-- Feature Pack Migration: 12 new backend features for Withly
 -- This migration is idempotent: uses IF NOT EXISTS, CREATE OR REPLACE, etc.
 
 ------------------------------------------------------------------------

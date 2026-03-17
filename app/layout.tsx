@@ -4,7 +4,7 @@ import "@/app/globals.css";
 import { SITE_URL } from "@/lib/env";
 
 export const metadata: Metadata = {
-  title: "Tag Along",
+  title: "Withly",
   description: "A private companionship platform for plans, errands, and everyday moments.",
   metadataBase: SITE_URL ? new URL(SITE_URL) : undefined,
   robots: {

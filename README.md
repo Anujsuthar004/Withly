@@ -1,8 +1,8 @@
-# Tag-along
+# Withly
 
-Tag-along is a private companionship workspace architected specifically to solve the friction of organizing casual, low-stakes hangouts and errands.
+Withly is a private companionship workspace architected specifically to solve the friction of organizing casual, low-stakes hangouts and errands.
 
-Instead of navigating the awkwardness of formal plans, Tag-along allows users to post highly specific, structured requests. Whether you need an "Errand Companion" to help carry groceries or a "Social Plus-One" to check out a new local spot, Tag-along prioritizes safety, clear intentions, and verifiable trust.
+Instead of navigating the awkwardness of formal plans, Withly allows users to post highly specific, structured requests. Whether you need an "Errand Companion" to help carry groceries or a "Social Plus-One" to check out a new local spot, Withly prioritizes safety, clear intentions, and verifiable trust.
 
 ## Technology Stack
 

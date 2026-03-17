@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { StaticPageShell } from "@/components/static-page-shell";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Tag Along",
+  title: "Privacy Policy | Withly",
 };
 
 export default function PrivacyPage() {
@@ -11,7 +11,7 @@ export default function PrivacyPage() {
     <StaticPageShell
       kicker="Privacy Policy"
       title="Privacy-first by default, not by marketing copy."
-      intro="Effective March 8, 2026. Tag Along is designed to limit public exposure, protect session details, and give members access to their own account data."
+      intro="Effective March 8, 2026. Withly is designed to limit public exposure, protect session details, and give members access to their own account data."
       sections={[
         {
           title: "What we collect",

@@ -8,8 +8,8 @@ export function SiteFooter() {
     <footer className="site-footer">
       <div className="site-footer-copy">
         <Link href="/" className="site-footer-brand">
-          <Image src="/tagalong-app-icon.svg" alt="Tag Along Logo" width={20} height={20} />
-          Tag Along
+          <Image src="/withly-app-icon.svg" alt="Withly Logo" width={20} height={20} />
+          Withly
         </Link>
         <p>Calmer coordination for plans, errands, and the moments you do not want to handle alone.</p>
       </div>

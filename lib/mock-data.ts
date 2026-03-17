@@ -154,7 +154,7 @@ export const previewWorkspace: WorkspaceSnapshot = {
         requestId: "d9fd0d36-e844-4133-a0a1-74488992ae98",
         senderType: "system",
         senderId: null,
-        senderName: "Tag Along",
+        senderName: "Withly",
         body: "Match confirmed. Use this room to align your exact meeting point, ETA, and safety check-in plan.",
         createdAt: new Date(now - 1000 * 60 * 8).toISOString(),
       },

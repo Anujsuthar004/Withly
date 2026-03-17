@@ -1,7 +1,7 @@
-# Tag Along - App Concept Note
+# Withly - App Concept Note
 
 ## 1) Product Vision
-Tag Along is a trust-first companionship platform for two high-value moments:
+Withly is a trust-first companionship platform for two high-value moments:
 - Social plus-one: users who want company for events, parties, public gatherings, and city experiences.
 - Errand companionship: users who want a reliable companion for practical tasks (hospital visits, paperwork runs, shopping, travel transfers, and unfamiliar locations).
 

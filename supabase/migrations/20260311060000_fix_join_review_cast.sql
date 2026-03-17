@@ -70,7 +70,7 @@ begin
       selected_request.id,
       'system',
       null,
-      'Tag Along',
+      'Withly',
       format(
         'Match confirmed between %s and %s. Use this room to align the exact meeting point, ETA, and safety plan.',
         coalesce(owner_name, 'the request owner'),

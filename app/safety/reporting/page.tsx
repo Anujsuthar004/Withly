@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { StaticPageShell } from "@/components/static-page-shell";
 
 export const metadata: Metadata = {
-  title: "Safety and Reporting | Tag Along",
+  title: "Safety and Reporting | Withly",
 };
 
 export default function ReportingPage() {
@@ -17,7 +17,7 @@ export default function ReportingPage() {
           title: "Immediate steps",
           body: [
             "Leave the situation if you feel unsafe. If you are in immediate danger, contact local emergency services first.",
-            "Inside Tag Along, open the matched request, submit a report with factual details, and block the other participant if you do not want further contact.",
+            "Inside Withly, open the matched request, submit a report with factual details, and block the other participant if you do not want further contact.",
           ],
         },
         {

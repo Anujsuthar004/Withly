@@ -1,8 +1,8 @@
 {
-  "name": "tag-along",
+  "name": "withly",
   "version": "0.1.0",
   "private": true,
-  "description": "Tag Along rebuilt with Next.js, TypeScript, and Supabase for secure companionship matching.",
+  "description": "Withly rebuilt with Next.js, TypeScript, and Supabase for secure companionship matching.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -5,7 +5,7 @@ test.describe("brand identity and feature visibility", () => {
     // Going to /feed will show the AppShell in preview mode
     await page.goto("/feed");
 
-    const logo = page.getByAltText("Tag Along Logo");
+    const logo = page.getByAltText("Withly Logo");
     // Should be at least 2: one in sidebar, one in topbar
     const count = await logo.count();
     expect(count).toBeGreaterThanOrEqual(1);
@@ -14,7 +14,7 @@ test.describe("brand identity and feature visibility", () => {
 
   test("site footer shows the official logo", async ({ page }) => {
     await page.goto("/");
-    const footerLogo = page.locator(".site-footer-brand img[alt='Tag Along Logo']");
+    const footerLogo = page.locator(".site-footer-brand img[alt='Withly Logo']");
     await expect(footerLogo).toBeVisible();
   });
 

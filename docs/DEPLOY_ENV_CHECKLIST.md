@@ -9,7 +9,7 @@ In **Vercel → Project → Settings → Environment Variables**, add these for 
 | Variable | Value |
 |---|---|
 | `APP_ENV` | `production` |
-| `NEXT_PUBLIC_SITE_URL` | Your production URL, e.g. `https://tagalong.app` |
+| `NEXT_PUBLIC_SITE_URL` | Your production URL, e.g. `https://withly.app` |
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://<project-ref>.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-only) |
@@ -23,10 +23,10 @@ After saving, trigger a **Redeploy** so the new values take effect.
 
 In **Supabase → Authentication → URL Configuration**:
 
-- **Site URL**: set to your production domain (e.g. `https://tagalong.app`)
+- **Site URL**: set to your production domain (e.g. `https://withly.app`)
 - **Redirect URLs**: add both:
-  - `https://tagalong.app/auth/callback`
-  - `https://tagalong.app/auth/reset-password`
+  - `https://withly.app/auth/callback`
+  - `https://withly.app/auth/reset-password`
 
 In **Supabase → Authentication → Email Templates**:
 
@@ -43,7 +43,7 @@ In **Supabase → Authentication → Providers** (optional):
 In **Cloudflare → Turnstile**:
 
 1. Create a new widget.
-2. Set the **domain** to your production domain (e.g. `tagalong.app`).
+2. Set the **domain** to your production domain (e.g. `withly.app`).
 3. Choose **Managed** mode for best balance of security and UX.
 4. Copy the **Site Key** → paste into Vercel as `NEXT_PUBLIC_TURNSTILE_SITE_KEY`.
 5. Copy the **Secret Key** → paste into Vercel as `TURNSTILE_SECRET_KEY`.

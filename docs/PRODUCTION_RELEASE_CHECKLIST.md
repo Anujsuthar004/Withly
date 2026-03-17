@@ -8,14 +8,14 @@
 
 ## 2. Environment readiness
 
-- Configure `.env.local` and production envs from [.env.example](/Users/anujsuthar/Documents/Tag-along/.env.example).
+- Configure `.env.local` and production envs from [.env.example](/Users/anujsuthar/Documents/Withly/.env.example).
 - Set `NEXT_PUBLIC_SITE_URL` to the canonical production domain.
 - Set `SUPABASE_SERVICE_ROLE_KEY` only in server-side environments.
 - Configure Turnstile before public signups or public request creation.
 
 ## 3. Database and auth
 
-- Run [supabase/migrations/20260308120000_secure_core.sql](/Users/anujsuthar/Documents/Tag-along/supabase/migrations/20260308120000_secure_core.sql).
+- Run [supabase/migrations/20260308120000_secure_core.sql](/Users/anujsuthar/Documents/Withly/supabase/migrations/20260308120000_secure_core.sql).
 - Enable Supabase email confirmation, password recovery, and any OAuth providers you intend to expose publicly.
 - Manually promote the initial admin account after first sign-in.
 

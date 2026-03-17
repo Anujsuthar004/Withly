@@ -25,7 +25,7 @@ export async function GET() {
     status: 200,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Content-Disposition": `attachment; filename="tag-along-export-${user.id}.json"`,
+      "Content-Disposition": `attachment; filename="withly-export-${user.id}.json"`,
       "Cache-Control": "no-store",
     },
   });

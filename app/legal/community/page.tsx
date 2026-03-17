@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { StaticPageShell } from "@/components/static-page-shell";
 
 export const metadata: Metadata = {
-  title: "Community Guidelines | Tag Along",
+  title: "Community Guidelines | Withly",
 };
 
 export default function CommunityGuidelinesPage() {
