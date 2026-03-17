@@ -573,7 +573,7 @@ main {
 .auth-form label,
 .stack-form label {
   display: grid;
-  gap: 10px;
+  gap: 6px;
   font-size: 0.92rem;
   font-weight: 600;
   min-width: 0;
@@ -707,7 +707,7 @@ main {
 .secondary-button:disabled,
 .ghost-button:disabled {
   cursor: not-allowed;
-  opacity: 0.58;
+  opacity: 0.75;
   transform: none;
   box-shadow: none;
 }

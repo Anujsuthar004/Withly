@@ -191,9 +191,9 @@ export function AppShell({
 
         <main className="app-content">
           {notice ? (
-            <div className="setup-banner" role="status" aria-live="polite">
-              <p className="kicker">System notice</p>
-              <p>{notice}</p>
+            <div className="summary-callout" role="status" aria-live="polite">
+              <strong>System Notice: </strong>
+              <span>{notice}</span>
             </div>
           ) : null}
           {children}

@@ -30,10 +30,7 @@ export function ProfilePage({
         intro="A calm, complete profile gives people the context they need to feel comfortable responding."
         status={status}
         meta={
-          <>
-            <ProfileAvatar name={profile.displayName} url={profile.avatarUrl} size="sm" />
-            <span className="mini-chip">{progress.percentage}% complete</span>
-          </>
+          <ProfileAvatar name={profile.displayName} url={profile.avatarUrl} size="sm" />
         }
       />
       <ProfilePanel profile={profile} availability={availability} preview={preview} onStatus={setStatus} />
