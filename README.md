@@ -4,8 +4,6 @@ Tag-along is a private companionship workspace architected specifically to solve
 
 Instead of navigating the awkwardness of formal plans, Tag-along allows users to post highly specific, structured requests. Whether you need an "Errand Companion" to help carry groceries or a "Social Plus-One" to check out a new local spot, Tag-along prioritizes safety, clear intentions, and verifiable trust.
 
-![Clean Shot 2024-10-24 at 16 01 27](https://github.com/user-attachments/assets/ae0caef0-e17f-4428-af31-eb4759e6616a)
-
 ## Technology Stack
 
 This application is built for extreme edge performance and deep Row Level Security (RLS).
@@ -16,9 +14,7 @@ This application is built for extreme edge performance and deep Row Level Securi
 - **Realtime**: Supabase Realtime (for private session chat and live notifications)
 - **Validation**: Zod & Server Actions
 
-## Core Features (v2)
-
-The application has been heavily expanded to include a 12-feature safety and trust suite:
+## Core Features
 
 1. **Safety Check-ins**: Active session participants can quickly tap "I'm OK," "Running Late," or "Need Help."
 2. **Emergency SOS**: A persistent panic button in chatrooms that securely dispatches your location to a predefined emergency contact.
