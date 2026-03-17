@@ -47,6 +47,8 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
   const [meetupAt, setMeetupAt] = useState("");
   const [radiusKm, setRadiusKm] = useState(5);
   const [tags, setTags] = useState(defaultTags.social.join(", "));
+  const [expiresAt, setExpiresAt] = useState("");
+  const [maxCompanions, setMaxCompanions] = useState(1);
   const [verifiedOnly, setVerifiedOnly] = useState(true);
   const [checkInEnabled, setCheckInEnabled] = useState(true);
   const [captchaToken, setCaptchaToken] = useState("");
@@ -73,6 +75,8 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
     setMeetupAt("");
     setRadiusKm(5);
     setTags(defaultTags[nextLane].join(", "));
+    setExpiresAt("");
+    setMaxCompanions(1);
     setVerifiedOnly(true);
     setCheckInEnabled(true);
     setCaptchaToken("");
@@ -142,6 +146,8 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
                   tags: parsedTags,
                   verifiedOnly,
                   checkInEnabled,
+                  maxCompanions,
+                  expiresAt: expiresAt || undefined,
                   captchaToken,
                 });
 
@@ -246,6 +252,33 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
                         type="datetime-local"
                         value={meetupAt}
                         onChange={(event) => setMeetupAt(event.target.value)}
+                        disabled={preview || isPending}
+                      />
+                    </div>
+                  </label>
+                </div>
+
+                <div className="grid-two">
+                  <label>
+                    Max Companions
+                    <input
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={maxCompanions}
+                      onChange={(event) => setMaxCompanions(Number(event.target.value))}
+                      disabled={preview || isPending}
+                    />
+                  </label>
+
+                  <label>
+                    Auto-Expire At (Ephemeral)
+                    <div className="input-icon-wrap">
+                      <CalendarClock size={16} />
+                      <input
+                        type="datetime-local"
+                        value={expiresAt}
+                        onChange={(event) => setExpiresAt(event.target.value)}
                         disabled={preview || isPending}
                       />
                     </div>
@@ -384,6 +417,10 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
             <div className="composer-preview-line">
               <span>Check-ins</span>
               <strong>{checkInEnabled ? "Enabled" : "Off"}</strong>
+            </div>
+            <div className="composer-preview-line">
+              <span>Group Size</span>
+              <strong>{maxCompanions === 1 ? "1-on-1" : `Up to ${maxCompanions}`}</strong>
             </div>
           </div>
 

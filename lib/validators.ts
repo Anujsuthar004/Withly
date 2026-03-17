@@ -7,11 +7,16 @@ export const feedRequestCardSchema = z.object({
   description: z.string(),
   areaLabel: z.string().nullable(),
   meetupAt: z.string().nullable(),
+  expiresAt: z.string().nullable().optional().default(null),
   createdAt: z.string(),
   verifiedOnly: z.boolean(),
   hostDisplayName: z.string().nullable(),
   hostVerified: z.boolean(),
+  hostTrustScore: z.number().optional().default(50),
+  hostVerificationTier: z.enum(["email", "phone", "id_verified"]).optional().default("email"),
   tags: z.array(z.string()),
+  compatibilityScore: z.number().nullable().optional().default(null),
+  maxCompanions: z.number().optional().default(1),
 });
 
 export const sessionMessageSchema = z.object({
@@ -32,6 +37,8 @@ export const workspaceSnapshotSchema = z.object({
     homeArea: z.string(),
     role: z.enum(["member", "admin"]),
     avatarUrl: z.string().optional().default(""),
+    verificationTier: z.enum(["email", "phone", "id_verified"]).optional().default("email"),
+    trustScore: z.number().optional().default(50),
   }),
   myRequests: z.array(
     z.object({
@@ -50,6 +57,8 @@ export const workspaceSnapshotSchema = z.object({
       completedAt: z.string().nullable(),
       userOutcome: z.enum(["completed", "issue"]).nullable(),
       userMeetAgain: z.boolean().nullable(),
+      maxCompanions: z.number().optional().default(1),
+      companionIds: z.array(z.string().uuid()).optional().default([]),
     })
   ),
   incomingJoinRequests: z.array(
@@ -120,10 +129,12 @@ export const createRequestSchema = z.object({
   description: z.string().trim().min(24).max(600),
   areaLabel: z.string().trim().min(3).max(120),
   meetupAt: z.string().trim().nullable(),
+  expiresAt: z.string().trim().nullable().optional(),
   radiusKm: z.number().int().min(1).max(25),
   tags: z.array(z.string().trim().min(1).max(24)).min(1).max(6),
   verifiedOnly: z.boolean(),
   checkInEnabled: z.boolean(),
+  maxCompanions: z.number().int().min(1).max(5).optional().default(1),
   captchaToken: z.string().trim().optional().nullable(),
 });
 
@@ -204,4 +215,68 @@ export const signInSchema = authCredentialSchema.extend({
 export const forgotPasswordSchema = z.object({
   email: z.string().trim().email(),
   captchaToken: z.string().trim().optional().nullable(),
+});
+
+// --- New feature schemas ---
+
+export const submitCheckInSchema = z.object({
+  requestId: z.string().uuid(),
+  status: z.enum(["ok", "missed", "sos"]).optional().default("ok"),
+  note: z.string().trim().max(300).optional().default(""),
+});
+
+export const setAvailabilityWindowSchema = z.object({
+  dayOfWeek: z.number().int().min(0).max(6),
+  startTime: z.string().trim().min(4).max(8),
+  endTime: z.string().trim().min(4).max(8),
+  label: z.string().trim().max(80).optional().default(""),
+});
+
+export const deleteAvailabilityWindowSchema = z.object({
+  windowId: z.string().uuid(),
+});
+
+export const setEmergencyContactSchema = z.object({
+  contactName: z.string().trim().min(2).max(60),
+  contactPhone: z.string().trim().min(6).max(20),
+  contactEmail: z.string().trim().email().nullable().optional(),
+});
+
+export const triggerSosSchema = z.object({
+  requestId: z.string().uuid(),
+  locationText: z.string().trim().max(200).optional().default(""),
+});
+
+export const resolveSosSchema = z.object({
+  alertId: z.string().uuid(),
+  status: z.enum(["resolved", "false_alarm"]).optional().default("resolved"),
+});
+
+export const upgradeVerificationSchema = z.object({
+  tier: z.enum(["phone", "id_verified"]),
+  phoneHash: z.string().trim().optional().nullable(),
+});
+
+export const createCommunitySchema = z.object({
+  name: z.string().trim().min(3).max(80),
+  description: z.string().trim().max(400).optional().default(""),
+  isPrivate: z.boolean().optional().default(false),
+});
+
+export const joinCommunitySchema = z.object({
+  communityId: z.string().uuid(),
+});
+
+export const markNotificationsReadSchema = z.object({
+  notificationIds: z.array(z.number().int()).min(1).max(100),
+});
+
+export const notificationSchema = z.object({
+  id: z.number(),
+  kind: z.string(),
+  title: z.string(),
+  body: z.string(),
+  refId: z.string().uuid().nullable(),
+  read: z.boolean(),
+  createdAt: z.string(),
 });

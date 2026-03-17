@@ -1,5 +1,23 @@
 export type RequestLane = "social" | "errand";
 export type RequestStatus = "open" | "matched" | "completed" | "cancelled";
+export type VerificationTier = "email" | "phone" | "id_verified";
+export type CheckInStatus = "ok" | "missed" | "sos";
+export type SosStatus = "active" | "resolved" | "false_alarm";
+export type ModerationVerdict = "safe" | "flagged" | "rejected";
+export type CommunityRole = "owner" | "moderator" | "member";
+export type NotificationKind =
+  | "join_request_received"
+  | "join_request_accepted"
+  | "join_request_declined"
+  | "message_received"
+  | "check_in_due"
+  | "check_in_missed"
+  | "session_completed"
+  | "meet_again_mutual"
+  | "sos_triggered"
+  | "verification_upgraded"
+  | "community_invite"
+  | "moderation_flag";
 
 export interface FeedRequestCard {
   id: string;
@@ -8,11 +26,16 @@ export interface FeedRequestCard {
   description: string;
   areaLabel: string | null;
   meetupAt: string | null;
+  expiresAt: string | null;
   createdAt: string;
   verifiedOnly: boolean;
   hostDisplayName: string | null;
   hostVerified: boolean;
+  hostTrustScore: number;
+  hostVerificationTier: VerificationTier;
   tags: string[];
+  compatibilityScore: number | null;
+  maxCompanions: number;
 }
 
 export interface WorkspaceProfile {
@@ -22,6 +45,8 @@ export interface WorkspaceProfile {
   homeArea: string;
   role: "member" | "admin";
   avatarUrl: string;
+  verificationTier: VerificationTier;
+  trustScore: number;
 }
 
 export interface WorkspaceRequest {
@@ -40,6 +65,8 @@ export interface WorkspaceRequest {
   completedAt: string | null;
   userOutcome: "completed" | "issue" | null;
   userMeetAgain: boolean | null;
+  maxCompanions: number;
+  companionIds: string[];
 }
 
 export interface WorkspaceJoinReview {
@@ -108,6 +135,7 @@ export interface AdminDashboard {
   };
   reports: ModerationReport[];
   deletionRequests: AccountDeletionRequest[];
+  moderationReviews?: ModerationReviewEntry[];
 }
 
 export interface WorkspaceSnapshot {
@@ -115,4 +143,92 @@ export interface WorkspaceSnapshot {
   myRequests: WorkspaceRequest[];
   incomingJoinRequests: WorkspaceJoinReview[];
   activeSession: WorkspaceSession | null;
+}
+
+// --- New feature types ---
+
+export interface SessionCheckIn {
+  id: number;
+  requestId: string;
+  userId: string;
+  status: CheckInStatus;
+  note: string;
+  createdAt: string;
+}
+
+export interface AppNotification {
+  id: number;
+  kind: NotificationKind;
+  title: string;
+  body: string;
+  refId: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface TrustScore {
+  userId: string;
+  sessionsCompleted: number;
+  sessionsWithIssues: number;
+  meetAgainYes: number;
+  meetAgainNo: number;
+  reportsReceived: number;
+  score: number;
+  updatedAt: string;
+}
+
+export interface AvailabilityWindow {
+  id: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  label: string;
+}
+
+export interface EmergencyContact {
+  id: string;
+  contactName: string;
+  contactPhone: string;
+  contactEmail: string | null;
+}
+
+export interface SosAlert {
+  id: string;
+  requestId: string;
+  triggeredBy: string;
+  status: SosStatus;
+  locationText: string;
+  resolvedAt: string | null;
+  createdAt: string;
+}
+
+export interface TrustedCompanion {
+  id: string;
+  companionId: string;
+  companionName: string;
+  companionTrustScore: number;
+  requestId: string;
+  createdAt: string;
+}
+
+export interface Community {
+  id: string;
+  name: string;
+  description: string;
+  isPrivate: boolean;
+  role: CommunityRole;
+  memberCount: number;
+  joinedAt: string;
+}
+
+export interface ModerationReviewEntry {
+  id: string;
+  contentType: "request" | "message" | "profile" | "report";
+  contentId: string;
+  contentText: string;
+  verdict: ModerationVerdict;
+  confidence: number;
+  flags: string[];
+  reviewedBy: string;
+  createdAt: string;
 }

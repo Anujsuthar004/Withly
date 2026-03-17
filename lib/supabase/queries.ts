@@ -55,11 +55,20 @@ async function createProfileAvatarUrl(path: string | null | undefined) {
 async function getCurrentProfile(supabase: NonNullable<Awaited<ReturnType<typeof getSupabaseServerClientOrNull>>>, userId: string) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, display_name, about_me, home_area, role, avatar_path")
+    .select("id, display_name, about_me, home_area, role, avatar_path, verification_tier")
     .eq("id", userId)
     .maybeSingle();
 
-  if (error && /avatar_path/i.test(error.message)) {
+  // Fetch trust score separately (may not exist yet)
+  const trustResult = await supabase
+    .from("trust_scores")
+    .select("score")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const trustScore = (trustResult.data as { score?: number } | null)?.score ?? 50;
+
+  if (error && /avatar_path|verification_tier/i.test(error.message)) {
     const fallback = await supabase
       .from("profiles")
       .select("id, display_name, about_me, home_area, role")
@@ -77,6 +86,8 @@ async function getCurrentProfile(supabase: NonNullable<Awaited<ReturnType<typeof
       homeArea: fallback.data.home_area ?? "",
       role: fallback.data.role,
       avatarUrl: "",
+      verificationTier: "email" as const,
+      trustScore,
     };
   }
 
@@ -91,6 +102,8 @@ async function getCurrentProfile(supabase: NonNullable<Awaited<ReturnType<typeof
     homeArea: data.home_area ?? "",
     role: data.role,
     avatarUrl: await createProfileAvatarUrl(data.avatar_path),
+    verificationTier: ((data as { verification_tier?: string }).verification_tier ?? "email") as "email" | "phone" | "id_verified",
+    trustScore,
   };
 }
 
@@ -254,7 +267,15 @@ export async function getAdminDashboard() {
     return null;
   }
 
-  return normalizeAdminDashboard(data);
+  const dashboard = normalizeAdminDashboard(data);
+  if (!dashboard) return null;
+
+  const { data: reviews } = await supabase.rpc("get_pending_moderation");
+
+  return {
+    ...dashboard,
+    moderationReviews: (reviews || []) as any[],
+  };
 }
 
 export async function getLandingPageState() {
@@ -264,6 +285,27 @@ export async function getLandingPageState() {
     feed: landingFeed.feed,
     feedError: landingFeed.feedError,
     hasSupabaseEnv,
+  };
+}
+
+export async function getMyAvailability() {
+  const supabase = await getSupabaseServerClientOrNull();
+  if (!supabase) return { availability: [], error: "No DB" };
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { availability: [], error: "No user" };
+
+  const { data, error } = await supabase.rpc("get_my_availability");
+  
+  if (error) {
+    return { availability: [], error: error.message };
+  }
+
+  // Raw data from RPC doesn't automatically match TS types perfectly in our mock
+  // but it returns availability_windows records.
+  return { 
+    availability: data as { id: string; day_of_week: number; start_time: string; end_time: string; label: string | null }[], 
+    error: "" 
   };
 }
 

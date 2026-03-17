@@ -1,10 +1,16 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Download, Trash2, UserMinus } from "lucide-react";
+import { Download, ShieldAlert, ShieldCheck, Trash2, UserMinus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { deleteAccountAction } from "@/app/workspace/actions";
+import { 
+  deleteAccountAction, 
+  setEmergencyContactAction,
+  upgradeVerificationAction,
+  joinCommunityAction,
+  createCommunityAction
+} from "@/app/workspace/actions";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { hasSupabaseEnv } from "@/lib/env";
 
@@ -13,6 +19,18 @@ export function AccountPanel({ preview, onStatus }: { preview: boolean; onStatus
   const [deleteReason, setDeleteReason] = useState("");
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isPending, startTransition] = useTransition();
+
+  const [ecName, setEcName] = useState("");
+  const [ecPhone, setEcPhone] = useState("");
+  const [ecEmail, setEcEmail] = useState("");
+  const [isEcPending, startEcTransition] = useTransition();
+
+  const [joinCode, setJoinCode] = useState("");
+  const [commName, setCommName] = useState("");
+  const [commDesc, setCommDesc] = useState("");
+  const [commDomain, setCommDomain] = useState("");
+  const [isCommPending, startCommTransition] = useTransition();
+  const [isVerPending, startVerTransition] = useTransition();
 
   return (
     <section className="panel account-panel">
@@ -55,6 +73,202 @@ export function AccountPanel({ preview, onStatus }: { preview: boolean; onStatus
             <Download size={16} />
             {preview ? "Preview mode only" : "Download account export"}
           </button>
+        </section>
+
+        <section className="panel-section">
+          <div className="form-section-head">
+            <h4>Emergency Contact</h4>
+            <p>We&apos;ll notify this person if you trigger an SOS alert during an active session.</p>
+          </div>
+
+          <form
+            className="stack-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+
+              if (preview) {
+                onStatus("This action is only available after sign-in.");
+                return;
+              }
+
+              startEcTransition(async () => {
+                const formData = new FormData();
+                formData.set("contactName", ecName);
+                formData.set("contactPhone", ecPhone);
+                if (ecEmail) formData.set("contactEmail", ecEmail);
+
+                const result = await setEmergencyContactAction({ ok: false, message: "" }, formData);
+                onStatus(result.message);
+                
+                if (result.ok) {
+                  setEcName("");
+                  setEcPhone("");
+                  setEcEmail("");
+                  router.refresh();
+                }
+              });
+            }}
+          >
+            <div className="grid-two">
+              <label>
+                Contact Name *
+                <input
+                  type="text"
+                  value={ecName}
+                  onChange={(event) => setEcName(event.target.value)}
+                  placeholder="Jane Doe"
+                  required
+                  disabled={preview || isEcPending}
+                />
+              </label>
+              <label>
+                Phone Number *
+                <input
+                  type="tel"
+                  value={ecPhone}
+                  onChange={(event) => setEcPhone(event.target.value)}
+                  placeholder="+15551234567"
+                  required
+                  disabled={preview || isEcPending}
+                />
+              </label>
+            </div>
+            <label>
+              Email Address (Optional)
+              <input
+                type="email"
+                value={ecEmail}
+                onChange={(event) => setEcEmail(event.target.value)}
+                placeholder="jane@example.com"
+                disabled={preview || isEcPending}
+              />
+            </label>
+
+            <button className="secondary-button" type="submit" disabled={preview || isEcPending || !ecName || !ecPhone}>
+              <ShieldAlert size={16} />
+              {preview ? "Preview mode only" : isEcPending ? "Saving..." : "Save Emergency Contact"}
+            </button>
+          </form>
+        </section>
+
+        <section className="panel-section">
+          <div className="form-section-head">
+            <h4>Verify Identity</h4>
+            <p>Higher verification tiers increase your trust score and let you join more strict requests.</p>
+          </div>
+          <div className="button-row">
+            <button
+              className="secondary-button compact"
+              type="button"
+              disabled={preview || isVerPending}
+              onClick={() => {
+                startVerTransition(async () => {
+                  const formData = new FormData();
+                  formData.set("tier", "phone");
+                  formData.set("id_reference", "stub_phone_123");
+                  const result = await upgradeVerificationAction({ ok: false, message: "" }, formData);
+                  onStatus(result.message);
+                  if (result.ok) router.refresh();
+                });
+              }}
+            >
+              <ShieldCheck size={16} /> Verify Phone
+            </button>
+            <button
+              className="primary-button compact"
+              type="button"
+              disabled={preview || isVerPending}
+              onClick={() => {
+                startVerTransition(async () => {
+                  const formData = new FormData();
+                  formData.set("tier", "id_verified");
+                  formData.set("id_reference", "stub_id_123");
+                  const result = await upgradeVerificationAction({ ok: false, message: "" }, formData);
+                  onStatus(result.message);
+                  if (result.ok) router.refresh();
+                });
+              }}
+            >
+              <ShieldCheck size={16} /> Verify Government ID
+            </button>
+          </div>
+        </section>
+
+        <section className="panel-section">
+          <div className="form-section-head">
+            <h4>Trust Communities</h4>
+            <p>Join or create a private network so members can filter requests to just your community.</p>
+          </div>
+          
+          <div className="grid-two">
+            <form className="stack-form" onSubmit={(e) => {
+              e.preventDefault();
+              startCommTransition(async () => {
+                const formData = new FormData();
+                formData.set("communityId_or_joinCode", joinCode);
+                const result = await joinCommunityAction({ ok: false, message: "" }, formData);
+                onStatus(result.message);
+                if (result.ok) setJoinCode("");
+              });
+            }}>
+              <label>
+                Join with a Code
+                <input 
+                  type="text" 
+                  placeholder="e.g. CAMPUS-2026" 
+                  value={joinCode} 
+                  onChange={(e) => setJoinCode(e.target.value)}
+                  disabled={preview || isCommPending}
+                  required
+                />
+              </label>
+              <button className="ghost-button compact" type="submit" disabled={preview || isCommPending}>
+                Join Community
+              </button>
+            </form>
+
+            <form className="stack-form" onSubmit={(e) => {
+              e.preventDefault();
+              startCommTransition(async () => {
+                const formData = new FormData();
+                formData.set("name", commName);
+                formData.set("description", commDesc);
+                if (commDomain) formData.set("domain_requirement", commDomain);
+                const result = await createCommunityAction({ ok: false, message: "" }, formData);
+                onStatus(result.message);
+                if (result.ok) {
+                  setCommName("");
+                  setCommDesc("");
+                  setCommDomain("");
+                }
+              });
+            }}>
+              <label>
+                Create Community
+                <input 
+                  type="text" 
+                  placeholder="Community Name" 
+                  value={commName} 
+                  onChange={(e) => setCommName(e.target.value)}
+                  disabled={preview || isCommPending}
+                  required
+                />
+              </label>
+              <label>
+                Email Domain (Optional)
+                <input 
+                  type="text" 
+                  placeholder="e.g. university.edu" 
+                  value={commDomain} 
+                  onChange={(e) => setCommDomain(e.target.value)}
+                  disabled={preview || isCommPending}
+                />
+              </label>
+              <button className="secondary-button compact" type="submit" disabled={preview || isCommPending}>
+                {isCommPending ? "Creating..." : "Create New Community"}
+              </button>
+            </form>
+          </div>
         </section>
 
         <section className="panel-section danger-panel">

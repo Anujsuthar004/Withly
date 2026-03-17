@@ -10,10 +10,12 @@ import { getProfileCompletion } from "@/lib/utils";
 
 export function ProfilePage({
   profile,
+  availability,
   preview,
   initialStatus,
 }: {
   profile: WorkspaceProfile;
+  availability: { id: string; day_of_week: number; start_time: string; end_time: string; label: string | null }[];
   preview: boolean;
   initialStatus?: string;
 }) {
@@ -34,7 +36,7 @@ export function ProfilePage({
           </>
         }
       />
-      <ProfilePanel profile={profile} preview={preview} onStatus={setStatus} />
+      <ProfilePanel profile={profile} availability={availability} preview={preview} onStatus={setStatus} />
     </div>
   );
 }

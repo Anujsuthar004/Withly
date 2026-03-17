@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Bell,
   Compass,
   Inbox,
   LayoutGrid,
@@ -30,6 +31,27 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+function useNotifications() {
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    async function check() {
+      try {
+        const res = await fetch("/api/notifications");
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadCount(data.unreadCount ?? 0);
+        }
+      } catch {}
+    }
+    check();
+    const interval = setInterval(check, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return unreadCount;
+}
+
 export function AppShell({
   children,
   showAdmin,
@@ -46,6 +68,7 @@ export function AppShell({
   profileAvatarUrl?: string;
 }) {
   const pathname = usePathname() ?? "";
+  const unreadNotifs = useNotifications();
 
   const navItems = useMemo<NavItem[]>(
     () => [
@@ -150,6 +173,12 @@ export function AppShell({
             {inboxCount > 0 ? (
               <Link className="ghost-button compact" href="/inbox">
                 {inboxCount} waiting
+              </Link>
+            ) : null}
+            {unreadNotifs > 0 ? (
+              <Link className="ghost-button compact" href="/inbox" title={`${unreadNotifs} unread notifications`}>
+                <Bell size={16} />
+                {unreadNotifs}
               </Link>
             ) : null}
             <Link className="ghost-button compact" href="/account">

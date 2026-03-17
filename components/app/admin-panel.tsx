@@ -11,6 +11,7 @@ import { formatRelativeTime } from "@/lib/utils";
 type ReportSeverity = "critical" | "high" | "medium" | "low";
 type ReportView = "active" | "all" | "open" | "reviewing" | "resolved";
 type DeletionView = "pending" | "all" | "resolved";
+type ModerationView = "pending" | "all";
 
 function getHoursSince(value: string) {
   const parsed = new Date(value);
@@ -83,6 +84,7 @@ export function AdminPanel({
   const [deletionBusyId, setDeletionBusyId] = useState<string | null>(null);
   const [reportView, setReportView] = useState<ReportView>("active");
   const [deletionView, setDeletionView] = useState<DeletionView>("pending");
+  const [aiModView, setAiModView] = useState<ModerationView>("pending");
   const [severityFilter, setSeverityFilter] = useState<ReportSeverity | "all">("all");
   const [reportSearch, setReportSearch] = useState("");
 
@@ -224,6 +226,12 @@ export function AdminPanel({
     return true;
   });
 
+  const aiReviews = dashboard.moderationReviews || [];
+  const filteredAiReviews = aiReviews.filter((entry) => {
+    if (aiModView === "pending") return entry.verdict === "flagged" || entry.verdict === "rejected";
+    return true;
+  });
+
   return (
     <section className="panel admin-panel">
       <div className="panel-heading">
@@ -329,6 +337,11 @@ export function AdminPanel({
             <span>Deletion load</span>
             <strong>{pendingDeletionRequests.length}</strong>
             <p>Separate privacy/compliance work that should not disappear behind conduct reports.</p>
+          </article>
+          <article className="admin-signal-card">
+            <span>AI Flags</span>
+            <strong>{aiReviews.length}</strong>
+            <p>Content flagged automatically by AI pending review.</p>
           </article>
         </div>
 
@@ -590,6 +603,65 @@ export function AdminPanel({
               </article>
             );
           })}
+        </div>
+      </section>
+
+      <section className="panel-section">
+        <div className="form-section-head">
+          <h4>AI Moderation Queue</h4>
+          <p>Review content flagged automatically by the AI system.</p>
+        </div>
+
+        <div className="feed-toolbar admin-toolbar">
+          <div className="filter-pill-group" role="tablist" aria-label="AI moderation filters">
+            <button
+              type="button"
+              className={`filter-pill ${aiModView === "pending" ? "active" : ""}`}
+              onClick={() => setAiModView("pending")}
+            >
+              Pending
+            </button>
+            <button type="button" className={`filter-pill ${aiModView === "all" ? "active" : ""}`} onClick={() => setAiModView("all")}>
+              All
+            </button>
+          </div>
+
+          <div className="feed-toolbar-meta">
+            <span>
+              Showing {filteredAiReviews.length} of {aiReviews.length} reviews
+            </span>
+          </div>
+        </div>
+
+        <div className="review-list">
+          {filteredAiReviews.length === 0 ? <div className="empty-card">No AI flags right now.</div> : null}
+
+          {filteredAiReviews.map((entry) => (
+            <article key={entry.id} className="review-card admin-review-card">
+              <div className="summary-head">
+                <div>
+                  <div className="admin-card-pill-row">
+                    <span className={`status-pill ${entry.verdict === 'flagged' ? 'severity-high' : 'severity-medium'}`}>
+                      {entry.verdict}
+                    </span>
+                    <span className="status-pill status-open">{entry.contentType}</span>
+                  </div>
+                  <h4>Confidence: {Math.round(entry.confidence * 100)}%</h4>
+                  <p>Content ID: {entry.contentId.slice(0, 8)}</p>
+                </div>
+                <div className="admin-card-meta-stack">
+                  <span className="mini-chip">{formatRelativeTime(entry.createdAt)}</span>
+                  <div className="tag-row" style={{ marginTop: '0.25rem' }}>
+                    {entry.flags.map(f => <span key={f} className="mini-chip" style={{ fontSize: '10px'}}>{f}</span>)}
+                  </div>
+                </div>
+              </div>
+
+              <p className="review-about" style={{ fontFamily: 'monospace', fontSize: '0.85em', background: 'rgba(0,0,0,0.03)', padding: '0.5rem', borderRadius: '4px' }}>
+                {entry.contentText}
+              </p>
+            </article>
+          ))}
         </div>
       </section>
     </section>

@@ -12,15 +12,25 @@ import {
   accountDeletionSchema,
   blockUserSchema,
   completeRequestSchema,
+  createCommunitySchema,
   createReportSchema,
   createRequestSchema,
+  deleteAvailabilityWindowSchema,
   deleteRequestSchema,
+  joinCommunitySchema,
   joinRequestSchema,
+  markNotificationsReadSchema,
   resolveDeletionRequestSchema,
   resolveReportSchema,
+  resolveSosSchema,
   reviewJoinRequestSchema,
   sendMessageSchema,
+  setAvailabilityWindowSchema,
+  setEmergencyContactSchema,
+  submitCheckInSchema,
+  triggerSosSchema,
   updateProfileSchema,
+  upgradeVerificationSchema,
 } from "@/lib/validators";
 
 interface ActionResult {
@@ -705,3 +715,359 @@ export async function deleteRequestAction(input: unknown): Promise<ActionResult>
     return { ok: false, message };
   }
 }
+
+// -- Feature 1: Safety Check-Ins --
+
+export async function submitCheckInAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  try {
+    const auth = await requireSupabaseSession();
+    if (auth.error || !auth.supabase || !auth.user) {
+      return auth.error ?? { ok: false, message: "Sign in to continue." };
+    }
+
+    const parsed = submitCheckInSchema.safeParse(Object.fromEntries(formData));
+    if (!parsed.success) return { ok: false, message: "Invalid check-in data." };
+
+    const rateLimitError = await enforceAuthenticatedActionLimit(auth.user.id, "check-in", 20, 60 * 60 * 1000);
+    if (rateLimitError) return rateLimitError;
+
+    const { error } = await auth.supabase.rpc("submit_check_in", {
+      request_id_input: parsed.data.requestId,
+      status_input: parsed.data.status,
+      note_input: parsed.data.note,
+    });
+
+    if (error) return { ok: false, message: error.message };
+
+    await logAppEvent({
+      level: "info",
+      category: "checkin.submit",
+      message: "Check-in submitted.",
+      context: { userId: auth.user.id, requestId: parsed.data.requestId, status: parsed.data.status },
+    }).catch(() => undefined);
+
+    revalidatePath("/");
+    return { ok: true, message: "Check-in submitted." };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not submit check-in.";
+    return { ok: false, message };
+  }
+}
+
+// -- Feature 2: Notifications --
+
+export async function markNotificationsReadAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  try {
+    const auth = await requireSupabaseSession();
+    if (auth.error || !auth.supabase || !auth.user) {
+      return auth.error ?? { ok: false, message: "Sign in to continue." };
+    }
+
+    const rawIds = formData.get("notificationIds");
+    const ids = typeof rawIds === "string" ? JSON.parse(rawIds) : [];
+    const parsed = markNotificationsReadSchema.safeParse({ notificationIds: ids });
+    if (!parsed.success) return { ok: false, message: "Invalid notification IDs." };
+
+    const { error } = await auth.supabase.rpc("mark_notifications_read", {
+      notification_ids: parsed.data.notificationIds,
+    });
+
+    if (error) return { ok: false, message: error.message };
+    return { ok: true, message: "Notifications marked as read." };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not mark notifications.";
+    return { ok: false, message };
+  }
+}
+
+// -- Feature 5: Availability Windows --
+
+export async function setAvailabilityWindowAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  try {
+    const auth = await requireSupabaseSession();
+    if (auth.error || !auth.supabase || !auth.user) {
+      return auth.error ?? { ok: false, message: "Sign in to continue." };
+    }
+
+    const parsed = setAvailabilityWindowSchema.safeParse({
+      dayOfWeek: Number(formData.get("dayOfWeek")),
+      startTime: formData.get("startTime"),
+      endTime: formData.get("endTime"),
+      label: formData.get("label"),
+    });
+    if (!parsed.success) return { ok: false, message: "Invalid availability data." };
+
+    const rateLimitError = await enforceAuthenticatedActionLimit(auth.user.id, "availability", 30, 60 * 60 * 1000);
+    if (rateLimitError) return rateLimitError;
+
+    const { error } = await auth.supabase.rpc("set_availability_window", {
+      day_input: parsed.data.dayOfWeek,
+      start_time_input: parsed.data.startTime,
+      end_time_input: parsed.data.endTime,
+      label_input: parsed.data.label,
+    });
+
+    if (error) return { ok: false, message: error.message };
+
+    revalidatePath("/profile");
+    return { ok: true, message: "Availability window saved." };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not save availability.";
+    return { ok: false, message };
+  }
+}
+
+export async function deleteAvailabilityWindowAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  try {
+    const auth = await requireSupabaseSession();
+    if (auth.error || !auth.supabase || !auth.user) {
+      return auth.error ?? { ok: false, message: "Sign in to continue." };
+    }
+
+    const parsed = deleteAvailabilityWindowSchema.safeParse({ windowId: formData.get("windowId") });
+    if (!parsed.success) return { ok: false, message: "Invalid window ID." };
+
+    const { error } = await auth.supabase.rpc("delete_availability_window", {
+      window_id_input: parsed.data.windowId,
+    });
+
+    if (error) return { ok: false, message: error.message };
+
+    revalidatePath("/profile");
+    return { ok: true, message: "Availability window removed." };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not remove availability.";
+    return { ok: false, message };
+  }
+}
+
+// -- Feature 6: Verification Upgrade --
+
+export async function upgradeVerificationAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  try {
+    const auth = await requireSupabaseSession();
+    if (auth.error || !auth.supabase || !auth.user) {
+      return auth.error ?? { ok: false, message: "Sign in to continue." };
+    }
+
+    const parsed = upgradeVerificationSchema.safeParse({
+      tier: formData.get("tier"),
+      phoneHash: formData.get("phoneHash"),
+    });
+    if (!parsed.success) return { ok: false, message: "Invalid verification data." };
+
+    const rateLimitError = await enforceAuthenticatedActionLimit(auth.user.id, "verification", 5, 60 * 60 * 1000);
+    if (rateLimitError) return rateLimitError;
+
+    const { error } = await auth.supabase.rpc("upgrade_verification_tier", {
+      new_tier: parsed.data.tier,
+      phone_hash_input: parsed.data.phoneHash ?? null,
+    });
+
+    if (error) return { ok: false, message: error.message };
+
+    await logAppEvent({
+      level: "info",
+      category: "verification.upgrade",
+      message: "Verification tier upgraded.",
+      context: { userId: auth.user.id, tier: parsed.data.tier },
+    }).catch(() => undefined);
+
+    revalidatePath("/profile");
+    revalidatePath("/account");
+    return { ok: true, message: `Verification upgraded to ${parsed.data.tier}.` };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not upgrade verification.";
+    return { ok: false, message };
+  }
+}
+
+// -- Feature 9: Emergency SOS --
+
+export async function setEmergencyContactAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  try {
+    const auth = await requireSupabaseSession();
+    if (auth.error || !auth.supabase || !auth.user) {
+      return auth.error ?? { ok: false, message: "Sign in to continue." };
+    }
+
+    const parsed = setEmergencyContactSchema.safeParse({
+      contactName: formData.get("contactName"),
+      contactPhone: formData.get("contactPhone"),
+      contactEmail: formData.get("contactEmail") || null,
+    });
+    if (!parsed.success) return { ok: false, message: "Invalid emergency contact data." };
+
+    const rateLimitError = await enforceAuthenticatedActionLimit(auth.user.id, "emergency-contact", 10, 60 * 60 * 1000);
+    if (rateLimitError) return rateLimitError;
+
+    const { error } = await auth.supabase.rpc("set_emergency_contact", {
+      name_input: parsed.data.contactName,
+      phone_input: parsed.data.contactPhone,
+      email_input: parsed.data.contactEmail ?? null,
+    });
+
+    if (error) return { ok: false, message: error.message };
+
+    await logAppEvent({
+      level: "info",
+      category: "emergency.contact",
+      message: "Emergency contact updated.",
+      context: { userId: auth.user.id },
+    }).catch(() => undefined);
+
+    revalidatePath("/account");
+    return { ok: true, message: "Emergency contact saved." };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not save emergency contact.";
+    return { ok: false, message };
+  }
+}
+
+export async function triggerSosAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  try {
+    const auth = await requireSupabaseSession();
+    if (auth.error || !auth.supabase || !auth.user) {
+      return auth.error ?? { ok: false, message: "Sign in to continue." };
+    }
+
+    const parsed = triggerSosSchema.safeParse({
+      requestId: formData.get("requestId"),
+      locationText: formData.get("locationText"),
+    });
+    if (!parsed.success) return { ok: false, message: "Invalid SOS data." };
+
+    const { error } = await auth.supabase.rpc("trigger_sos_alert", {
+      request_id_input: parsed.data.requestId,
+      location_text_input: parsed.data.locationText,
+    });
+
+    if (error) return { ok: false, message: error.message };
+
+    await logAppEvent({
+      level: "warn",
+      category: "sos.triggered",
+      message: "SOS alert triggered.",
+      context: { userId: auth.user.id, requestId: parsed.data.requestId },
+    }).catch(() => undefined);
+
+    revalidatePath("/");
+    return { ok: true, message: "SOS alert sent. Your companion and emergency contact have been notified." };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not trigger SOS.";
+    return { ok: false, message };
+  }
+}
+
+export async function resolveSosAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  try {
+    const auth = await requireSupabaseSession();
+    if (auth.error || !auth.supabase || !auth.user) {
+      return auth.error ?? { ok: false, message: "Sign in to continue." };
+    }
+
+    const parsed = resolveSosSchema.safeParse({
+      alertId: formData.get("alertId"),
+      status: formData.get("status"),
+    });
+    if (!parsed.success) return { ok: false, message: "Invalid resolve data." };
+
+    const { error } = await auth.supabase.rpc("resolve_sos_alert", {
+      alert_id_input: parsed.data.alertId,
+      resolution_status: parsed.data.status,
+    });
+
+    if (error) return { ok: false, message: error.message };
+
+    await logAppEvent({
+      level: "info",
+      category: "sos.resolved",
+      message: "SOS alert resolved.",
+      context: { userId: auth.user.id, alertId: parsed.data.alertId, status: parsed.data.status },
+    }).catch(() => undefined);
+
+    revalidatePath("/");
+    return { ok: true, message: "SOS alert resolved." };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not resolve SOS.";
+    return { ok: false, message };
+  }
+}
+
+// -- Feature 11: Communities --
+
+export async function createCommunityAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  try {
+    const auth = await requireSupabaseSession();
+    if (auth.error || !auth.supabase || !auth.user) {
+      return auth.error ?? { ok: false, message: "Sign in to continue." };
+    }
+
+    const parsed = createCommunitySchema.safeParse({
+      name: formData.get("name"),
+      description: formData.get("description"),
+      isPrivate: formData.get("isPrivate") === "true",
+    });
+    if (!parsed.success) return { ok: false, message: "Invalid community data." };
+
+    const rateLimitError = await enforceAuthenticatedActionLimit(auth.user.id, "community-create", 5, 24 * 60 * 60 * 1000);
+    if (rateLimitError) return rateLimitError;
+
+    const { error } = await auth.supabase.rpc("create_community", {
+      name_input: parsed.data.name,
+      description_input: parsed.data.description,
+      is_private_input: parsed.data.isPrivate,
+    });
+
+    if (error) return { ok: false, message: error.message };
+
+    await logAppEvent({
+      level: "info",
+      category: "community.create",
+      message: "Community created.",
+      context: { userId: auth.user.id, name: parsed.data.name },
+    }).catch(() => undefined);
+
+    revalidatePath("/");
+    return { ok: true, message: "Community created." };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not create community.";
+    return { ok: false, message };
+  }
+}
+
+export async function joinCommunityAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  try {
+    const auth = await requireSupabaseSession();
+    if (auth.error || !auth.supabase || !auth.user) {
+      return auth.error ?? { ok: false, message: "Sign in to continue." };
+    }
+
+    const parsed = joinCommunitySchema.safeParse({ communityId: formData.get("communityId") });
+    if (!parsed.success) return { ok: false, message: "Invalid community ID." };
+
+    const rateLimitError = await enforceAuthenticatedActionLimit(auth.user.id, "community-join", 10, 60 * 60 * 1000);
+    if (rateLimitError) return rateLimitError;
+
+    const { error } = await auth.supabase.rpc("join_community", {
+      community_id_input: parsed.data.communityId,
+    });
+
+    if (error) return { ok: false, message: error.message };
+
+    await logAppEvent({
+      level: "info",
+      category: "community.join",
+      message: "Joined community.",
+      context: { userId: auth.user.id, communityId: parsed.data.communityId },
+    }).catch(() => undefined);
+
+    revalidatePath("/");
+    return { ok: true, message: "You joined the community." };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not join community.";
+    return { ok: false, message };
+  }
+}
+
+

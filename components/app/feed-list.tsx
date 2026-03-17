@@ -2,7 +2,7 @@
 
 import { useDeferredValue, useMemo, useState } from "react";
 import Link from "next/link";
-import { Compass, ShieldAlert, Trash2 } from "lucide-react";
+import { Clock, Compass, ShieldAlert, ShieldCheck, Star, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { deleteRequestAction, submitJoinRequestAction } from "@/app/workspace/actions";
@@ -247,6 +247,30 @@ export function FeedList({
             ) : (
               <p className="request-privacy-note">Exact meetup details are shared privately after both people are aligned.</p>
             )}
+
+            <div className="card-chip-row" style={{ marginTop: "0.5rem", marginBottom: "0.5rem", flexWrap: "wrap", opacity: 0.9 }}>
+              <span className="mini-chip" title="Host Trust Score">
+                <Star size={12} /> {request.hostTrustScore}/100 Trust
+              </span>
+              <span className="mini-chip" title={`Host Verification: ${request.hostVerificationTier}`}>
+                <ShieldCheck size={12} /> {request.hostVerificationTier === "id_verified" ? "ID Verified" : request.hostVerificationTier === "phone" ? "Phone" : "Email"}
+              </span>
+              {request.compatibilityScore !== null ? (
+                <span className="mini-chip" title="Companion Compatibility Score">
+                  {request.compatibilityScore}% Match
+                </span>
+              ) : null}
+              {request.maxCompanions > 1 ? (
+                <span className="mini-chip" title="Group Request">
+                  <Users size={12} /> Up to {request.maxCompanions} others
+                </span>
+              ) : null}
+              {request.expiresAt ? (
+                <span className="mini-chip" title={`Expires at ${formatDateTime(request.expiresAt)}`}>
+                  <Clock size={12} /> Ephemeral
+                </span>
+              ) : null}
+            </div>
 
             <div className="tag-row">
               {request.tags.map((tag) => (

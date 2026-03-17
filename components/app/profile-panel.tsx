@@ -1,20 +1,28 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Radar } from "lucide-react";
+import { Clock, Plus, Radar, ShieldCheck, Star, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { removeProfileAvatarAction, updateProfileAction, uploadProfileAvatarAction } from "@/app/workspace/actions";
+import { 
+  deleteAvailabilityWindowAction,
+  removeProfileAvatarAction, 
+  setAvailabilityWindowAction,
+  updateProfileAction, 
+  uploadProfileAvatarAction 
+} from "@/app/workspace/actions";
 import { ProfileAvatar } from "@/components/app/profile-avatar";
 import type { WorkspaceProfile } from "@/lib/supabase/types";
 import { getProfileCompletion } from "@/lib/utils";
 
 export function ProfilePanel({
   profile,
+  availability = [],
   preview,
   onStatus,
 }: {
   profile: WorkspaceProfile;
+  availability?: { id: string; day_of_week: number; start_time: string; end_time: string; label: string | null }[];
   preview: boolean;
   onStatus: (message: string) => void;
 }) {
@@ -26,6 +34,12 @@ export function ProfilePanel({
   });
   const [isPending, startTransition] = useTransition();
   const [isAvatarPending, startAvatarTransition] = useTransition();
+  const [isAvailPending, startAvailTransition] = useTransition();
+
+  const [dayOfWeek, setDayOfWeek] = useState(1);
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("17:00");
+  const [availLabel, setAvailLabel] = useState("");
   const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -107,10 +121,20 @@ export function ProfilePanel({
           <p className="kicker">Identity</p>
           <h3>{profile.displayName}</h3>
         </div>
-        <span className="status-dot">
-          <Radar size={16} />
-          {profile.homeArea || "Area not set"}
-        </span>
+        <div className="card-chip-row align-right">
+          <span className="status-dot">
+            <Radar size={16} />
+            {profile.homeArea || "Area not set"}
+          </span>
+          <span className="status-dot">
+            <Star size={16} />
+            {profile.trustScore}/100 Trust
+          </span>
+          <span className="status-dot">
+            <ShieldCheck size={16} />
+            {profile.verificationTier === "id_verified" ? "ID Verified" : profile.verificationTier === "phone" ? "Phone Verified" : "Email Verified"}
+          </span>
+        </div>
       </div>
       <p className="panel-intro">Keep the essentials current so people understand who they are talking to before they ever reply.</p>
 
@@ -254,8 +278,104 @@ export function ProfilePanel({
           </label>
         </section>
 
-        <button className="secondary-button" type="submit" disabled={preview || isPending || isAvatarPending}>
-          {preview ? "Preview mode only" : isPending ? "Saving..." : "Save profile"}
+        <section className="form-section">
+          <div className="form-section-head">
+            <h4>Availability Windows</h4>
+            <p>Set a few recurring windows when you&apos;re typically free. Helps match you with regular companions.</p>
+          </div>
+
+          {availability.length > 0 && (
+            <div className="summary-callout" style={{ padding: "1rem" }}>
+              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                {availability.map((window) => {
+                  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+                  return (
+                    <li key={window.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span>
+                        <strong>{days[window.day_of_week]}</strong> {window.start_time} - {window.end_time}
+                        {window.label ? ` (${window.label})` : ""}
+                      </span>
+                      <button
+                        type="button"
+                        className="danger-button ghost-button compact"
+                        disabled={preview || isAvailPending}
+                        onClick={() => {
+                          startAvailTransition(async () => {
+                            const formData = new FormData();
+                            formData.set("windowId", window.id);
+                            const result = await deleteAvailabilityWindowAction({ ok: false, message: "" }, formData);
+                            onStatus(result.message);
+                            if (result.ok) router.refresh();
+                          });
+                        }}
+                      >
+                        <Trash2 size={12} /> Remove
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          <div className="grid-two">
+            <label>
+              Day
+              <select value={dayOfWeek} onChange={(e) => setDayOfWeek(Number(e.target.value))} disabled={preview || isAvailPending}>
+                <option value={1}>Monday</option>
+                <option value={2}>Tuesday</option>
+                <option value={3}>Wednesday</option>
+                <option value={4}>Thursday</option>
+                <option value={5}>Friday</option>
+                <option value={6}>Saturday</option>
+                <option value={0}>Sunday</option>
+              </select>
+            </label>
+
+            <label>
+              Start Time
+              <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} disabled={preview || isAvailPending} />
+            </label>
+
+            <label>
+              End Time
+              <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} disabled={preview || isAvailPending} />
+            </label>
+
+            <label>
+              Label (Optional)
+              <input type="text" placeholder="e.g. Afternoon Walk" value={availLabel} onChange={(e) => setAvailLabel(e.target.value)} disabled={preview || isAvailPending} />
+            </label>
+          </div>
+
+          <button
+            className="secondary-button compact"
+            type="button"
+            disabled={preview || isAvailPending}
+            onClick={() => {
+              startAvailTransition(async () => {
+                const formData = new FormData();
+                formData.set("dayOfWeek", String(dayOfWeek));
+                formData.set("startTime", startTime);
+                formData.set("endTime", endTime);
+                formData.set("label", availLabel);
+
+                const result = await setAvailabilityWindowAction({ ok: false, message: "" }, formData);
+                onStatus(result.message);
+                
+                if (result.ok) {
+                  setAvailLabel("");
+                  router.refresh();
+                }
+              });
+            }}
+          >
+            <Clock size={16} /> Add Window
+          </button>
+        </section>
+
+        <button className="primary-button" type="submit" disabled={preview || isPending || isAvatarPending}>
+          {preview ? "Preview mode only" : isPending ? "Saving..." : "Save profile details"}
         </button>
       </form>
     </section>
