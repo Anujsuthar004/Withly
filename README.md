@@ -1,101 +1,85 @@
-# Tag Along
+# Tag-along
 
-Tag Along is a dual-mode companionship product for two use cases:
-- Social plus-one for events and public hangouts.
-- Errand companionship for practical support.
+Tag-along is a private companionship workspace architected specifically to solve the friction of organizing casual, low-stakes hangouts and errands.
 
-This repo has been migrated to:
-- Next.js App Router
-- React 19
-- TypeScript
-- Supabase Auth
-- Supabase Postgres with RLS
-- Supabase Realtime for private session chat
+Instead of navigating the awkwardness of formal plans, Tag-along allows users to post highly specific, structured requests. Whether you need an "Errand Companion" to help carry groceries or a "Social Plus-One" to check out a new local spot, Tag-along prioritizes safety, clear intentions, and verifiable trust.
 
-## Why this rebuild
+![Clean Shot 2024-10-24 at 16 01 27](https://github.com/user-attachments/assets/ae0caef0-e17f-4428-af31-eb4759e6616a)
 
-The previous app exposed too much through public endpoints and kept sensitive local/demo data in the repo. The new foundation prioritizes:
-- managed auth instead of custom session code
-- row-level security instead of trust-by-convention
-- sanitized public feed data instead of public full request records
-- realtime chat restricted to actual session participants
-- env-only secrets and no checked-in data store
+## Technology Stack
 
-## Current product surface
+This application is built for extreme edge performance and deep Row Level Security (RLS).
+- **Frontend**: Next.js 16 (App Router), React 19, TypeScript
+- **Styling**: Vanilla CSS (`globals.css`)
+- **Backend**: Supabase Postgres (with RLS)
+- **Authentication**: Supabase Auth
+- **Realtime**: Supabase Realtime (for private session chat and live notifications)
+- **Validation**: Zod & Server Actions
 
-- marketing landing page with secure auth entry
-- authenticated workspace with:
-  - request composer
-  - safe discovery feed
-  - private join-review queue
-  - private matched-session chat
-- private report, block, completion, account export, and delete-account flows
-- admin moderation queue for reports and deletion requests
-- public privacy, terms, community, and safety pages
-- Supabase RPC layer for request creation, join requests, accept/decline flow, and messaging
-- database migration with tables, triggers, functions, grants, and RLS policies
+## Core Features (v2)
 
-## Local setup
+The application has been heavily expanded to include a 12-feature safety and trust suite:
 
-1. Create a Supabase project.
-2. In the Supabase SQL editor, run the migration in [supabase/migrations/20260308120000_secure_core.sql](/Users/anujsuthar/Documents/Tag-along/supabase/migrations/20260308120000_secure_core.sql).
-3. Copy [.env.example](/Users/anujsuthar/Documents/Tag-along/.env.example) to `.env.local` and fill in:
+1. **Safety Check-ins**: Active session participants can quickly tap "I'm OK," "Running Late," or "Need Help."
+2. **Emergency SOS**: A persistent panic button in chatrooms that securely dispatches your location to a predefined emergency contact.
+3. **Progressive Verification**: Users earn Trust badges by verifying their Phone, Government ID, or Institutional Email.
+4. **Dynamic Trust Scoring**: An algorithmic (0-100) score that adjusts based on completed sessions, mutual endorsements, and platform behavior.
+5. **Ephemeral Requests**: Requests auto-expire based on user-defined times, preventing stale feeds and ensuring immediate discovery.
+6. **Group Companionship**: Built-in capacity management allows request creators to cap their events (e.g., "Up to 3 people").
+7. **Trust Communities**: Create and join walled-garden networks automatically gated by specific email domains (e.g., `@nyu.edu`).
+8. **AI Content Moderation**: Background screening of user-generated content, automatically queuing high-risk flags into an Admin dashboard.
+9. **Companion Compatibility**: Feed requests actively parse mutual tags, previous interactions, and safety thresholds to display a % match score.
+10. **Availability Windows**: Define your standard recurring free time on your profile for better algorithmic matching.
+11. **Meet-Again Network**: Seamlessly build a private roster of trusted companions after positive sessions.
+12. **Realtime Notifications**: A bell inbox syncing instantly via Supabase to alert you of join requests and chat messages.
+
+## Local Setup
+
+1. **Create a Supabase project.**
+2. **Run Migrations**: 
+   In your Supabase SQL editor, run the V1 core first, followed by the massive V2 feature pack.
+   - `supabase/migrations/20260308120000_secure_core.sql`
+   - `supabase/migrations/20260317120000_feature_pack.sql`
+3. **Configure Environment Variables**:
+   Copy `.env.example` to `.env.local` and configure your keys:
    - `NEXT_PUBLIC_SITE_URL`
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY` for admin log/event/deletion features
-   - `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` for public anti-bot protection
-   - `NEXT_PUBLIC_SUPPORT_EMAIL`
-4. Install dependencies:
+   - `SUPABASE_SERVICE_ROLE_KEY` (Required for Cron/Admin operations)
+   - `CRON_SECRET` (Required to secure the `/api/cron/expire-requests` endpoint)
+   - `MODERATION_API_KEY` & `MODERATION_API_URL` (Optional)
+   - `GEOCODING_API_KEY` (Optional)
+4. **Install and Run**:
 ```bash
 npm install
-```
-5. Start the app:
-```bash
 npm run dev
 ```
-6. Open [http://localhost:3000](http://localhost:3000).
 
-If Supabase env vars are missing, the UI still renders in preview mode using safe mock data.
+*(Note: If Supabase env vars are missing, the UI gracefully falls back into a static "Preview" mode using mock data.)*
 
-## Promote an admin
+## Vercel Deployment & Cron Jobs
 
-There is no "first user becomes admin" behavior anymore.
+When deploying this application to production (e.g., Vercel), you must configure a CRON job to automatically handle the Ephemeral Requests (Feature 4). 
 
-To promote an account manually in Supabase:
-```sql
-update public.profiles
-set role = 'admin'
-where id = '<user-uuid>';
-```
+You should configure a 5-minute schedule to ping the specific API endpoint handling expiration logic:
+`[POST] /api/cron/expire-requests`
 
-## Structure
+Ensure your deployment environment variables contain the matching `CRON_SECRET` to authorize the invocation.
 
-- `app/`: Next.js routes, layouts, workspace, auth callback
-- `components/`: interactive React UI
-- `lib/`: env helpers, Supabase clients, queries, validators, mock preview data
-- `supabase/migrations/`: database schema, RLS, RPCs, and realtime publication
-- `tests/`: Playwright smoke coverage for public pages and preview mode
-- `docs/`: public release, deploy, security cleanup, and ops runbook docs
-- `CONCEPT_NOTE.md`: original product framing
+## Quality Assurance
 
-## Verification
+The codebase is heavily typed and formatted. Before committing, ensure the pipeline checks pass:
 
 ```bash
 npm run typecheck
 npm run lint
 npm run build
-npm run test:e2e
 ```
 
-## Public release docs
+## Security Philosophy 
 
-- [Production release checklist](/Users/anujsuthar/Documents/Tag-along/docs/PRODUCTION_RELEASE_CHECKLIST.md)
-- [Supabase and Vercel deploy](/Users/anujsuthar/Documents/Tag-along/docs/SUPABASE_VERCEL_DEPLOY.md)
-- [Security history cleanup](/Users/anujsuthar/Documents/Tag-along/docs/SECURITY_HISTORY_CLEANUP.md)
-- [Operations runbook](/Users/anujsuthar/Documents/Tag-along/docs/OPERATIONS_RUNBOOK.md)
-
-## Notes
-
-- The app is designed to keep public discovery minimal. Session details and matched identities are only available to participants through Supabase policies and secured RPCs.
-- Realtime chat requires the `request_messages` table to stay in the Supabase realtime publication. The migration handles this when the publication exists.
+This project operates on a "Trust No Client" philosophy:
+- We rely entirely on Supabase Row Level Security (RLS) instead of application-code trust.
+- Public discovery feeds only expose sanitized, aggregated data blocks.
+- Real-world identities and granular session details are locked exclusively to matched session participants.
+- All mutative server actions go through strict Zod schema parsing before interacting with the database layer.
