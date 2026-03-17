@@ -33,49 +33,6 @@ The application has been heavily expanded to include a 12-feature safety and tru
 11. **Meet-Again Network**: Seamlessly build a private roster of trusted companions after positive sessions.
 12. **Realtime Notifications**: A bell inbox syncing instantly via Supabase to alert you of join requests and chat messages.
 
-## Local Setup
-
-1. **Create a Supabase project.**
-2. **Run Migrations**: 
-   In your Supabase SQL editor, run the V1 core first, followed by the massive V2 feature pack.
-   - `supabase/migrations/20260308120000_secure_core.sql`
-   - `supabase/migrations/20260317120000_feature_pack.sql`
-3. **Configure Environment Variables**:
-   Copy `.env.example` to `.env.local` and configure your keys:
-   - `NEXT_PUBLIC_SITE_URL`
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY` (Required for Cron/Admin operations)
-   - `CRON_SECRET` (Required to secure the `/api/cron/expire-requests` endpoint)
-   - `MODERATION_API_KEY` & `MODERATION_API_URL` (Optional)
-   - `GEOCODING_API_KEY` (Optional)
-4. **Install and Run**:
-```bash
-npm install
-npm run dev
-```
-
-*(Note: If Supabase env vars are missing, the UI gracefully falls back into a static "Preview" mode using mock data.)*
-
-## Vercel Deployment & Cron Jobs
-
-When deploying this application to production (e.g., Vercel), you must configure a CRON job to automatically handle the Ephemeral Requests (Feature 4). 
-
-You should configure a 5-minute schedule to ping the specific API endpoint handling expiration logic:
-`[POST] /api/cron/expire-requests`
-
-Ensure your deployment environment variables contain the matching `CRON_SECRET` to authorize the invocation.
-
-## Quality Assurance
-
-The codebase is heavily typed and formatted. Before committing, ensure the pipeline checks pass:
-
-```bash
-npm run typecheck
-npm run lint
-npm run build
-```
-
 ## Security Philosophy 
 
 This project operates on a "Trust No Client" philosophy:
