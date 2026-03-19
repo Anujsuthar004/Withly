@@ -10,12 +10,16 @@ export const APP_ENV = process.env.APP_ENV?.trim().toLowerCase() ?? "development
 export const MODERATION_API_URL = process.env.MODERATION_API_URL?.trim() ?? "";
 export const MODERATION_API_KEY = process.env.MODERATION_API_KEY?.trim() ?? "";
 export const GEOCODING_API_KEY = process.env.GEOCODING_API_KEY?.trim() ?? "";
+export const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim() ?? "";
+export const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY?.trim() ?? "";
+export const PUSH_WEBHOOK_SECRET = process.env.PUSH_WEBHOOK_SECRET?.trim() ?? "";
 
 export const hasSupabaseEnv = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 export const hasSupabaseAdminEnv = Boolean(hasSupabaseEnv && SUPABASE_SERVICE_ROLE_KEY);
 export const hasTurnstileEnv = Boolean(TURNSTILE_SITE_KEY && TURNSTILE_SECRET_KEY);
 export const hasModerationEnv = Boolean(MODERATION_API_URL && MODERATION_API_KEY);
 export const hasGeocodingEnv = Boolean(GEOCODING_API_KEY);
+export const hasVapidEnv = Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY);
 export const isProduction = APP_ENV === "production";
 
 export function requireSupabaseEnv() {

@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Bell,
+  BellOff,
   Compass,
   Inbox,
   LayoutGrid,
@@ -52,6 +53,70 @@ function useNotifications() {
   return unreadCount;
 }
 
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
+
+function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  const arr = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) arr[i] = rawData.charCodeAt(i);
+  return arr.buffer as ArrayBuffer;
+}
+
+function usePushNotifications() {
+  const [permission, setPermission] = useState<NotificationPermission | "unsupported">("unsupported");
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window) || !("serviceWorker" in navigator)) return;
+    setPermission(Notification.permission);
+
+    if (!VAPID_PUBLIC_KEY) return;
+
+    navigator.serviceWorker.register("/sw.js", { scope: "/" }).then(async (registration) => {
+      if (Notification.permission === "granted") {
+        await subscribeAndSave(registration);
+      }
+    }).catch(() => {});
+  }, []);
+
+  async function subscribeAndSave(registration: ServiceWorkerRegistration) {
+    try {
+      const existing = await registration.pushManager.getSubscription();
+      const sub = existing ?? await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+      await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sub.toJSON()),
+      });
+    } catch {}
+  }
+
+  const enable = useCallback(async () => {
+    if (!("Notification" in window) || !("serviceWorker" in navigator) || !VAPID_PUBLIC_KEY) return;
+    const result = await Notification.requestPermission();
+    setPermission(result);
+    if (result === "granted") {
+      const registration = await navigator.serviceWorker.ready;
+      await subscribeAndSave(registration);
+    }
+  }, []);
+
+  const disable = useCallback(async () => {
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const sub = await registration.pushManager.getSubscription();
+      if (sub) await sub.unsubscribe();
+      await fetch("/api/push/subscribe", { method: "DELETE" });
+    } catch {}
+  }, []);
+
+  return { permission, enable, disable };
+}
+
 export function AppShell({
   children,
   showAdmin,
@@ -69,6 +134,7 @@ export function AppShell({
 }) {
   const pathname = usePathname() ?? "";
   const unreadNotifs = useNotifications();
+  const { permission, enable, disable } = usePushNotifications();
 
   const navItems = useMemo<NavItem[]>(
     () => [
@@ -180,6 +246,17 @@ export function AppShell({
                 <Bell size={16} />
                 {unreadNotifs}
               </Link>
+            ) : null}
+            {permission === "default" && VAPID_PUBLIC_KEY ? (
+              <button type="button" className="ghost-button compact" onClick={() => void enable()} title="Enable push notifications">
+                <Bell size={16} />
+                Enable alerts
+              </button>
+            ) : null}
+            {permission === "granted" ? (
+              <button type="button" className="ghost-button compact" onClick={() => void disable()} title="Disable push notifications">
+                <BellOff size={16} />
+              </button>
             ) : null}
             <Link className="ghost-button compact" href="/account">
               <Settings size={16} />
