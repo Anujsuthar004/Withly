@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServerClientOrNull } from "@/lib/supabase/server";
+import { enforceRateLimit, getRequestMeta } from "@/lib/security";
 import { notificationSchema } from "@/lib/validators";
 
 export async function GET() {
@@ -14,6 +15,20 @@ export async function GET() {
 
   if (!user) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  }
+
+  const { ip } = await getRequestMeta();
+  const rateLimit = await enforceRateLimit({
+    action: "notifications.fetch",
+    identifier: `${user.id}:${ip}`,
+    limit: 60,
+    windowMs: 60_000,
+  });
+  if (!rateLimit.ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Please slow down." },
+      { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
+    );
   }
 
   const { data, error } = await supabase.rpc("get_my_notifications", { limit_count: 30 });
