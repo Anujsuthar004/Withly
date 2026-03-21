@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { SessionPanel } from "@/components/app/session-panel";
+import { SessionPageClient } from "@/components/app/session-page-client";
 import { getInboxPageState } from "@/lib/supabase/queries";
 
 export const dynamic = "force-dynamic";
@@ -38,10 +38,6 @@ export default async function SessionRoute({ params }: { params: Promise<{ id: s
     );
   }
 
-  return (
-    <div className="workspace-page">
-      <SessionPanel session={snapshot.activeSession} currentUserId={snapshot.profile.id} onStatus={() => undefined} />
-    </div>
-  );
+  return <SessionPageClient session={snapshot.activeSession} currentUserId={snapshot.profile.id} />;
 }
 
