@@ -99,7 +99,7 @@ export interface WorkspaceSession {
   meetupAt: string | null;
   checkInEnabled: boolean;
   partnerDisplayName: string;
-  partnerId: string;
+  partnerId: string | null;
   messages: SessionMessage[];
 }
 

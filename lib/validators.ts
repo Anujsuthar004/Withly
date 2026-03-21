@@ -32,10 +32,10 @@ export const sessionMessageSchema = z.object({
 export const workspaceSnapshotSchema = z.object({
   profile: z.object({
     id: z.string().uuid(),
-    displayName: z.string(),
-    aboutMe: z.string(),
-    homeArea: z.string(),
-    role: z.enum(["member", "admin"]),
+    displayName: z.string().nullable().transform((v) => v ?? ""),
+    aboutMe: z.string().nullable().transform((v) => v ?? ""),
+    homeArea: z.string().nullable().transform((v) => v ?? ""),
+    role: z.enum(["member", "admin"]).optional().default("member"),
     avatarUrl: z.string().optional().default(""),
     verificationTier: z.enum(["email", "phone", "id_verified"]).optional().default("email"),
     trustScore: z.number().optional().default(50),
@@ -44,7 +44,7 @@ export const workspaceSnapshotSchema = z.object({
     z.object({
       id: z.string().uuid(),
       lane: z.enum(["social", "errand"]),
-      title: z.string(),
+      title: z.string().nullable().transform((v) => v ?? ""),
       areaLabel: z.string().nullable().transform((v) => v ?? ""),
       meetupAt: z.string().nullable(),
       status: z.enum(["open", "matched", "completed", "cancelled"]),
@@ -68,9 +68,9 @@ export const workspaceSnapshotSchema = z.object({
       requestTitle: z.string(),
       requestLane: z.enum(["social", "errand"]),
       joinerId: z.string().uuid(),
-      joinerDisplayName: z.string(),
-      joinerAboutMe: z.string(),
-      introMessage: z.string(),
+      joinerDisplayName: z.string().nullable().transform((v) => v ?? ""),
+      joinerAboutMe: z.string().nullable().transform((v) => v ?? ""),
+      introMessage: z.string().nullable().transform((v) => v ?? ""),
       createdAt: z.string(),
     })
   ),
@@ -82,8 +82,8 @@ export const workspaceSnapshotSchema = z.object({
       areaLabel: z.string().nullable().transform((v) => v ?? ""),
       meetupAt: z.string().nullable(),
       checkInEnabled: z.boolean(),
-      partnerDisplayName: z.string(),
-      partnerId: z.string().uuid(),
+      partnerDisplayName: z.string().nullable().transform((v) => v ?? ""),
+      partnerId: z.string().uuid().nullable(),
       messages: z.array(sessionMessageSchema),
     })
     .nullable(),
