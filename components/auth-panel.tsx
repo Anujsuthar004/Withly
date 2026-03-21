@@ -283,7 +283,7 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
         ) : null}
 
         <button className="primary-button" type="submit" disabled={isPending}>
-          {isPending ? "Working..." : mode === "signin" ? "Enter Workspace" : "Create Account"}
+          {isPending ? "Working..." : mode === "signin" ? "Sign In" : "Create Account"}
           <ArrowRight size={18} />
         </button>
       </form>

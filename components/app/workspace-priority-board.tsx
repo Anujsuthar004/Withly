@@ -50,17 +50,35 @@ export function WorkspacePriorityBoard({
             secondaryHref: "/requests/new",
             secondaryLabel: "Post another request",
           }
-        : {
-            kicker: preview ? "Preview mode" : "Fresh start",
-            title: preview ? "Explore the workspace before posting." : "Post your first request and start the conversation.",
-            description: preview
-              ? "You can browse the layout now. Sign in when you are ready to publish, review replies, and move into chat."
-              : "A clear first request is the fastest way to make the app feel useful. Keep it specific, calm, and easy to trust.",
-            primaryHref: "/requests/new",
-            primaryLabel: "Create a request",
-            secondaryHref: "/profile",
-            secondaryLabel: "Finish profile",
-          };
+        : preview
+          ? {
+              kicker: "Preview mode",
+              title: "Explore the workspace before posting.",
+              description: "You can browse the layout now. Sign in when you are ready to publish, review replies, and move into chat.",
+              primaryHref: "/requests/new",
+              primaryLabel: "Create a request",
+              secondaryHref: "/profile",
+              secondaryLabel: "Finish profile",
+            }
+          : profileProgress.percentage < 100
+          ? {
+              kicker: "Get started",
+              title: "Complete your profile before posting a request.",
+              description: "A complete profile builds trust before anyone replies. Add a photo, a short bio, and your area — it takes less than two minutes.",
+              primaryHref: "/profile",
+              primaryLabel: "Complete profile",
+              secondaryHref: "/requests/new",
+              secondaryLabel: "Skip to posting",
+            }
+          : {
+              kicker: "Fresh start",
+              title: "Post your first request and start the conversation.",
+              description: "A clear first request is the fastest way to make the app feel useful. Keep it specific, calm, and easy to trust.",
+              primaryHref: "/requests/new",
+              primaryLabel: "Create a request",
+              secondaryHref: "/profile",
+              secondaryLabel: "View profile",
+            };
 
   return (
     <section className="priority-board">

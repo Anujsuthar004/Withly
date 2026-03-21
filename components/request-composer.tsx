@@ -204,6 +204,9 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
                     required
                     disabled={preview || isPending}
                   />
+                  {title.length > 0 && title.trim().length < 6 ? (
+                    <small className="field-hint">{6 - title.trim().length} more character{6 - title.trim().length === 1 ? "" : "s"} needed</small>
+                  ) : null}
                 </label>
 
                 <label>
@@ -218,6 +221,9 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
                     required
                     disabled={preview || isPending}
                   />
+                  {description.length > 0 && description.trim().length < 24 ? (
+                    <small className="field-hint">{24 - description.trim().length} more character{24 - description.trim().length === 1 ? "" : "s"} needed</small>
+                  ) : null}
                 </label>
               </section>
             ) : null}
@@ -369,14 +375,26 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
               </button>
 
               {stepIndex < stepOrder.length - 1 ? (
-                <button
-                  className="primary-button compact"
-                  type="button"
-                  disabled={isPending || (stepIndex === 0 ? !basicsReady : !logisticsReady)}
-                  onClick={() => setStepIndex((current) => Math.min(stepOrder.length - 1, current + 1))}
-                >
-                  Continue
-                </button>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.25rem" }}>
+                  <button
+                    className="primary-button compact"
+                    type="button"
+                    disabled={isPending || (stepIndex === 0 ? !basicsReady : !logisticsReady)}
+                    onClick={() => setStepIndex((current) => Math.min(stepOrder.length - 1, current + 1))}
+                  >
+                    Continue
+                  </button>
+                  {stepIndex === 0 && !basicsReady ? (
+                    <small className="field-hint">
+                      {!title.trim() || title.trim().length < 6
+                        ? "Title needs at least 6 characters"
+                        : "Description needs at least 24 characters"}
+                    </small>
+                  ) : null}
+                  {stepIndex === 1 && !logisticsReady ? (
+                    <small className="field-hint">Add an area to continue</small>
+                  ) : null}
+                </div>
               ) : (
                 <button className="primary-button compact" type="submit" disabled={preview || isPending}>
                   {preview ? "Preview mode only" : isPending ? "Posting..." : "Post Request"}

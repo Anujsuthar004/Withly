@@ -34,11 +34,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             </span>
           </div>
 
-          <h1>
-            Company for the moments you want to enjoy,
-            <br />
-            and the ones you would rather not do alone.
-          </h1>
+          <h1>Find someone to go with.</h1>
           <p>
             Find company for plans, errands, and in-between moments without sharing more than you need. Browse the
             basics first, then move into a private space once a plan is confirmed.

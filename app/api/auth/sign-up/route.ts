@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       data: {
         display_name: payload.data.displayName,
       },
-      emailRedirectTo: `${SITE_URL || request.nextUrl.origin}/auth/callback?next=${encodeURIComponent("/workspace")}`,
+      emailRedirectTo: `${SITE_URL || request.nextUrl.origin}/auth/callback?next=${encodeURIComponent("/profile")}`,
     },
   });
 

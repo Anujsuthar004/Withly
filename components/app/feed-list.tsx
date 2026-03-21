@@ -212,8 +212,20 @@ export function FeedList({
       <div className="feed-list">
         {visibleFeed.length === 0 ? (
           <div className="empty-card">
-            <strong>No requests match this view yet.</strong>
-            <span>Try clearing one filter or widening the search so more options can surface.</span>
+            {feed.length === 0 ? (
+              <>
+                <strong>No active requests yet.</strong>
+                <span>Be the first to post one — a clear, specific request is all it takes to get the ball rolling.</span>
+                <Link className="primary-button compact" href="/requests/new" style={{ marginTop: "0.75rem" }}>
+                  Post a request
+                </Link>
+              </>
+            ) : (
+              <>
+                <strong>No requests match this view.</strong>
+                <span>Try clearing one filter or widening the search so more options can surface.</span>
+              </>
+            )}
           </div>
         ) : null}
 
