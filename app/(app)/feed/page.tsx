@@ -26,7 +26,7 @@ export default async function FeedPage() {
       />
 
       {!feedError ? <WorkspacePriorityBoard snapshot={snapshot} preview={preview} feedCount={feed.length} /> : null}
-      {feedError ? null : <FeedList feed={feed} preview={preview} ownerRequestIds={ownerRequestIds} />}
+      {feedError ? null : <FeedList feed={feed} preview={preview} ownerRequestIds={ownerRequestIds} activeSessionRequestId={snapshot.activeSession?.requestId ?? null} />}
     </div>
   );
 }

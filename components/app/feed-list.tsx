@@ -14,11 +14,13 @@ export function FeedList({
   feed,
   preview = false,
   ownerRequestIds = [],
+  activeSessionRequestId = null,
   onStatus,
 }: {
   feed: FeedRequestCard[];
   preview?: boolean;
   ownerRequestIds?: string[];
+  activeSessionRequestId?: string | null;
   onStatus?: (message: string) => void;
 }) {
   const router = useRouter();
@@ -315,7 +317,11 @@ export function FeedList({
               </div>
             ) : (
               <div className="button-row request-card-actions">
-                {submittedJoinIds.has(request.id) ? (
+                {activeSessionRequestId === request.id ? (
+                  <Link className="primary-button compact" href="/inbox">
+                    Open chat
+                  </Link>
+                ) : submittedJoinIds.has(request.id) ? (
                   <button className="secondary-button compact" type="button" disabled>
                     Join request sent
                   </button>
