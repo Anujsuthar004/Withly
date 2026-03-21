@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 
 import { SessionPanel } from "@/components/app/session-panel";
 import { getInboxPageState } from "@/lib/supabase/queries";
@@ -10,7 +10,7 @@ export default async function SessionRoute({ params }: { params: Promise<{ id: s
   const { snapshot } = await getInboxPageState();
 
   if (!snapshot.activeSession || snapshot.activeSession.requestId !== id) {
-    notFound();
+    redirect("/inbox");
   }
 
   return (

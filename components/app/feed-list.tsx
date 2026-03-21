@@ -31,6 +31,7 @@ export function FeedList({
   const [joinDrafts, setJoinDrafts] = useState<Record<string, string>>({});
   const [joinBusyId, setJoinBusyId] = useState<string | null>(null);
   const [expandedJoinId, setExpandedJoinId] = useState<string | null>(null);
+  const [submittedJoinIds, setSubmittedJoinIds] = useState<Set<string>>(new Set());
   const [deleteBusyId, setDeleteBusyId] = useState<string | null>(null);
   const [dismissedRequestIds, setDismissedRequestIds] = useState<string[]>([]);
   const [feedback, setFeedback] = useState("");
@@ -314,16 +315,22 @@ export function FeedList({
               </div>
             ) : (
               <div className="button-row request-card-actions">
-                <button
-                  className="primary-button compact"
-                  type="button"
-                  disabled={preview}
-                  onClick={() => {
-                    setExpandedJoinId((current) => (current === request.id ? null : request.id));
-                  }}
-                >
-                  {preview ? "Sign in to join" : expandedJoinId === request.id ? "Cancel" : "Request to join"}
-                </button>
+                {submittedJoinIds.has(request.id) ? (
+                  <button className="secondary-button compact" type="button" disabled>
+                    Join request sent
+                  </button>
+                ) : (
+                  <button
+                    className="primary-button compact"
+                    type="button"
+                    disabled={preview}
+                    onClick={() => {
+                      setExpandedJoinId((current) => (current === request.id ? null : request.id));
+                    }}
+                  >
+                    {preview ? "Sign in to join" : expandedJoinId === request.id ? "Cancel" : "Request to join"}
+                  </button>
+                )}
               </div>
             )}
 
@@ -355,6 +362,7 @@ export function FeedList({
                         if (result.ok) {
                           setJoinDrafts((current) => ({ ...current, [request.id]: "" }));
                           setExpandedJoinId(null);
+                          setSubmittedJoinIds((current) => new Set([...current, request.id]));
                           router.refresh();
                         }
                       } catch {

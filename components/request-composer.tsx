@@ -158,8 +158,7 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
                   return;
                 }
 
-                resetForm(lane);
-                router.refresh();
+                router.push("/requests");
               });
             }}
           >
