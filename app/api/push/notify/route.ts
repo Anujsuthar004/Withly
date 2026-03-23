@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 import { PUSH_WEBHOOK_SECRET, hasVapidEnv } from "@/lib/env";
@@ -41,10 +42,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, skipped: "vapid_not_configured" });
   }
 
-  // Verify webhook secret
+  // Verify webhook secret using constant-time comparison to prevent timing attacks
   const authHeader = request.headers.get("authorization") ?? "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-  if (!PUSH_WEBHOOK_SECRET || token !== PUSH_WEBHOOK_SECRET) {
+  if (!PUSH_WEBHOOK_SECRET || token.length !== PUSH_WEBHOOK_SECRET.length ||
+    !crypto.timingSafeEqual(Buffer.from(token), Buffer.from(PUSH_WEBHOOK_SECRET))) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 

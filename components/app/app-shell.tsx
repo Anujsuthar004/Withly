@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
   BellOff,
@@ -34,6 +34,7 @@ function isActive(pathname: string, href: string) {
 
 function useNotifications() {
   const [unreadCount, setUnreadCount] = useState(0);
+  const router = useRouter();
 
   useEffect(() => {
     async function check() {
@@ -42,13 +43,16 @@ function useNotifications() {
         if (res.ok) {
           const data = await res.json();
           setUnreadCount(data.unreadCount ?? 0);
+          // Refresh server components so inboxCount (join requests + active session)
+          // stays current without a full page reload.
+          router.refresh();
         }
       } catch {}
     }
     check();
     const interval = setInterval(check, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [router]);
 
   return unreadCount;
 }

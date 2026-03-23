@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useEffectEvent, useRef, useState, useTransition } from "react";
-import { SendHorizontal } from "lucide-react";
+import { SendHorizontal, WifiOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { sendMessageAction } from "@/app/workspace/actions";
@@ -23,6 +23,7 @@ export function ChatRoom({ requestId, currentUserId, initialMessages, onStatus }
   const [messages, setMessages] = useState(initialMessages);
   const [body, setBody] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [isDisconnected, setIsDisconnected] = useState(false);
 
   const appendMessage = useEffectEvent((message: SessionMessage) => {
     setMessages((current) => {
@@ -92,7 +93,9 @@ export function ChatRoom({ requestId, currentUserId, initialMessages, onStatus }
           });
         }
       )
-      .subscribe();
+      .subscribe((status: string) => {
+        setIsDisconnected(status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED");
+      });
 
     return () => {
       void supabase.removeChannel(channel);
@@ -101,6 +104,12 @@ export function ChatRoom({ requestId, currentUserId, initialMessages, onStatus }
 
   return (
     <div className="chat-room">
+      {isDisconnected ? (
+        <div className="chat-disconnected-banner" role="status" aria-live="polite">
+          <WifiOff size={14} />
+          Live updates paused — reload the page to reconnect.
+        </div>
+      ) : null}
       <div ref={scrollRef} className="chat-thread">
         {messages.length === 0 ? (
           <div className="empty-chat">No messages yet. Use the thread to confirm the exact meeting point and ETA.</div>

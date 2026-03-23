@@ -2,7 +2,6 @@ import { emptyWorkspaceSnapshot, previewFeed, previewWorkspace } from "@/lib/moc
 import { PROFILE_AVATAR_BUCKET } from "@/lib/avatar";
 import { hasSupabaseEnv, isProduction } from "@/lib/env";
 import type { AdminDashboard, FeedRequestCard, WorkspaceSnapshot } from "@/lib/supabase/types";
-import { getSupabaseAdminClientOrNull } from "@/lib/supabase/admin";
 import { getSupabaseServerClientOrNull } from "@/lib/supabase/server";
 import { adminDashboardSchema, feedRequestCardSchema, workspaceSnapshotSchema } from "@/lib/validators";
 
@@ -34,22 +33,17 @@ function normalizeAdminDashboard(payload: unknown): AdminDashboard | null {
   return parsed.data;
 }
 
-async function createProfileAvatarUrl(path: string | null | undefined) {
+function createProfileAvatarUrl(path: string | null | undefined): string {
   if (!path) {
     return "";
   }
 
-  const admin = getSupabaseAdminClientOrNull();
-  if (!admin) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  if (!supabaseUrl) {
     return "";
   }
 
-  const { data, error } = await admin.storage.from(PROFILE_AVATAR_BUCKET).createSignedUrl(path, 60 * 60 * 12);
-  if (error) {
-    return "";
-  }
-
-  return data.signedUrl;
+  return `${supabaseUrl}/storage/v1/object/public/${PROFILE_AVATAR_BUCKET}/${path}`;
 }
 
 async function getCurrentProfile(supabase: NonNullable<Awaited<ReturnType<typeof getSupabaseServerClientOrNull>>>, userId: string) {
@@ -101,7 +95,7 @@ async function getCurrentProfile(supabase: NonNullable<Awaited<ReturnType<typeof
     aboutMe: data.about_me ?? "",
     homeArea: data.home_area ?? "",
     role: data.role,
-    avatarUrl: await createProfileAvatarUrl(data.avatar_path),
+    avatarUrl: createProfileAvatarUrl(data.avatar_path),
     verificationTier: ((data as { verification_tier?: string }).verification_tier ?? "email") as "email" | "phone" | "id_verified",
     trustScore,
   };
@@ -202,11 +196,10 @@ export async function getWorkspaceSnapshot() {
     };
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data, error } = await supabase.rpc("get_workspace_snapshot");
+  const [{ data: { user } }, { data, error }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.rpc("get_workspace_snapshot"),
+  ]);
   if (error) {
     return {
       snapshot: emptyWorkspaceSnapshot,

@@ -42,11 +42,16 @@ interface ActionResult {
 async function ensureProfileAvatarBucket() {
   const admin = createSupabaseAdminClient();
   const { error } = await admin.storage.createBucket(PROFILE_AVATAR_BUCKET, {
-    public: false,
+    public: true,
   });
 
   if (error && !/already exists|duplicate/i.test(error.message)) {
     throw error;
+  }
+
+  // If the bucket already existed, ensure it is public so URLs work without signing
+  if (error) {
+    await admin.storage.updateBucket(PROFILE_AVATAR_BUCKET, { public: true });
   }
 }
 
@@ -329,6 +334,12 @@ export async function submitJoinRequestAction(input: unknown): Promise<ActionRes
   });
 
   if (error) {
+    await logAppEvent({
+      level: "warn",
+      category: "join_request.submit",
+      message: "Submit join request failed.",
+      context: { userId: auth.user.id, requestId: parsed.data.requestId, error: error.message },
+    });
     return { ok: false, message: error.message };
   }
 
@@ -359,6 +370,12 @@ export async function reviewJoinRequestAction(input: unknown): Promise<ActionRes
   });
 
   if (error) {
+    await logAppEvent({
+      level: "warn",
+      category: "join_request.review",
+      message: "Review join request failed.",
+      context: { userId: auth.user.id, joinRequestId: parsed.data.joinRequestId, decision: parsed.data.decision, error: error.message },
+    });
     return { ok: false, message: error.message };
   }
 
@@ -392,6 +409,12 @@ export async function sendMessageAction(input: unknown): Promise<ActionResult> {
   });
 
   if (error) {
+    await logAppEvent({
+      level: "warn",
+      category: "message.send",
+      message: "Send message failed.",
+      context: { userId: auth.user.id, requestId: parsed.data.requestId, error: error.message },
+    });
     return { ok: false, message: error.message };
   }
 

@@ -71,6 +71,8 @@ export async function enforceRateLimit({
     return { ok: true };
   }
 
+  console.error("[security] Supabase admin unavailable — rate limiting degraded to in-memory store. Restart will reset counts.");
+
   const key = `${action}:${hashedIdentifier}`;
   const store = fallbackRateLimitStore.__tagAlongRateLimitStore ?? new Map<string, number[]>();
   fallbackRateLimitStore.__tagAlongRateLimitStore = store;
