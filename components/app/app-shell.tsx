@@ -69,20 +69,10 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
 }
 
 function usePushNotifications() {
-  const [permission, setPermission] = useState<NotificationPermission | "unsupported">("unsupported");
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !("Notification" in window) || !("serviceWorker" in navigator)) return;
-    setPermission(Notification.permission);
-
-    if (!VAPID_PUBLIC_KEY) return;
-
-    navigator.serviceWorker.register("/sw.js", { scope: "/" }).then(async (registration) => {
-      if (Notification.permission === "granted") {
-        await subscribeAndSave(registration);
-      }
-    }).catch(() => {});
-  }, []);
+  const [permission, setPermission] = useState<NotificationPermission | "unsupported">(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) return "unsupported";
+    return Notification.permission;
+  });
 
   async function subscribeAndSave(registration: ServiceWorkerRegistration) {
     try {
@@ -98,6 +88,17 @@ function usePushNotifications() {
       });
     } catch {}
   }
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window) || !("serviceWorker" in navigator)) return;
+    if (!VAPID_PUBLIC_KEY) return;
+
+    navigator.serviceWorker.register("/sw.js", { scope: "/" }).then(async (registration) => {
+      if (Notification.permission === "granted") {
+        await subscribeAndSave(registration);
+      }
+    }).catch(() => {});
+  }, []);
 
   const enable = useCallback(async () => {
     if (!("Notification" in window) || !("serviceWorker" in navigator) || !VAPID_PUBLIC_KEY) return;
