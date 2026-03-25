@@ -337,7 +337,7 @@ export function AppShell({
                 <Settings size={16} />
                 Settings
               </Link>
-              <SignOutButton />
+              <SignOutButton className="ghost-button compact" />
             </div>
           </div>
         </header>

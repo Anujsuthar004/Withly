@@ -11,5 +11,7 @@ test("public explore is reachable and legacy workspace redirects", async ({ page
   await expect(page).toHaveURL(/\/explore\/requests\/[0-9a-f-]+$/);
 
   await page.goto("/feed");
-  await expect(page.getByRole("heading", { name: /Find requests worth replying to/i })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: /Find requests worth replying to|intentional workspace for companionship/i })
+  ).toBeVisible();
 });

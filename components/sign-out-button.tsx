@@ -7,14 +7,14 @@ import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { hasSupabaseEnv } from "@/lib/env";
 
-export function SignOutButton() {
+export function SignOutButton({ className = "ghost-button" }: { className?: string }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   return (
     <button
       type="button"
-      className="ghost-button"
+      className={className}
       onClick={() => {
         startTransition(async () => {
           if (!hasSupabaseEnv) {
