@@ -233,7 +233,7 @@ export function FeedList({
         ) : null}
 
         {visibleFeed.map((request) => (
-          <article key={request.id} className={`request-card lane-${request.lane}`}>
+          <article key={request.id} className={`request-card lane-${request.lane} ${visibleFeed[0]?.id === request.id ? "featured" : ""}`}>
             <div className="request-card-top">
               <div>
                 <span className="request-lane">{request.lane === "social" ? "Social" : "Errand"}</span>
@@ -263,7 +263,7 @@ export function FeedList({
               <p className="request-privacy-note">Exact meetup details are shared privately after both people are aligned.</p>
             )}
 
-            <div className="card-chip-row" style={{ marginTop: "0.5rem", marginBottom: "0.5rem", flexWrap: "wrap", opacity: 0.9 }}>
+            <div className="card-chip-row request-trust-row">
               <span className="mini-chip" title="Host Trust Score">
                 <Star size={12} /> {request.hostTrustScore}/100 Trust
               </span>
@@ -298,6 +298,20 @@ export function FeedList({
                   {tag}
                 </button>
               ))}
+            </div>
+
+            <div className="request-card-footer">
+              <div className="request-host">
+                <small>{request.hostDisplayName ? "Hosted by" : "Private host"}</small>
+                <strong>{request.hostDisplayName || "Protected member"}</strong>
+              </div>
+              <span className="request-card-fit">
+                {request.compatibilityScore !== null
+                  ? `${request.compatibilityScore}% fit`
+                  : request.verifiedOnly
+                    ? "Verified replies"
+                    : "Open replies"}
+              </span>
             </div>
 
             {ownerRequestIdSet.has(request.id) ? (

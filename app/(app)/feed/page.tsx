@@ -13,9 +13,9 @@ export default async function FeedPage() {
   return (
     <div className="workspace-page">
       <WorkspacePageHeader
-        kicker="Feed"
-        title="Find requests worth replying to."
-        intro="Start with what needs your attention, then browse active requests with sharper filters and calmer signals."
+        kicker="Curation Hub"
+        title="Your intentional workspace for companionship."
+        intro="Start with the requests that fit your presence best, then browse the rest with calmer filters and clearer signals."
         status={feedError || undefined}
         meta={<span className="mini-chip">{feed.length} visible in feed</span>}
         actions={

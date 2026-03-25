@@ -14,6 +14,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   const params = await searchParams;
   const { user, feed, feedError, hasSupabaseEnv } = await getLandingPageState();
   const nextPath = normalizeNextPath(params.next);
+  const verifiedPreviewCount = feed.filter((request) => request.verifiedOnly).length;
 
   if (user) {
     redirect(nextPath);
@@ -49,6 +50,24 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             </Link>
           </div>
 
+          <div className="hero-intro-grid" aria-label="Platform highlights">
+            <article className="hero-signal-card">
+              <span>Live window</span>
+              <strong>{feed.length}</strong>
+              <p>Requests visible right now before sign-in.</p>
+            </article>
+            <article className="hero-signal-card tone-teal">
+              <span>Protected replies</span>
+              <strong>{verifiedPreviewCount}</strong>
+              <p>Current previews marked verified-only.</p>
+            </article>
+            <article className="hero-signal-card tone-sand">
+              <span>Private handoff</span>
+              <strong>1 tap</strong>
+              <p>Move from public preview into a private workspace as soon as both people align.</p>
+            </article>
+          </div>
+
           <div className="bullet-grid">
             <article>
               <Sparkles size={18} />
@@ -81,14 +100,20 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
 
       {feed.length > 0 ? (
         <section className="preview-section" id="open-requests">
-          <div className="section-title">
-            <p className="kicker">Open Requests</p>
-            <h2>A small public window into what is active right now.</h2>
-            <p>
-              {hasSupabaseEnv
-                ? "Only the basic request details are shown before sign-in."
-                : "A sample preview is showing right now while account services are offline."}
-            </p>
+          <div className="section-title preview-section-head">
+            <div>
+              <p className="kicker">Open Requests</p>
+              <h2>A small public window into what is active right now.</h2>
+              <p>
+                {hasSupabaseEnv
+                  ? "Only the basic request details are shown before sign-in."
+                  : "A sample preview is showing right now while account services are offline."}
+              </p>
+            </div>
+            <div className="preview-section-head-note" aria-label="Feed summary">
+              <span className="mini-chip">{feed.length} active now</span>
+              <span className="mini-chip">{verifiedPreviewCount} verified-only</span>
+            </div>
           </div>
 
           <div className="preview-grid">

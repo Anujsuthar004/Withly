@@ -18,7 +18,7 @@ export function SessionPageClient({
 
   return (
     <div className="workspace-page">
-      <WorkspacePageHeader kicker="Session" title="Your confirmed plan." intro="Keep the details, updates, and safety check-ins in one private thread." status={status} />
+      <WorkspacePageHeader kicker="Workspace" title="Your confirmed plan." intro="Keep the details, updates, and safety check-ins in one private thread." status={status} />
       <SessionPanel session={session} currentUserId={currentUserId} onStatus={setStatus} />
     </div>
   );

@@ -13,6 +13,8 @@ import {
   PlusCircle,
   Settings,
   ShieldAlert,
+  ShieldCheck,
+  Sparkles,
   UserRound,
 } from "lucide-react";
 
@@ -25,6 +27,17 @@ type NavItem = {
   icon: React.ReactNode;
   match: (pathname: string) => boolean;
   badge?: number;
+};
+
+const sectionDescriptions: Record<string, string> = {
+  Feed: "Scan the live request stream and move on the strongest fit first.",
+  Post: "Write a clear request with the right logistics and safety defaults.",
+  "My requests": "Track your live plans, replies, and anything that still needs a nudge.",
+  Inbox: "Review introductions, confirm the right match, and keep sessions moving.",
+  Profile: "Sharpen the first impression people see before they reply.",
+  Account: "Keep exports, security controls, and account actions close at hand.",
+  Admin: "Monitor trust, moderation, and platform health from one control room.",
+  Workspace: "Everything important, kept calm and easy to triage.",
 };
 
 function isActive(pathname: string, href: string) {
@@ -166,6 +179,20 @@ export function AppShell({
   const activeItem = [...navItems, ...(showAdmin ? [{ href: "/admin", label: "Admin", icon: null, match: (p: string) => isActive(p, "/admin") }] : [])].find(
     (item) => item.match(pathname)
   );
+  const activeTitle = activeItem?.label ?? (showAdmin ? "Admin" : "Workspace");
+  const activeDescription = sectionDescriptions[activeTitle] ?? sectionDescriptions.Workspace;
+  const pulseTitle =
+    inboxCount > 0
+      ? `${inboxCount} item${inboxCount === 1 ? "" : "s"} waiting on you`
+      : unreadNotifs > 0
+        ? `${unreadNotifs} fresh alert${unreadNotifs === 1 ? "" : "s"} just landed`
+        : "Everything is in a calm state";
+  const pulseDescription =
+    unreadNotifs > 0
+      ? "Jump into inbox and keep the conversation moving while the context is still fresh."
+      : showAdmin
+        ? "Admin controls are enabled, and the workspace is ready for moderation or review."
+        : "No urgent follow-up right now, so you can browse or post at your own pace.";
 
   return (
     <div className="app-shell">
@@ -183,9 +210,32 @@ export function AppShell({
             <PlusCircle size={16} />
             New request
           </Link>
+
+          <section className="app-sidebar-pulse" aria-label="Workspace pulse">
+            <div className="app-sidebar-pulse-copy">
+              <p className="kicker">Workspace pulse</p>
+              <strong>{pulseTitle}</strong>
+              <p>{pulseDescription}</p>
+            </div>
+            <div className="app-sidebar-pulse-stats">
+              <span>
+                <strong>{inboxCount}</strong>
+                Inbox
+              </span>
+              <span>
+                <strong>{unreadNotifs}</strong>
+                Alerts
+              </span>
+              <span>
+                <strong>{showAdmin ? "On" : "Off"}</strong>
+                Admin
+              </span>
+            </div>
+          </section>
         </div>
 
         <nav className="app-nav">
+          <p className="app-nav-group-label">Workspace</p>
           {navItems.map((item) => {
             const active = item.match(pathname);
             return (
@@ -207,14 +257,17 @@ export function AppShell({
           })}
 
           {showAdmin ? (
-            <Link
-              href="/admin"
-              className={`app-nav-link ${isActive(pathname, "/admin") ? "active" : ""}`}
-              aria-current={isActive(pathname, "/admin") ? "page" : undefined}
-            >
-              <ShieldAlert size={18} />
-              <span>Admin</span>
-            </Link>
+            <>
+              <p className="app-nav-group-label">Control</p>
+              <Link
+                href="/admin"
+                className={`app-nav-link ${isActive(pathname, "/admin") ? "active" : ""}`}
+                aria-current={isActive(pathname, "/admin") ? "page" : undefined}
+              >
+                <ShieldAlert size={18} />
+                <span>Admin</span>
+              </Link>
+            </>
           ) : null}
         </nav>
 
@@ -230,44 +283,62 @@ export function AppShell({
               <Image src="/withly-app-icon.svg" alt="Withly Logo" width={20} height={20} />
               Withly
             </Link>
-            <span className="kicker">{activeItem?.label ?? (showAdmin ? "Admin enabled" : "Member account")}</span>
-            <strong>{showAdmin ? "Admin enabled" : "Member account"}</strong>
+            <span className="kicker">{showAdmin ? "Admin enabled" : "Workspace overview"}</span>
+            <strong>{activeTitle}</strong>
+            <p>{activeDescription}</p>
           </div>
           <div className="app-topbar-actions">
-            <div className="app-user-chip">
-              <ProfileAvatar name={profileName} url={profileAvatarUrl} size="sm" />
-              <div className="app-user-chip-copy">
-                <strong>{profileName}</strong>
-                <small>{showAdmin ? "Admin account" : "Member account"}</small>
-              </div>
+            <div className="app-topbar-meta">
+              <span className="app-topbar-meta-pill">
+                <Sparkles size={14} />
+                {unreadNotifs > 0
+                  ? `${unreadNotifs} fresh alert${unreadNotifs === 1 ? "" : "s"}`
+                  : inboxCount > 0
+                    ? `${inboxCount} inbox follow-up${inboxCount === 1 ? "" : "s"}`
+                    : "Quiet workspace"}
+              </span>
+              <span className="app-topbar-meta-pill subtle">
+                <ShieldCheck size={14} />
+                {showAdmin ? "Admin access" : "Private member space"}
+              </span>
             </div>
-            {inboxCount > 0 ? (
-              <Link className="ghost-button compact" href="/inbox">
-                {inboxCount} waiting
+
+            <div className="app-topbar-action-row">
+              <div className="app-user-chip">
+                <ProfileAvatar name={profileName} url={profileAvatarUrl} size="sm" />
+                <div className="app-user-chip-copy">
+                  <strong>{profileName}</strong>
+                  <small>{showAdmin ? "Admin account" : "Member account"}</small>
+                </div>
+              </div>
+              {inboxCount > 0 ? (
+                <Link className="ghost-button compact" href="/inbox">
+                  {inboxCount} waiting
+                </Link>
+              ) : null}
+              {unreadNotifs > 0 ? (
+                <Link className="ghost-button compact" href="/inbox" title={`${unreadNotifs} unread notifications`}>
+                  <Bell size={16} />
+                  {unreadNotifs}
+                </Link>
+              ) : null}
+              {permission === "default" && VAPID_PUBLIC_KEY ? (
+                <button type="button" className="ghost-button compact" onClick={() => void enable()} title="Enable push notifications">
+                  <Bell size={16} />
+                  Enable alerts
+                </button>
+              ) : null}
+              {permission === "granted" ? (
+                <button type="button" className="ghost-button compact" onClick={() => void disable()} title="Disable push notifications">
+                  <BellOff size={16} />
+                </button>
+              ) : null}
+              <Link className="ghost-button compact" href="/account">
+                <Settings size={16} />
+                Settings
               </Link>
-            ) : null}
-            {unreadNotifs > 0 ? (
-              <Link className="ghost-button compact" href="/inbox" title={`${unreadNotifs} unread notifications`}>
-                <Bell size={16} />
-                {unreadNotifs}
-              </Link>
-            ) : null}
-            {permission === "default" && VAPID_PUBLIC_KEY ? (
-              <button type="button" className="ghost-button compact" onClick={() => void enable()} title="Enable push notifications">
-                <Bell size={16} />
-                Enable alerts
-              </button>
-            ) : null}
-            {permission === "granted" ? (
-              <button type="button" className="ghost-button compact" onClick={() => void disable()} title="Disable push notifications">
-                <BellOff size={16} />
-              </button>
-            ) : null}
-            <Link className="ghost-button compact" href="/account">
-              <Settings size={16} />
-              Settings
-            </Link>
-            <SignOutButton />
+              <SignOutButton />
+            </div>
           </div>
         </header>
 

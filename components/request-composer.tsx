@@ -38,6 +38,19 @@ const stepOrder = [
   },
 ] as const;
 
+const laneDetails: Record<RequestLane, { eyebrow: string; title: string; description: string }> = {
+  social: {
+    eyebrow: "Intentional company",
+    title: "Social Plus-One",
+    description: "Gallery walks, coffee chats, and shared experiences that stay warm, calm, and low-pressure.",
+  },
+  errand: {
+    eyebrow: "Steady support",
+    title: "Errand Companion",
+    description: "Practical help for runs, appointments, and logistics when you want another grounded person nearby.",
+  },
+};
+
 export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
   const router = useRouter();
   const [lane, setLane] = useState<RequestLane>("social");
@@ -124,7 +137,9 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
                     resetForm(option);
                   }}
                 >
-                  {option === "social" ? "Social Plus-One" : "Errand Companion"}
+                  <span className="lane-switch-label">{laneDetails[option].eyebrow}</span>
+                  <strong>{laneDetails[option].title}</strong>
+                  <small>{laneDetails[option].description}</small>
                 </button>
               ))}
             </div>

@@ -6,7 +6,6 @@ import { ProfileAvatar } from "@/components/app/profile-avatar";
 import { ProfilePanel } from "@/components/app/profile-panel";
 import type { WorkspaceProfile } from "@/lib/supabase/types";
 import { WorkspacePageHeader } from "@/components/app/workspace-page-header";
-import { getProfileCompletion } from "@/lib/utils";
 
 export function ProfilePage({
   profile,
@@ -20,14 +19,13 @@ export function ProfilePage({
   initialStatus?: string;
 }) {
   const [status, setStatus] = useState(initialStatus ?? (preview ? "Preview mode is active. Sign in to update your profile." : "Profile ready."));
-  const progress = getProfileCompletion(profile);
 
   return (
     <div className="workspace-page">
       <WorkspacePageHeader
         kicker="Profile"
-        title="Present yourself clearly before anyone replies."
-        intro="A calm, complete profile gives people the context they need to feel comfortable responding."
+        title="Creating space for presence and calm."
+        intro="Shape the first impression people see before they reply, with enough warmth and clarity to feel trustworthy."
         status={status}
         meta={
           <ProfileAvatar name={profile.displayName} url={profile.avatarUrl} size="sm" />

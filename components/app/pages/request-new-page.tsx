@@ -13,9 +13,9 @@ export function RequestNewPage({ preview, initialStatus }: { preview: boolean; i
   return (
     <div className="workspace-page">
       <WorkspacePageHeader
-        kicker="Post"
-        title="Write a plan that feels easy to trust."
-        intro="Good requests feel specific without oversharing. Set the tone, logistics, and safety defaults in one pass."
+        kicker="New companion journey"
+        title="Post a request."
+        intro="Define the tone first, then shape the practical details so the right companion recognises the fit quickly."
         status={status}
         meta={<span className="mini-chip">3-step flow</span>}
       />

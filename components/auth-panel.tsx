@@ -194,6 +194,23 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
         <p>Create an account, confirm your email, and manage requests, replies, and follow-up from one workspace.</p>
       </div>
 
+      <div className="auth-trust-strip" aria-label="Trust and privacy highlights">
+        <article>
+          <ShieldCheck size={16} />
+          <div>
+            <strong>Accountable profiles</strong>
+            <span>Verified identities and email confirmation keep the baseline trustworthy.</span>
+          </div>
+        </article>
+        <article>
+          <LockKeyhole size={16} />
+          <div>
+            <strong>Private coordination</strong>
+            <span>Exact logistics stay inside the workspace until both people are aligned.</span>
+          </div>
+        </article>
+      </div>
+
       <div className="segment-control">
         <button
           type="button"

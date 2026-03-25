@@ -28,8 +28,8 @@ export function InboxPage({
     <div className="workspace-page">
       <WorkspacePageHeader
         kicker="Inbox"
-        title="Keep replies moving toward a confident yes."
-        intro="Review introductions, confirm the right fit, and keep any matched plan coordinated in one place."
+        title="Keep replies moving with calm clarity."
+        intro="Review introductions, confirm the right fit, and keep matched plans coordinated in one shared workspace."
         status={status}
         meta={<span className="mini-chip">{pendingCount + (hasSession ? 1 : 0)} active threads</span>}
       />
