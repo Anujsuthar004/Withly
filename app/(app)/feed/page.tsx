@@ -1,8 +1,6 @@
 import Link from "next/link";
 
 import { FeedList } from "@/components/app/feed-list";
-import { WorkspacePriorityBoard } from "@/components/app/workspace-priority-board";
-import { WorkspacePageHeader } from "@/components/app/workspace-page-header";
 import { getFeedPageState } from "@/lib/supabase/queries";
 
 export const dynamic = "force-dynamic";
@@ -11,22 +9,39 @@ export default async function FeedPage() {
   const { feed, feedError, ownerRequestIds, preview, snapshot } = await getFeedPageState(24);
 
   return (
-    <div className="workspace-page">
-      <WorkspacePageHeader
-        kicker="Curation Hub"
-        title="Your intentional workspace for companionship."
-        intro="Start with the requests that fit your presence best, then browse the rest with calmer filters and clearer signals."
-        status={feedError || undefined}
-        meta={<span className="mini-chip">{feed.length} visible in feed</span>}
-        actions={
-          <Link className="primary-button compact" href="/requests/new">
-            Create a request
+    <div className="sanctuary-page sanctuary-feed-page">
+      <section className="sanctuary-page-intro">
+        <div>
+          <p className="sanctuary-kicker">Curation Hub</p>
+          <h1>
+            Your Intentional <span>Workspace</span> for Companionship.
+          </h1>
+          <p>
+            A tailored selection of requests waiting for your presence. Designed for quiet connections and shared
+            experiences.
+          </p>
+        </div>
+        <div className="sanctuary-page-actions">
+          {snapshot.activeSession ? <span className="sanctuary-chip">1 active workspace</span> : null}
+          <span className="sanctuary-chip">{feed.length} open requests</span>
+          <Link className="withly-create-button subtle" href="/requests/new">
+            Create Request
           </Link>
-        }
-      />
+        </div>
+      </section>
 
-      {!feedError ? <WorkspacePriorityBoard snapshot={snapshot} preview={preview} feedCount={feed.length} /> : null}
-      {feedError ? null : <FeedList feed={feed} preview={preview} ownerRequestIds={ownerRequestIds} activeSessionRequestId={snapshot.activeSession?.requestId ?? null} />}
+      {feedError ? (
+        <section className="withly-status-banner" role="status" aria-live="polite">
+          {feedError}
+        </section>
+      ) : (
+        <FeedList
+          feed={feed}
+          preview={preview}
+          ownerRequestIds={ownerRequestIds}
+          activeSessionRequestId={snapshot.activeSession?.requestId ?? null}
+        />
+      )}
     </div>
   );
 }

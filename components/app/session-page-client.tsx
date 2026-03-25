@@ -3,8 +3,6 @@
 import { useState } from "react";
 
 import { SessionPanel } from "@/components/app/session-panel";
-import { StatusBadge } from "@/components/app/status-badge";
-import { WorkspacePageHeader } from "@/components/app/workspace-page-header";
 import type { WorkspaceSession } from "@/lib/supabase/types";
 
 export function SessionPageClient({
@@ -14,11 +12,11 @@ export function SessionPageClient({
   session: WorkspaceSession;
   currentUserId: string;
 }) {
-  const [status, setStatus] = useState("Session ready.");
+  const [status, setStatus] = useState("");
 
   return (
-    <div className="workspace-page">
-      <WorkspacePageHeader kicker="Workspace" title="Your confirmed plan." intro="Keep the details, updates, and safety check-ins in one private thread." status={status} />
+    <div className="sanctuary-page sanctuary-session-page">
+      {status ? <div className="withly-status-banner">{status}</div> : null}
       <SessionPanel session={session} currentUserId={currentUserId} onStatus={setStatus} />
     </div>
   );

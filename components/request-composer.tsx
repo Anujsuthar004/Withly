@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import { CalendarClock, CheckCircle2, Shield, Sparkles } from "lucide-react";
+import { type ReactNode, useMemo, useState, useTransition } from "react";
+import Image from "next/image";
+import { ArrowRight, CalendarClock, CheckCircle2, MapPin, MessageCircleMore, Send, Shield, ShoppingBag, Sparkles, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { createRequestAction } from "@/app/workspace/actions";
 import { TurnstileWidget } from "@/components/turnstile-widget";
 import { TURNSTILE_SITE_KEY, hasTurnstileEnv } from "@/lib/env";
+import { referenceMedia } from "@/lib/reference-content";
 import type { RequestLane } from "@/lib/supabase/types";
 import { formatDateTime } from "@/lib/utils";
 
@@ -20,36 +22,28 @@ const defaultTags: Record<RequestLane, string[]> = {
   errand: ["structured", "on-time", "supportive"],
 };
 
-const stepOrder = [
+const laneCards: Array<{
+  lane: RequestLane;
+  title: string;
+  description: string;
+  icon: ReactNode;
+  tone: "soft" | "peach";
+}> = [
   {
-    key: "basics",
-    title: "Basics",
-    description: "Tone, context, and clarity.",
+    lane: "errand",
+    title: "Errand",
+    description: "Groceries, pharmacy runs, or dry cleaning pickup. Someone to handle the logistics while you stay focused.",
+    icon: <ShoppingBag size={28} />,
+    tone: "soft",
   },
   {
-    key: "logistics",
-    title: "Logistics",
-    description: "Area, timing, and tags.",
+    lane: "social",
+    title: "Social",
+    description: "Coffee chats, museum visits, or a walk in the park. Purely human connection.",
+    icon: <MessageCircleMore size={28} />,
+    tone: "peach",
   },
-  {
-    key: "safety",
-    title: "Safety",
-    description: "Defaults and final review.",
-  },
-] as const;
-
-const laneDetails: Record<RequestLane, { eyebrow: string; title: string; description: string }> = {
-  social: {
-    eyebrow: "Intentional company",
-    title: "Social Plus-One",
-    description: "Gallery walks, coffee chats, and shared experiences that stay warm, calm, and low-pressure.",
-  },
-  errand: {
-    eyebrow: "Steady support",
-    title: "Errand Companion",
-    description: "Practical help for runs, appointments, and logistics when you want another grounded person nearby.",
-  },
-};
+];
 
 export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
   const router = useRouter();
@@ -66,7 +60,6 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
   const [checkInEnabled, setCheckInEnabled] = useState(true);
   const [captchaToken, setCaptchaToken] = useState("");
   const [turnstileKey, setTurnstileKey] = useState(0);
-  const [stepIndex, setStepIndex] = useState(0);
   const [isPending, startTransition] = useTransition();
 
   const parsedTags = useMemo(
@@ -80,410 +73,356 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
 
   const basicsReady = title.trim().length >= 6 && description.trim().length >= 24;
   const logisticsReady = areaLabel.trim().length >= 3;
+  const canSubmit = basicsReady && logisticsReady && (!hasTurnstileEnv || Boolean(captchaToken));
 
-  function resetForm(nextLane: RequestLane) {
-    setTitle("");
-    setDescription("");
-    setAreaLabel("");
-    setMeetupAt("");
-    setRadiusKm(5);
-    setTags(defaultTags[nextLane].join(", "));
-    setExpiresAt("");
-    setMaxCompanions(1);
-    setVerifiedOnly(true);
-    setCheckInEnabled(true);
-    setCaptchaToken("");
-    setTurnstileKey((current) => current + 1);
-    setStepIndex(0);
-  }
-
-  function canMoveToStep(targetIndex: number) {
-    if (targetIndex <= stepIndex) return true;
-    if (targetIndex === 1) return basicsReady;
-    if (targetIndex === 2) return basicsReady && logisticsReady;
-    return false;
-  }
+  const progress = [
+    true,
+    basicsReady,
+    basicsReady && logisticsReady,
+  ];
 
   return (
-    <section className="panel composer-panel">
-      <div className="composer-shell">
-        <div className="composer-main">
-          <div className="composer-top">
-            <div className="composer-top-copy">
-              <div className="panel-heading composer-panel-heading">
-                <div>
-                  <p className="kicker">Post Securely</p>
-                  <h3>Craft a request with strong defaults.</h3>
-                </div>
-                <span className="status-dot">
-                  <Sparkles size={16} />
-                  Guided flow
-                </span>
-              </div>
-              <p className="panel-intro composer-panel-intro">
-                Move one step at a time: set the tone first, tighten the logistics second, and publish only after the
-                draft feels calm and clear.
-              </p>
-            </div>
+    <div className="composer-reference-shell">
+      <div className="composer-reference-main">
+        <div className="composer-progress">
+          {progress.map((complete, index) => (
+            <span key={index} className={complete ? "active" : ""} />
+          ))}
+        </div>
 
-            <div className="lane-switch composer-lane-switch">
-              {(["social", "errand"] as const).map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  className={lane === option ? "active" : ""}
-                  onClick={() => {
-                    setLane(option);
-                    resetForm(option);
-                  }}
-                >
-                  <span className="lane-switch-label">{laneDetails[option].eyebrow}</span>
-                  <strong>{laneDetails[option].title}</strong>
-                  <small>{laneDetails[option].description}</small>
-                </button>
-              ))}
-            </div>
-          </div>
+        <form
+          className="composer-reference-form"
+          onSubmit={(event) => {
+            event.preventDefault();
 
-          <form
-            className="stack-form composer-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-
-              startTransition(async () => {
-                const result = await createRequestAction({
-                  lane,
-                  title,
-                  description,
-                  areaLabel,
-                  meetupAt: meetupAt || null,
-                  radiusKm,
-                  tags: parsedTags,
-                  verifiedOnly,
-                  checkInEnabled,
-                  maxCompanions,
-                  expiresAt: expiresAt || undefined,
-                  captchaToken,
-                });
-
-                onStatus(result.message);
-                if (!result.ok) {
-                  setCaptchaToken("");
-                  setTurnstileKey((current) => current + 1);
-                  return;
-                }
-
-                router.push("/requests");
+            startTransition(async () => {
+              const result = await createRequestAction({
+                lane,
+                title,
+                description,
+                areaLabel,
+                meetupAt: meetupAt || null,
+                radiusKm,
+                tags: parsedTags,
+                verifiedOnly,
+                checkInEnabled,
+                maxCompanions,
+                expiresAt: expiresAt || undefined,
+                captchaToken,
               });
-            }}
-          >
-            <div className="composer-steps" role="tablist" aria-label="Request creation steps">
-              {stepOrder.map((step, index) => (
-                <button
-                  key={step.key}
-                  type="button"
-                  className={`composer-step ${stepIndex === index ? "active" : ""} ${canMoveToStep(index) ? "" : "locked"}`}
-                  onClick={() => {
-                    if (canMoveToStep(index)) {
-                      setStepIndex(index);
-                    }
-                  }}
-                  disabled={!canMoveToStep(index)}
-                >
-                  <span>{index + 1}</span>
-                  <div>
-                    <strong>{step.title}</strong>
-                    <small>{step.description}</small>
-                  </div>
-                </button>
-              ))}
+
+              onStatus(result.message);
+              if (!result.ok) {
+                setCaptchaToken("");
+                setTurnstileKey((current) => current + 1);
+                return;
+              }
+
+              router.push("/requests");
+            });
+          }}
+        >
+          <section className="composer-stage">
+            <div className="composer-stage-head">
+              <div>
+                <h2>1. Choose a Category</h2>
+                <p>Define the nature of your request to find the right companion.</p>
+              </div>
             </div>
 
-            {stepIndex === 0 ? (
-              <section className="form-section">
-                <div className="form-section-head">
-                  <h4>Plan basics</h4>
-                  <p>Name the plan clearly, then describe the mood, expectations, and what would make it feel safe.</p>
+            <div className="composer-category-grid">
+              {laneCards.map((option) => {
+                const active = option.lane === lane;
+
+                return (
+                  <button
+                    key={option.lane}
+                    type="button"
+                    className={`composer-category-card tone-${option.tone} ${active ? "active" : ""}`}
+                    onClick={() => {
+                      setLane(option.lane);
+                      setTags(defaultTags[option.lane].join(", "));
+                    }}
+                  >
+                    <span className="composer-category-icon">{option.icon}</span>
+                    <strong>{option.title}</strong>
+                    <p>{option.description}</p>
+                    <span className="composer-category-link">
+                      {active ? "Selected" : "Select Category"}
+                      <ArrowRight size={16} />
+                    </span>
+                  </button>
+                );
+              })}
+
+              <button
+                type="button"
+                className="composer-category-card composer-category-card--wide"
+                onClick={() => document.getElementById("request-title-field")?.focus()}
+              >
+                <div className="composer-category-wide-icon">
+                  <Sparkles size={22} />
                 </div>
-
-                <label>
-                  Title
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
-                    placeholder={lane === "social" ? "Rooftop set and an after-walk" : "Hospital visit and pharmacy stop"}
-                    minLength={6}
-                    maxLength={120}
-                    required
-                    disabled={preview || isPending}
-                  />
-                  {title.length > 0 && title.trim().length < 6 ? (
-                    <small className="field-hint">{6 - title.trim().length} more character{6 - title.trim().length === 1 ? "" : "s"} needed</small>
-                  ) : null}
-                </label>
-
-                <label>
-                  Description
-                  <textarea
-                    value={description}
-                    onChange={(event) => setDescription(event.target.value)}
-                    placeholder="State the mood, timing, expectations, and what would make the session feel safe."
-                    minLength={24}
-                    maxLength={600}
-                    rows={5}
-                    required
-                    disabled={preview || isPending}
-                  />
-                  {description.length > 0 && description.trim().length < 24 ? (
-                    <small className="field-hint">{24 - description.trim().length} more character{24 - description.trim().length === 1 ? "" : "s"} needed</small>
-                  ) : null}
-                </label>
-              </section>
-            ) : null}
-
-            {stepIndex === 1 ? (
-              <section className="form-section">
-                <div className="form-section-head">
-                  <h4>Logistics</h4>
-                  <p>Share just enough area and timing context for the right people to recognize the fit quickly.</p>
+                <div>
+                  <strong>Custom Request</strong>
+                  <p>Something unique that doesn&apos;t fit a standard box.</p>
                 </div>
+                <ArrowRight size={16} />
+              </button>
+            </div>
 
-                <div className="grid-two">
-                  <label>
-                    Area
+            <div className="composer-stage-actions">
+              <button type="button" className="composer-text-button" onClick={() => router.push("/feed")}>
+                Cancel
+              </button>
+              <span className="composer-inline-note">
+                {basicsReady ? "Task details ready to refine." : "Choose a category, then name the plan clearly."}
+              </span>
+            </div>
+          </section>
+
+          <section className={`composer-stage ${basicsReady ? "ready" : "muted"}`}>
+            <div className="composer-stage-head">
+              <div>
+                <h2>2. Task Details</h2>
+                <p>Share just enough context for the right companion to recognize the fit quickly.</p>
+              </div>
+            </div>
+
+            <div className="composer-underlines">
+              <label className="composer-line-field composer-line-field--full">
+                <span>What are we doing?</span>
+                <input
+                  id="request-title-field"
+                  type="text"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder={lane === "social" ? "e.g. New exhibit at SFMOMA" : "e.g. Weekly grocery run at the local market"}
+                  minLength={6}
+                  maxLength={120}
+                  required
+                  disabled={preview || isPending}
+                />
+              </label>
+
+              <label className="composer-line-field composer-line-field--full">
+                <span>Describe the tone</span>
+                <textarea
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  placeholder="What should the other person know about the pace, intent, and kind of presence that would help?"
+                  minLength={24}
+                  maxLength={600}
+                  rows={4}
+                  required
+                  disabled={preview || isPending}
+                />
+              </label>
+
+              <div className="composer-two-up">
+                <label className="composer-line-field">
+                  <span>Where</span>
+                  <div className="composer-line-input">
+                    <MapPin size={16} />
                     <input
                       type="text"
                       value={areaLabel}
                       onChange={(event) => setAreaLabel(event.target.value)}
-                      placeholder="Neighbourhood or landmark"
+                      placeholder="Select location"
                       minLength={3}
                       maxLength={120}
                       required
                       disabled={preview || isPending}
                     />
-                  </label>
+                  </div>
+                </label>
 
-                  <label>
-                    Meet time
-                    <div className="input-icon-wrap">
-                      <CalendarClock size={16} />
-                      <input
-                        type="datetime-local"
-                        value={meetupAt}
-                        onChange={(event) => setMeetupAt(event.target.value)}
-                        disabled={preview || isPending}
-                      />
-                    </div>
-                  </label>
-                </div>
-
-                <div className="grid-two">
-                  <label>
-                    Max Companions
+                <label className="composer-line-field">
+                  <span>When</span>
+                  <div className="composer-line-input">
+                    <CalendarClock size={16} />
                     <input
-                      type="number"
-                      min={1}
-                      max={10}
-                      value={maxCompanions}
-                      onChange={(event) => setMaxCompanions(Number(event.target.value))}
+                      type="datetime-local"
+                      value={meetupAt}
+                      onChange={(event) => setMeetupAt(event.target.value)}
                       disabled={preview || isPending}
                     />
-                  </label>
-
-                  <label>
-                    Auto-Expire At (Ephemeral)
-                    <div className="input-icon-wrap">
-                      <CalendarClock size={16} />
-                      <input
-                        type="datetime-local"
-                        value={expiresAt}
-                        onChange={(event) => setExpiresAt(event.target.value)}
-                        disabled={preview || isPending}
-                      />
-                    </div>
-                  </label>
-                </div>
-
-                <div className="grid-two">
-                  <label className="range-field">
-                    Discovery radius: {radiusKm} km
-                    <input
-                      type="range"
-                      min={1}
-                      max={25}
-                      value={radiusKm}
-                      onChange={(event) => setRadiusKm(Number(event.target.value))}
-                      disabled={preview || isPending}
-                    />
-                  </label>
-
-                  <label>
-                    Tags
-                    <input
-                      type="text"
-                      value={tags}
-                      onChange={(event) => setTags(event.target.value)}
-                      placeholder="comma, separated, tags"
-                      disabled={preview || isPending}
-                    />
-                  </label>
-                </div>
-              </section>
-            ) : null}
-
-            {stepIndex === 2 ? (
-              <section className="form-section">
-                <div className="form-section-head">
-                  <h4>Safety defaults</h4>
-                  <p>Set expectations, review the draft, and only publish when the plan reads clearly end to end.</p>
-                </div>
-
-                <div className="option-grid">
-                  <label className="toggle-card">
-                    <input
-                      type="checkbox"
-                      checked={verifiedOnly}
-                      onChange={(event) => setVerifiedOnly(event.target.checked)}
-                      disabled={preview || isPending}
-                    />
-                    <span>
-                      <Shield size={16} />
-                      Verified-only responses
-                    </span>
-                  </label>
-
-                  <label className="toggle-card">
-                    <input
-                      type="checkbox"
-                      checked={checkInEnabled}
-                      onChange={(event) => setCheckInEnabled(event.target.checked)}
-                      disabled={preview || isPending}
-                    />
-                    <span>
-                      <Sparkles size={16} />
-                      Check-in ready session
-                    </span>
-                  </label>
-                </div>
-
-                {hasTurnstileEnv ? (
-                  <TurnstileWidget
-                    key={turnstileKey}
-                    siteKey={TURNSTILE_SITE_KEY}
-                    onToken={setCaptchaToken}
-                    theme="light"
-                  />
-                ) : null}
-              </section>
-            ) : null}
-
-            <div className="composer-actions">
-              <button
-                className="ghost-button compact"
-                type="button"
-                disabled={stepIndex === 0 || isPending}
-                onClick={() => setStepIndex((current) => Math.max(0, current - 1))}
-              >
-                Back
-              </button>
-
-              {stepIndex < stepOrder.length - 1 ? (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.25rem" }}>
-                  <button
-                    className="primary-button compact"
-                    type="button"
-                    disabled={isPending || (stepIndex === 0 ? !basicsReady : !logisticsReady)}
-                    onClick={() => setStepIndex((current) => Math.min(stepOrder.length - 1, current + 1))}
-                  >
-                    Continue
-                  </button>
-                  {stepIndex === 0 && !basicsReady ? (
-                    <small className="field-hint">
-                      {!title.trim() || title.trim().length < 6
-                        ? "Title needs at least 6 characters"
-                        : "Description needs at least 24 characters"}
-                    </small>
-                  ) : null}
-                  {stepIndex === 1 && !logisticsReady ? (
-                    <small className="field-hint">Add an area to continue</small>
-                  ) : null}
-                </div>
-              ) : (
-                <button className="primary-button compact" type="submit" disabled={preview || isPending}>
-                  {preview ? "Preview mode only" : isPending ? "Posting..." : "Post Request"}
-                </button>
-              )}
+                  </div>
+                </label>
+              </div>
             </div>
-          </form>
+          </section>
+
+          <section className={`composer-stage ${logisticsReady ? "ready" : "muted"}`}>
+            <div className="composer-stage-head">
+              <div>
+                <h2>3. Intent &amp; Preferences</h2>
+                <p>Set expectations, safety defaults, and a few lightweight discovery signals.</p>
+              </div>
+            </div>
+
+            <div className="composer-preference-grid">
+              <label className={`composer-preference-card ${verifiedOnly ? "active" : ""}`}>
+                <input
+                  type="checkbox"
+                  checked={verifiedOnly}
+                  onChange={(event) => setVerifiedOnly(event.target.checked)}
+                  disabled={preview || isPending}
+                />
+                <div className="composer-preference-icon">
+                  <Shield size={18} />
+                </div>
+                <div>
+                  <strong>Verified responses only</strong>
+                  <p>Keep replies limited to companions with stronger trust signals.</p>
+                </div>
+              </label>
+
+              <label className={`composer-preference-card ${checkInEnabled ? "active" : ""}`}>
+                <input
+                  type="checkbox"
+                  checked={checkInEnabled}
+                  onChange={(event) => setCheckInEnabled(event.target.checked)}
+                  disabled={preview || isPending}
+                />
+                <div className="composer-preference-icon">
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <strong>Live safety check-ins</strong>
+                  <p>Keep arrival and SOS tools ready once the request turns into an active workspace.</p>
+                </div>
+              </label>
+            </div>
+
+            <div className="composer-advanced-grid">
+              <label className="composer-line-field">
+                <span>Max companions</span>
+                <div className="composer-line-input">
+                  <Users size={16} />
+                  <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={maxCompanions}
+                    onChange={(event) => setMaxCompanions(Number(event.target.value))}
+                    disabled={preview || isPending}
+                  />
+                </div>
+              </label>
+
+              <label className="composer-line-field">
+                <span>Auto-expire at</span>
+                <div className="composer-line-input">
+                  <CalendarClock size={16} />
+                  <input
+                    type="datetime-local"
+                    value={expiresAt}
+                    onChange={(event) => setExpiresAt(event.target.value)}
+                    disabled={preview || isPending}
+                  />
+                </div>
+              </label>
+
+              <label className="composer-line-field">
+                <span>Discovery radius</span>
+                <div className="composer-range-wrap">
+                  <input
+                    type="range"
+                    min={1}
+                    max={25}
+                    value={radiusKm}
+                    onChange={(event) => setRadiusKm(Number(event.target.value))}
+                    disabled={preview || isPending}
+                  />
+                  <strong>{radiusKm} km</strong>
+                </div>
+              </label>
+
+              <label className="composer-line-field">
+                <span>Tags</span>
+                <input
+                  type="text"
+                  value={tags}
+                  onChange={(event) => setTags(event.target.value)}
+                  placeholder="comma, separated, tags"
+                  disabled={preview || isPending}
+                />
+              </label>
+            </div>
+
+            {hasTurnstileEnv ? (
+              <div className="composer-captcha-wrap">
+                <TurnstileWidget key={turnstileKey} siteKey={TURNSTILE_SITE_KEY} onToken={setCaptchaToken} theme="light" />
+              </div>
+            ) : null}
+          </section>
+
+          <div className="composer-submit-row">
+            <div className="composer-submit-note">
+              <CheckCircle2 size={16} />
+              <span>
+                {preview
+                  ? "Preview mode is on. Sign in to publish."
+                  : canSubmit
+                    ? "Ready to publish."
+                    : "Add a stronger title, description, and area before publishing."}
+              </span>
+            </div>
+            <button className="composer-submit-button" type="submit" disabled={preview || isPending || !canSubmit}>
+              <Send size={16} />
+              {preview ? "Preview mode only" : isPending ? "Posting..." : "Post Request"}
+            </button>
+          </div>
+
+          <button className="composer-floating-submit" type="submit" disabled={preview || isPending || !canSubmit} aria-label="Post request">
+            <Send size={24} />
+          </button>
+        </form>
+      </div>
+
+      <aside className="composer-reference-side">
+        <div className="composer-side-card">
+          <h3>Why Withly?</h3>
+          <p>Our companions are vetted for intentionality. Every request is an opportunity for meaningful coexistence.</p>
         </div>
 
-        <aside className="composer-preview panel">
-          <div className="form-section-head">
-            <h4>Live preview</h4>
-            <p>Check how the request reads before you publish it. This is the moment to simplify and tighten.</p>
+        <div className="composer-side-image">
+          <Image src={referenceMedia.homeArtwork[2]} alt="Intentional quiet workspace" fill sizes="(max-width: 1280px) 100vw, 280px" />
+          <div className="composer-side-image-copy">
+            <span>Workspace vibe</span>
+            <strong>Intentional Quietude</strong>
           </div>
+        </div>
 
-          <div className="composer-preview-card">
-            <div className="composer-preview-top">
-              <span className="request-lane">{lane === "social" ? "Social" : "Errand"}</span>
-              <span className="mini-chip">{formatDateTime(meetupAt || null)}</span>
-            </div>
-            <h4>{title.trim() || "Your request title will appear here."}</h4>
-            <p>{description.trim() || "A calm, specific description helps the right person recognise the fit quickly."}</p>
+        <div className="composer-preview-card">
+          <div className="composer-preview-head">
+            <span>{lane === "social" ? "Social" : "Errand"}</span>
+            <span>{formatDateTime(meetupAt || null)}</span>
           </div>
-
-          <div className="composer-preview-meta">
-            <div className="composer-preview-line">
-              <span>Area</span>
-              <strong>{areaLabel.trim() || "Add a neighbourhood or landmark"}</strong>
+          <h3>{title.trim() || "Your request title will appear here."}</h3>
+          <p>{description.trim() || "A calm, specific description helps the right companion recognize the fit quickly."}</p>
+          <dl className="composer-preview-details">
+            <div>
+              <dt>Where</dt>
+              <dd>{areaLabel.trim() || "Choose a neighborhood or landmark"}</dd>
             </div>
-            <div className="composer-preview-line">
-              <span>Discovery radius</span>
-              <strong>{radiusKm} km</strong>
+            <div>
+              <dt>Radius</dt>
+              <dd>{radiusKm} km</dd>
             </div>
-            <div className="composer-preview-line">
-              <span>Replies</span>
-              <strong>{verifiedOnly ? "Verified only" : "Open to all"}</strong>
+            <div>
+              <dt>Companions</dt>
+              <dd>{maxCompanions === 1 ? "1-on-1" : `Up to ${maxCompanions}`}</dd>
             </div>
-            <div className="composer-preview-line">
-              <span>Check-ins</span>
-              <strong>{checkInEnabled ? "Enabled" : "Off"}</strong>
-            </div>
-            <div className="composer-preview-line">
-              <span>Group Size</span>
-              <strong>{maxCompanions === 1 ? "1-on-1" : `Up to ${maxCompanions}`}</strong>
-            </div>
+          </dl>
+          <div className="composer-preview-tags">
+            {parsedTags.slice(0, 4).map((tag) => (
+              <span key={tag}>{tag}</span>
+            ))}
           </div>
-
-          <div className="tag-row">
-            {parsedTags.length > 0 ? (
-              parsedTags.map((tag) => (
-                <span key={tag} className="tag-chip active">
-                  {tag}
-                </span>
-              ))
-            ) : (
-              <span className="request-privacy-note">Add a few tags so the right people can spot the request faster.</span>
-            )}
-          </div>
-
-          <div className="composer-checklist">
-            <div className={`composer-checklist-item ${basicsReady ? "done" : ""}`}>
-              <CheckCircle2 size={16} />
-              Basics {basicsReady ? "ready" : "need a stronger title and description"}
-            </div>
-            <div className={`composer-checklist-item ${logisticsReady ? "done" : ""}`}>
-              <CheckCircle2 size={16} />
-              Logistics {logisticsReady ? "ready" : "need an area before publishing"}
-            </div>
-            <div className={`composer-checklist-item ${stepIndex === 2 ? "done" : ""}`}>
-              <CheckCircle2 size={16} />
-              Final review {stepIndex === 2 ? "open" : "comes last"}
-            </div>
-          </div>
-        </aside>
-      </div>
-    </section>
+        </div>
+      </aside>
+    </div>
   );
 }

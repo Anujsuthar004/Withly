@@ -1,17 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Clock, Radar, ShieldCheck, Star, Trash2 } from "lucide-react";
+import Image from "next/image";
+import { Clock3, LockKeyhole, MapPin, MessageCircleMore, ShieldCheck, Star, SunMedium, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { 
+import {
   deleteAvailabilityWindowAction,
-  removeProfileAvatarAction, 
+  removeProfileAvatarAction,
   setAvailabilityWindowAction,
-  updateProfileAction, 
-  uploadProfileAvatarAction 
+  updateProfileAction,
+  uploadProfileAvatarAction,
 } from "@/app/workspace/actions";
 import { ProfileAvatar } from "@/components/app/profile-avatar";
+import { getDisplayTags, referenceMedia, referenceProfileReviews } from "@/lib/reference-content";
 import type { WorkspaceProfile } from "@/lib/supabase/types";
 import { getProfileCompletion } from "@/lib/utils";
 
@@ -47,6 +49,8 @@ export function ProfilePanel({
   const displayName = form.displayName.trim() || profile.displayName;
   const activeAvatarUrl = avatarPreviewUrl || profile.avatarUrl;
   const progress = getProfileCompletion({ ...form, avatarUrl: activeAvatarUrl });
+  const displayTags = getDisplayTags(form.aboutMe, form.homeArea);
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
   useEffect(() => {
     return () => {
@@ -115,68 +119,152 @@ export function ProfilePanel({
   }
 
   return (
-    <section className="panel profile-panel">
-      <div className="profile-editor-hero">
-        <article className="profile-editor-card profile-editor-card-identity">
-          <div className="profile-avatar-stack">
-            <ProfileAvatar name={displayName} url={activeAvatarUrl} size="xl" />
-            <div className="profile-avatar-copy">
-              <p className="kicker">The curator&apos;s intent</p>
-              <h3>{displayName}</h3>
-              <p>{form.aboutMe || "Add a few lines about the kind of presence, support, or companionship you offer."}</p>
+    <section className="trust-dashboard-shell">
+      <div className="trust-dashboard-grid">
+        <aside className="trust-dashboard-left">
+          <article className="trust-identity-card">
+            <div className="trust-avatar-wrap">
+              <ProfileAvatar name={displayName} url={activeAvatarUrl} size="xl" />
+              <span className="trust-avatar-badge">
+                <ShieldCheck size={14} />
+              </span>
             </div>
-          </div>
+            <h2>{displayName}</h2>
+            <p>Certified companion</p>
 
-          <div className="tag-row">
-            {profile.homeArea ? <span className="tag-chip active">{profile.homeArea}</span> : null}
-            <span className="tag-chip active">
-              {profile.verificationTier === "id_verified" ? "ID Verified" : profile.verificationTier === "phone" ? "Phone Verified" : "Email Verified"}
-            </span>
-            <span className="tag-chip active">{profile.trustScore}/100 trust</span>
-          </div>
-        </article>
-
-        <article className="profile-editor-card profile-editor-card-trust">
-          <div className="form-section-head">
-            <h4>Trust & presence</h4>
-            <p>Keep the essentials current so people understand who they are talking to before they ever reply.</p>
-          </div>
-
-          <div className="profile-strength-meter" aria-label={`Profile ${progress.percentage}% complete`}>
-            <div className="profile-strength-bar">
-              <span style={{ width: `${progress.percentage}%` }} />
-            </div>
-            <strong>{progress.percentage}% complete</strong>
-          </div>
-
-          <div className="profile-editor-signal-grid">
-            <span className="status-dot">
-              <Radar size={16} />
-              {profile.homeArea || "Area not set"}
-            </span>
-            <span className="status-dot">
-              <Star size={16} />
-              {profile.trustScore}/100 Trust
-            </span>
-            <span className="status-dot">
-              <ShieldCheck size={16} />
-              {availability.length} availability window{availability.length === 1 ? "" : "s"}
-            </span>
-          </div>
-
-          <div className="profile-strength-checklist">
-            {progress.steps.map((step) => (
-              <div key={step.id} className={`profile-strength-item ${step.done ? "done" : ""}`}>
-                <span>{step.label}</span>
-                <strong>{step.done ? "Done" : "Add it"}</strong>
+            <div className="trust-score-card">
+              <div className="trust-score-head">
+                <span>Trust score</span>
+                <strong>{profile.trustScore}</strong>
               </div>
-            ))}
-          </div>
-        </article>
+              <div className="trust-score-bar">
+                <span style={{ width: `${profile.trustScore}%` }} />
+              </div>
+              <small>
+                {profile.verificationTier === "id_verified"
+                  ? "Identity verified via secure review and recent successful sessions."
+                  : "Verification is active and the profile is ready for clearer trust signals."}
+              </small>
+            </div>
+          </article>
+
+          <article className="trust-mutual-card">
+            <p className="sanctuary-kicker">Mutual circles</p>
+            <div className="trust-mutual-avatars">
+              {referenceMedia.profileMutuals.map((url) => (
+                <span key={url} className="trust-mutual-avatar">
+                  <Image src={url} alt="" fill sizes="40px" />
+                </span>
+              ))}
+              <span className="trust-mutual-more">+4</span>
+            </div>
+            <p>
+              You both belong to the <strong>{form.homeArea || "Quietude Collective"}</strong> circle and calm planning spaces.
+            </p>
+          </article>
+        </aside>
+
+        <div className="trust-dashboard-main">
+          <section className="trust-intent-section">
+            <p className="sanctuary-kicker accent">The curator&apos;s intent</p>
+            <h2>Creating spaces for presence and calm.</h2>
+            <p>
+              {form.aboutMe ||
+                "I specialize in low-stimulation companionship, focused on grounded pacing, clear logistics, and warm follow-through."}
+            </p>
+            <div className="trust-tag-row">
+              {displayTags.map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
+            </div>
+          </section>
+
+          <section className="trust-engagement-section">
+            <div className="trust-section-head">
+              <h3>Past Engagements</h3>
+              <span>View Full History</span>
+            </div>
+
+            <div className="trust-review-grid">
+              {referenceProfileReviews.map((review) => (
+                <article key={review.title} className="trust-review-card">
+                  <div className="trust-stars">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <Star key={index} size={12} fill="currentColor" />
+                    ))}
+                  </div>
+                  <p>&quot;{review.quote}&quot;</p>
+                  <div className="trust-review-meta">
+                    <strong>{review.title}</strong>
+                    <span>{review.date}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <article className="trust-banner-card">
+              <Image src={referenceMedia.profileBanner} alt="Sanctuary certification" fill sizes="(max-width: 960px) 100vw, 840px" />
+              <div className="trust-banner-overlay" />
+              <div className="trust-banner-copy">
+                <div>
+                  <h3>Sanctuary Certified</h3>
+                  <p>{availability.length > 0 ? `${availability.length}+ availability windows are currently active.` : "Ready for quiet, grounded sessions."}</p>
+                </div>
+                <span>Active partner</span>
+              </div>
+            </article>
+          </section>
+
+          <section className="trust-spec-grid">
+            <article className="trust-spec-card">
+              <p className="sanctuary-kicker">Interaction style</p>
+              <ul>
+                <li>
+                  <MessageCircleMore size={16} />
+                  <div>
+                    <strong>Minimalist communication</strong>
+                    <span>Prefers brief logistical texts over long calls.</span>
+                  </div>
+                </li>
+                <li>
+                  <SunMedium size={16} />
+                  <div>
+                    <strong>Morning preference</strong>
+                    <span>
+                      {availability[0]
+                        ? `${days[availability[0].day_of_week]} ${availability[0].start_time} - ${availability[0].end_time}`
+                        : "Best availability often starts earlier in the day."}
+                    </span>
+                  </div>
+                </li>
+              </ul>
+            </article>
+
+            <article className="trust-spec-card">
+              <p className="sanctuary-kicker">Safety standards</p>
+              <ul>
+                <li>
+                  <MapPin size={16} />
+                  <div>
+                    <strong>Public spaces only</strong>
+                    <span>Meetups stay grounded in clear, vetted public locations.</span>
+                  </div>
+                </li>
+                <li>
+                  <LockKeyhole size={16} />
+                  <div>
+                    <strong>End-to-end tracking</strong>
+                    <span>Private workspaces keep the plan, updates, and check-ins together.</span>
+                  </div>
+                </li>
+              </ul>
+            </article>
+          </section>
+        </div>
       </div>
 
       <form
-        className="stack-form"
+        className="profile-studio-form"
         onSubmit={(event) => {
           event.preventDefault();
 
@@ -189,19 +277,17 @@ export function ProfilePanel({
           });
         }}
       >
-        <section className="form-section profile-avatar-card">
-          <div className="profile-avatar-stack">
-            <ProfileAvatar name={displayName} url={activeAvatarUrl} size="xl" />
-            <div className="profile-avatar-copy">
-              <div className="form-section-head">
-                <h4>Profile photo</h4>
-                <p>Use a clear, recent photo so people can recognise you quickly. If you skip it, the app falls back to your initials.</p>
-              </div>
-              <div className="profile-avatar-meta">
-                <span className="mini-chip">{activeAvatarUrl ? "Photo ready" : "Initials placeholder"}</span>
-                {selectedAvatarFile ? <span className="mini-chip">{selectedAvatarFile.name}</span> : null}
-              </div>
+        <section className="profile-studio-card">
+          <div className="profile-studio-head">
+            <div>
+              <p className="sanctuary-kicker">Edit studio</p>
+              <h3>Profile details</h3>
             </div>
+            <span className="sanctuary-chip">{progress.percentage}% complete</span>
+          </div>
+
+          <div className="profile-studio-meter">
+            <span style={{ width: `${progress.percentage}%` }} />
           </div>
 
           <input
@@ -229,40 +315,38 @@ export function ProfilePanel({
             disabled={preview || isAvatarPending}
           />
 
-          <div className="button-row profile-avatar-actions">
-            <label className="ghost-button compact file-picker-button" htmlFor="profile-avatar-input">
-              {selectedAvatarFile ? "Choose another photo" : "Choose photo"}
-            </label>
-            <button
-              className="secondary-button compact"
-              type="button"
-              onClick={handleAvatarUpload}
-              disabled={preview || isAvatarPending || !selectedAvatarFile}
-            >
-              {preview ? "Preview mode only" : isAvatarPending && selectedAvatarFile ? "Uploading..." : "Upload photo"}
-            </button>
-            <button
-              className="ghost-button compact danger-button"
-              type="button"
-              onClick={handleAvatarRemoval}
-              disabled={preview || isAvatarPending || (!selectedAvatarFile && !profile.avatarUrl)}
-            >
-              {preview ? "Preview mode only" : isAvatarPending ? "Working..." : selectedAvatarFile ? "Clear selection" : "Remove photo"}
-            </button>
+          <div className="profile-studio-avatar-row">
+            <ProfileAvatar name={displayName} url={activeAvatarUrl} size="xl" />
+            <div className="profile-studio-avatar-copy">
+              <strong>Profile photo</strong>
+              <p>Use a clear, recent photo so people can recognize you quickly.</p>
+              <div className="profile-studio-avatar-actions">
+                <label className="composer-text-button profile-upload-button" htmlFor="profile-avatar-input">
+                  {selectedAvatarFile ? "Choose another photo" : "Choose photo"}
+                </label>
+                <button
+                  className="sanctuary-primary-button"
+                  type="button"
+                  onClick={handleAvatarUpload}
+                  disabled={preview || isAvatarPending || !selectedAvatarFile}
+                >
+                  {preview ? "Preview mode only" : isAvatarPending && selectedAvatarFile ? "Uploading..." : "Upload photo"}
+                </button>
+                <button
+                  className="sanctuary-ghost-button danger"
+                  type="button"
+                  onClick={handleAvatarRemoval}
+                  disabled={preview || isAvatarPending || (!selectedAvatarFile && !profile.avatarUrl)}
+                >
+                  {preview ? "Preview mode only" : isAvatarPending ? "Working..." : selectedAvatarFile ? "Clear selection" : "Remove photo"}
+                </button>
+              </div>
+            </div>
           </div>
 
-          <p className="profile-avatar-note">JPG, PNG, or WebP up to 4 MB.</p>
-        </section>
-
-        <section className="form-section">
-          <div className="form-section-head">
-            <h4>Public details</h4>
-            <p>Make this recognisable, calm, and honest. People should know who they are meeting in a few seconds.</p>
-          </div>
-
-          <div className="grid-two">
-            <label>
-              Display name
+          <div className="profile-studio-fields">
+            <label className="composer-line-field">
+              <span>Display name</span>
               <input
                 type="text"
                 value={form.displayName}
@@ -273,8 +357,8 @@ export function ProfilePanel({
               />
             </label>
 
-            <label>
-              Home area
+            <label className="composer-line-field">
+              <span>Home area</span>
               <input
                 type="text"
                 value={form.homeArea}
@@ -283,64 +367,65 @@ export function ProfilePanel({
                 disabled={preview || isPending}
               />
             </label>
-          </div>
 
-          <label>
-            About you
-            <textarea
-              rows={3}
-              value={form.aboutMe}
-              onChange={(event) => setForm((current) => ({ ...current, aboutMe: event.target.value }))}
-              maxLength={300}
-              disabled={preview || isPending}
-            />
-          </label>
+            <label className="composer-line-field composer-line-field--full">
+              <span>About you</span>
+              <textarea
+                rows={4}
+                value={form.aboutMe}
+                onChange={(event) => setForm((current) => ({ ...current, aboutMe: event.target.value }))}
+                maxLength={300}
+                disabled={preview || isPending}
+              />
+            </label>
+          </div>
         </section>
 
-        <section className="form-section">
-          <div className="form-section-head">
-            <h4>Availability Windows</h4>
-            <p>Set a few recurring windows when you&apos;re typically free. Helps match you with regular companions.</p>
+        <section className="profile-studio-card">
+          <div className="profile-studio-head">
+            <div>
+              <p className="sanctuary-kicker">Availability</p>
+              <h3>Recurring windows</h3>
+            </div>
+            <span className="sanctuary-chip">{availability.length} active</span>
           </div>
 
-          {availability.length > 0 && (
-            <div className="summary-callout" style={{ padding: "1rem" }}>
-              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                {availability.map((window) => {
-                  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-                  return (
-                    <li key={window.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span>
-                        <strong>{days[window.day_of_week]}</strong> {window.start_time} - {window.end_time}
-                        {window.label ? ` (${window.label})` : ""}
-                      </span>
-                      <button
-                        type="button"
-                        className="danger-button ghost-button compact"
-                        disabled={preview || isAvailPending}
-                        onClick={() => {
-                          startAvailTransition(async () => {
-                            const formData = new FormData();
-                            formData.set("windowId", window.id);
-                            const result = await deleteAvailabilityWindowAction({ ok: false, message: "" }, formData);
-                            onStatus(result.message);
-                            if (result.ok) router.refresh();
-                          });
-                        }}
-                      >
-                        <Trash2 size={12} /> Remove
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+          {availability.length > 0 ? (
+            <div className="profile-availability-list">
+              {availability.map((window) => (
+                <div key={window.id} className="profile-availability-item">
+                  <div>
+                    <strong>
+                      {days[window.day_of_week]} {window.start_time} - {window.end_time}
+                    </strong>
+                    <span>{window.label || "Open window"}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="sanctuary-ghost-button danger"
+                    disabled={preview || isAvailPending}
+                    onClick={() => {
+                      startAvailTransition(async () => {
+                        const formData = new FormData();
+                        formData.set("windowId", window.id);
+                        const result = await deleteAvailabilityWindowAction({ ok: false, message: "" }, formData);
+                        onStatus(result.message);
+                        if (result.ok) router.refresh();
+                      });
+                    }}
+                  >
+                    <Trash2 size={14} />
+                    Remove
+                  </button>
+                </div>
+              ))}
             </div>
-          )}
+          ) : null}
 
-          <div className="grid-two">
-            <label>
-              Day
-              <select value={dayOfWeek} onChange={(e) => setDayOfWeek(Number(e.target.value))} disabled={preview || isAvailPending}>
+          <div className="profile-availability-fields">
+            <label className="composer-line-field">
+              <span>Day</span>
+              <select value={dayOfWeek} onChange={(event) => setDayOfWeek(Number(event.target.value))} disabled={preview || isAvailPending}>
                 <option value={1}>Monday</option>
                 <option value={2}>Tuesday</option>
                 <option value={3}>Wednesday</option>
@@ -351,24 +436,24 @@ export function ProfilePanel({
               </select>
             </label>
 
-            <label>
-              Start Time
-              <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} disabled={preview || isAvailPending} />
+            <label className="composer-line-field">
+              <span>Start time</span>
+              <input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} disabled={preview || isAvailPending} />
             </label>
 
-            <label>
-              End Time
-              <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} disabled={preview || isAvailPending} />
+            <label className="composer-line-field">
+              <span>End time</span>
+              <input type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} disabled={preview || isAvailPending} />
             </label>
 
-            <label>
-              Label (Optional)
-              <input type="text" placeholder="e.g. Afternoon Walk" value={availLabel} onChange={(e) => setAvailLabel(e.target.value)} disabled={preview || isAvailPending} />
+            <label className="composer-line-field">
+              <span>Label</span>
+              <input type="text" placeholder="e.g. Afternoon walk" value={availLabel} onChange={(event) => setAvailLabel(event.target.value)} disabled={preview || isAvailPending} />
             </label>
           </div>
 
           <button
-            className="secondary-button compact"
+            className="sanctuary-primary-button"
             type="button"
             disabled={preview || isAvailPending}
             onClick={() => {
@@ -381,7 +466,7 @@ export function ProfilePanel({
 
                 const result = await setAvailabilityWindowAction({ ok: false, message: "" }, formData);
                 onStatus(result.message);
-                
+
                 if (result.ok) {
                   setAvailLabel("");
                   router.refresh();
@@ -389,11 +474,12 @@ export function ProfilePanel({
               });
             }}
           >
-            <Clock size={16} /> Add Window
+            <Clock3 size={16} />
+            Add window
           </button>
         </section>
 
-        <button className="primary-button" type="submit" disabled={preview || isPending || isAvatarPending}>
+        <button className="composer-submit-button" type="submit" disabled={preview || isPending || isAvatarPending}>
           {preview ? "Preview mode only" : isPending ? "Saving..." : "Save profile details"}
         </button>
       </form>

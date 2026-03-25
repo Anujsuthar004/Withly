@@ -1,103 +1,155 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { HeartHandshake, MessageCircleMore, ShieldAlert } from "lucide-react";
+import { CalendarDays, HeartHandshake, MapPin, Mail, ShieldAlert, Share2 } from "lucide-react";
 
 import { submitCheckInAction, triggerSosAction } from "@/app/workspace/actions";
 import { ChatRoom } from "@/components/chat-room";
-import type { WorkspaceSession } from "@/lib/supabase/types";
 import { SUPPORT_EMAIL } from "@/lib/env";
+import { referenceMedia, referenceSessionChecklist } from "@/lib/reference-content";
+import type { WorkspaceSession } from "@/lib/supabase/types";
 import { formatDateTime } from "@/lib/utils";
 
 export function SessionPanel({
   session,
   currentUserId,
   onStatus,
+  embedded = false,
 }: {
   session: WorkspaceSession;
   currentUserId: string;
   onStatus: (message: string) => void;
+  embedded?: boolean;
 }) {
+  const checklist = session.checkInEnabled ? referenceSessionChecklist : referenceSessionChecklist.slice(0, 2);
+
   return (
-    <section className="panel session-panel">
-      <div className="panel-heading">
-        <div>
-          <p className="kicker">Active workspace</p>
-          <h3>{session.requestTitle}</h3>
-        </div>
-        <span className="status-dot">
-          <MessageCircleMore size={16} />
-          Planning live
-        </span>
-      </div>
-      <p className="panel-intro">Keep the details, updates, and safety check-ins in one private thread without losing the practical context around the plan.</p>
-
-      <div className="session-layout">
-        <div className="session-main-column">
-          <div className="summary-callout summary-callout-teal">
-            <p>Keep first meetups in public places, confirm an exact landmark in chat, and reach out quickly if you need moderation help.</p>
-          </div>
-
-          <div className="session-summary">
+    <section className={`workspace-session-shell ${embedded ? "embedded" : ""}`}>
+      {!embedded ? (
+        <aside className="workspace-session-rail">
+          <div className="workspace-session-rail-card workspace-session-rail-profile">
+            <div className="workspace-session-rail-avatar">W</div>
             <div>
-              <h4>{session.partnerDisplayName}</h4>
-              <p>
-                {session.areaLabel} • {formatDateTime(session.meetupAt)}
-              </p>
+              <strong>The Curator</strong>
+              <span>Intentional Quietude</span>
             </div>
-            <Link className="ghost-button compact" href={`/requests/${session.requestId}`}>
-              View request
-            </Link>
           </div>
 
-          <SessionSafetyActions session={session} onStatus={onStatus} />
+          <nav className="workspace-session-rail-nav" aria-label="Workspace sections">
+            <Link href="/profile" className="workspace-session-rail-link">
+              Trust Dashboard
+            </Link>
+            <Link href={`/sessions/${session.requestId}`} className="workspace-session-rail-link active">
+              Active Workspace
+            </Link>
+          </nav>
 
-          <ChatRoom
-            requestId={session.requestId}
-            currentUserId={currentUserId}
-            initialMessages={session.messages}
-            onStatus={onStatus}
-          />
+          <Link href="/requests/new" className="workspace-session-rail-cta">
+            New Companion
+          </Link>
+
+          <div className="workspace-session-rail-footer">
+            <Link href="/safety/reporting">Help</Link>
+            <Link href="/requests">Archive</Link>
+          </div>
+        </aside>
+      ) : null}
+
+      <div className="workspace-session-main">
+        <div className="workspace-session-header">
+          <div>
+            <p className="sanctuary-kicker">Workspace / R-1042</p>
+            <h2>{session.requestTitle}</h2>
+          </div>
+
+          <div className="workspace-session-status">
+            <span className="active">Planning</span>
+            <span>Confirmed</span>
+            <span>In Progress</span>
+          </div>
         </div>
 
-        <aside className="session-side-column">
-          <section className="session-side-card">
-            <p className="kicker">Trip details</p>
-            <div className="session-side-list">
-              <div>
-                <span>Location</span>
-                <strong>{session.areaLabel}</strong>
+        <div className="workspace-session-layout">
+          <div className="workspace-session-chat-column">
+            <ChatRoom
+              requestId={session.requestId}
+              currentUserId={currentUserId}
+              initialMessages={session.messages}
+              onStatus={onStatus}
+            />
+          </div>
+
+          <aside className="workspace-session-side-column">
+            <section className="workspace-side-card">
+              <h3>Trip Details</h3>
+              <div className="workspace-side-detail">
+                <div>
+                  <span>Location</span>
+                  <strong>{session.areaLabel}</strong>
+                </div>
+                <MapPin size={16} />
               </div>
-              <div>
-                <span>Time & date</span>
-                <strong>{formatDateTime(session.meetupAt)}</strong>
+              <div className="workspace-side-detail">
+                <div>
+                  <span>Time & date</span>
+                  <strong>{formatDateTime(session.meetupAt)}</strong>
+                </div>
+                <CalendarDays size={16} />
               </div>
-              <div>
-                <span>Companion</span>
-                <strong>{session.partnerDisplayName}</strong>
+              <div className="workspace-side-detail">
+                <div>
+                  <span>Companion</span>
+                  <strong>{session.partnerDisplayName}</strong>
+                </div>
+                <HeartHandshake size={16} />
               </div>
+
+              <div className="workspace-side-map">
+                <Image src={referenceMedia.workspaceMap} alt={session.areaLabel} fill sizes="(max-width: 960px) 100vw, 320px" />
+              </div>
+            </section>
+
+            <section className="workspace-side-card">
+              <div className="workspace-side-card-head">
+                <h3>Shared Checklist</h3>
+                <span>Add Item</span>
+              </div>
+              <ul className="workspace-session-checklist">
+                {checklist.map((item, index) => (
+                  <li key={item} className={index === 0 ? "done" : ""}>
+                    <span />
+                    <p>{item}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <div className="workspace-side-actions-grid">
+              <a className="workspace-side-action-card tone-peach" href={`mailto:${SUPPORT_EMAIL}`}>
+                <Mail size={20} />
+                <div>
+                  <strong>Email support</strong>
+                  <span>Get help fast</span>
+                </div>
+              </a>
+              <Link className="workspace-side-action-card tone-green" href={`/requests/${session.requestId}`}>
+                <Share2 size={20} />
+                <div>
+                  <strong>Open request</strong>
+                  <span>Review the plan</span>
+                </div>
+              </Link>
             </div>
-          </section>
 
-          <section className="session-side-card">
-            <p className="kicker">Shared checklist</p>
-            <ul className="session-checklist">
-              <li>Confirm the exact landmark in chat</li>
-              <li>Share an ETA before you leave</li>
-              {session.checkInEnabled ? <li>Send an arrival check-in once you meet</li> : null}
-            </ul>
-          </section>
+            <div className="workspace-side-gallery">
+              <Image src={referenceMedia.workspaceGallery} alt="Workspace reference" fill sizes="(max-width: 960px) 100vw, 320px" />
+            </div>
 
-          <section className="session-side-card session-side-actions">
-            <a className="ghost-button compact" href={`mailto:${SUPPORT_EMAIL}`}>
-              Email support
-            </a>
-            <Link className="secondary-button compact" href={`/requests/${session.requestId}`}>
-              Open request
-            </Link>
-          </section>
-        </aside>
+            <SessionSafetyActions session={session} onStatus={onStatus} />
+          </aside>
+        </div>
       </div>
     </section>
   );
@@ -124,7 +176,7 @@ function SessionSafetyActions({ session, onStatus }: { session: WorkspaceSession
 
   function handleSos() {
     if (!confirm("Are you sure you want to trigger an SOS? This notifies your emergency contact.")) return;
-    
+
     startTransition(async () => {
       const formData = new FormData();
       formData.set("requestId", session.requestId);
@@ -140,28 +192,20 @@ function SessionSafetyActions({ session, onStatus }: { session: WorkspaceSession
   }
 
   return (
-    <div className="summary-callout session-safety-card">
-      <p className="session-safety-title">Safety actions</p>
-      <div className="button-row">
-        {session.checkInEnabled && (
-          <button 
-            type="button" 
-            className="secondary-button compact" 
-            onClick={() => handleCheckIn("ok")}
-            disabled={isPending}
-          >
-            <HeartHandshake size={14} /> Send I&apos;m OK
+    <section className="workspace-side-card workspace-safety-card">
+      <h3>Safety actions</h3>
+      <div className="workspace-safety-actions">
+        {session.checkInEnabled ? (
+          <button type="button" className="sanctuary-ghost-button" onClick={() => handleCheckIn("ok")} disabled={isPending}>
+            <HeartHandshake size={14} />
+            Send I&apos;m OK
           </button>
-        )}
-        <button 
-          type="button" 
-          className="danger-button compact primary-button" 
-          onClick={handleSos}
-          disabled={isPending}
-        >
-          <ShieldAlert size={14} /> Trigger SOS
+        ) : null}
+        <button type="button" className="sanctuary-primary-button danger" onClick={handleSos} disabled={isPending}>
+          <ShieldAlert size={14} />
+          Trigger SOS
         </button>
       </div>
-    </div>
+    </section>
   );
 }

@@ -6,7 +6,6 @@ import { CheckCircle2, MessageCircleMore, ShieldAlert } from "lucide-react";
 
 import { JoinReviewPanel } from "@/components/app/join-review-panel";
 import { SessionPanel } from "@/components/app/session-panel";
-import { WorkspacePageHeader } from "@/components/app/workspace-page-header";
 import type { WorkspaceSnapshot } from "@/lib/supabase/types";
 
 export function InboxPage({
@@ -18,25 +17,25 @@ export function InboxPage({
   preview: boolean;
   initialStatus?: string;
 }) {
-  const [status, setStatus] = useState(
-    initialStatus ?? (preview ? "Preview mode is active. Sign in to review replies and chat." : "Inbox ready.")
-  );
+  const [status, setStatus] = useState(initialStatus ?? (preview ? "Preview mode is active. Sign in to review replies and chat." : ""));
   const hasSession = Boolean(snapshot.activeSession);
   const pendingCount = snapshot.incomingJoinRequests.length;
 
   return (
-    <div className="workspace-page">
-      <WorkspacePageHeader
-        kicker="Inbox"
-        title="Keep replies moving with calm clarity."
-        intro="Review introductions, confirm the right fit, and keep matched plans coordinated in one shared workspace."
-        status={status}
-        meta={<span className="mini-chip">{pendingCount + (hasSession ? 1 : 0)} active threads</span>}
-      />
+    <div className="sanctuary-page sanctuary-inbox-page">
+      <section className="sanctuary-page-intro">
+        <div>
+          <p className="sanctuary-kicker">Inbox</p>
+          <h1>Keep replies moving with calm clarity.</h1>
+          <p>Review introductions, confirm the right fit, and keep matched plans coordinated in one shared workspace.</p>
+        </div>
+        <span className="sanctuary-chip">{pendingCount + (hasSession ? 1 : 0)} active threads</span>
+      </section>
+      {status ? <div className="withly-status-banner">{status}</div> : null}
 
       <div className="workspace-content inbox-layout">
         <aside className="workspace-left">
-          <section className="panel inbox-command-panel">
+          <section className="panel inbox-command-panel sanctuary-panel">
             <div className="form-section-head">
               <h4>Action queue</h4>
               <p>Start with anything waiting on you, then move into the thread that needs the most clarity.</p>
@@ -75,9 +74,9 @@ export function InboxPage({
         <div className="workspace-main">
           <section id="active-session">
             {snapshot.activeSession ? (
-              <SessionPanel session={snapshot.activeSession} currentUserId={snapshot.profile.id} onStatus={setStatus} />
+              <SessionPanel session={snapshot.activeSession} currentUserId={snapshot.profile.id} onStatus={setStatus} embedded />
             ) : (
-              <section className="panel">
+              <section className="panel sanctuary-panel">
                 <div className="panel-heading">
                   <div>
                     <p className="kicker">Sessions</p>

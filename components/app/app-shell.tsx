@@ -1,48 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import Image from "next/image";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  Bell,
-  BellOff,
-  Compass,
-  Inbox,
-  LayoutGrid,
-  PlusCircle,
-  Settings,
-  ShieldAlert,
-  ShieldCheck,
-  Sparkles,
-  UserRound,
-} from "lucide-react";
+import { Bell, BellOff, Compass, Inbox, PlusCircle, Settings, ShieldCheck, UserRound } from "lucide-react";
 
-import { ProfileAvatar } from "@/components/app/profile-avatar";
 import { SignOutButton } from "@/components/sign-out-button";
 
-type NavItem = {
-  href: string;
-  label: string;
-  icon: React.ReactNode;
-  match: (pathname: string) => boolean;
-  badge?: number;
+type AppShellProps = {
+  children: React.ReactNode;
+  showAdmin: boolean;
+  inboxCount?: number;
+  notice?: string;
+  profileName?: string;
+  profileAvatarUrl?: string;
 };
 
-const sectionDescriptions: Record<string, string> = {
-  Feed: "Scan the live request stream and move on the strongest fit first.",
-  Post: "Write a clear request with the right logistics and safety defaults.",
-  "My requests": "Track your live plans, replies, and anything that still needs a nudge.",
-  Inbox: "Review introductions, confirm the right match, and keep sessions moving.",
-  Profile: "Sharpen the first impression people see before they reply.",
-  Account: "Keep exports, security controls, and account actions close at hand.",
-  Admin: "Monitor trust, moderation, and platform health from one control room.",
-  Workspace: "Everything important, kept calm and easy to triage.",
-};
-
-function isActive(pathname: string, href: string) {
-  if (href === "/feed") return pathname === "/feed";
-  return pathname === href || pathname.startsWith(`${href}/`);
+function getActiveNav(pathname: string) {
+  if (pathname.startsWith("/profile")) return "profile";
+  if (pathname.startsWith("/account") || pathname.startsWith("/admin")) return "settings";
+  if (pathname.startsWith("/requests") || pathname.startsWith("/inbox") || pathname.startsWith("/sessions")) return "requests";
+  return "home";
 }
 
 function useNotifications() {
@@ -56,12 +34,11 @@ function useNotifications() {
         if (res.ok) {
           const data = await res.json();
           setUnreadCount(data.unreadCount ?? 0);
-          // Refresh server components so inboxCount (join requests + active session)
-          // stays current without a full page reload.
           router.refresh();
         }
       } catch {}
     }
+
     check();
     const interval = setInterval(check, 30000);
     return () => clearInterval(interval);
@@ -77,7 +54,7 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const rawData = atob(base64);
   const arr = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; i++) arr[i] = rawData.charCodeAt(i);
+  for (let index = 0; index < rawData.length; index += 1) arr[index] = rawData.charCodeAt(index);
   return arr.buffer as ArrayBuffer;
 }
 
@@ -90,10 +67,13 @@ function usePushNotifications() {
   async function subscribeAndSave(registration: ServiceWorkerRegistration) {
     try {
       const existing = await registration.pushManager.getSubscription();
-      const sub = existing ?? await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      });
+      const sub =
+        existing ??
+        await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
+
       await fetch("/api/push/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -103,14 +83,18 @@ function usePushNotifications() {
   }
 
   useEffect(() => {
-    if (typeof window === "undefined" || !("Notification" in window) || !("serviceWorker" in navigator)) return;
-    if (!VAPID_PUBLIC_KEY) return;
+    if (typeof window === "undefined" || !("Notification" in window) || !("serviceWorker" in navigator) || !VAPID_PUBLIC_KEY) {
+      return;
+    }
 
-    navigator.serviceWorker.register("/sw.js", { scope: "/" }).then(async (registration) => {
-      if (Notification.permission === "granted") {
-        await subscribeAndSave(registration);
-      }
-    }).catch(() => {});
+    navigator.serviceWorker
+      .register("/sw.js", { scope: "/" })
+      .then(async (registration) => {
+        if (Notification.permission === "granted") {
+          await subscribeAndSave(registration);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const enable = useCallback(async () => {
@@ -129,252 +113,116 @@ function usePushNotifications() {
       const sub = await registration.pushManager.getSubscription();
       if (sub) await sub.unsubscribe();
       await fetch("/api/push/subscribe", { method: "DELETE" });
+      setPermission(Notification.permission);
     } catch {}
   }, []);
 
   return { permission, enable, disable };
 }
 
-export function AppShell({
-  children,
-  showAdmin,
-  inboxCount = 0,
-  notice = "",
-  profileName = "Member",
-  profileAvatarUrl = "",
-}: {
-  children: React.ReactNode;
-  showAdmin: boolean;
-  inboxCount?: number;
-  notice?: string;
-  profileName?: string;
-  profileAvatarUrl?: string;
-}) {
+export function AppShell(props: AppShellProps) {
+  const { children, showAdmin, inboxCount = 0, notice = "" } = props;
   const pathname = usePathname() ?? "";
-  const unreadNotifs = useNotifications();
+  const unreadCount = useNotifications();
   const { permission, enable, disable } = usePushNotifications();
+  const activeNav = getActiveNav(pathname);
 
-  const navItems = useMemo<NavItem[]>(
-    () => [
-      { href: "/feed", label: "Feed", icon: <Compass size={18} />, match: (p) => isActive(p, "/feed") },
-      { href: "/requests/new", label: "Post", icon: <PlusCircle size={18} />, match: (p) => isActive(p, "/requests/new") },
-      { href: "/requests", label: "My requests", icon: <LayoutGrid size={18} />, match: (p) => isActive(p, "/requests") },
-      { href: "/inbox", label: "Inbox", icon: <Inbox size={18} />, match: (p) => isActive(p, "/inbox"), badge: inboxCount },
-      { href: "/profile", label: "Profile", icon: <UserRound size={18} />, match: (p) => isActive(p, "/profile") },
-      { href: "/account", label: "Account", icon: <Settings size={18} />, match: (p) => isActive(p, "/account") },
-    ],
-    [inboxCount]
-  );
-
-  const bottomItems = useMemo<NavItem[]>(
-    () => [
-      { href: "/feed", label: "Feed", icon: <Compass size={18} />, match: (p) => isActive(p, "/feed") },
-      { href: "/requests/new", label: "Post", icon: <PlusCircle size={18} />, match: (p) => isActive(p, "/requests/new") },
-      { href: "/inbox", label: "Inbox", icon: <Inbox size={18} />, match: (p) => isActive(p, "/inbox"), badge: inboxCount },
-      { href: "/profile", label: "Profile", icon: <UserRound size={18} />, match: (p) => isActive(p, "/profile") },
-    ],
-    [inboxCount]
-  );
-
-  const activeItem = [...navItems, ...(showAdmin ? [{ href: "/admin", label: "Admin", icon: null, match: (p: string) => isActive(p, "/admin") }] : [])].find(
-    (item) => item.match(pathname)
-  );
-  const activeTitle = activeItem?.label ?? (showAdmin ? "Admin" : "Workspace");
-  const activeDescription = sectionDescriptions[activeTitle] ?? sectionDescriptions.Workspace;
-  const pulseTitle =
-    inboxCount > 0
-      ? `${inboxCount} item${inboxCount === 1 ? "" : "s"} waiting on you`
-      : unreadNotifs > 0
-        ? `${unreadNotifs} fresh alert${unreadNotifs === 1 ? "" : "s"} just landed`
-        : "Everything is in a calm state";
-  const pulseDescription =
-    unreadNotifs > 0
-      ? "Jump into inbox and keep the conversation moving while the context is still fresh."
-      : showAdmin
-        ? "Admin controls are enabled, and the workspace is ready for moderation or review."
-        : "No urgent follow-up right now, so you can browse or post at your own pace.";
+  const navItems = [
+    { href: "/feed", label: "Home", key: "home" },
+    { href: "/requests/new", label: "Requests", key: "requests" },
+    { href: "/profile", label: "Profile", key: "profile" },
+    { href: "/account", label: "Settings", key: "settings" },
+  ] as const;
 
   return (
-    <div className="app-shell">
-      <aside className="app-sidebar" aria-label="Primary">
-        <div className="app-sidebar-top">
-          <Link href="/feed" className="app-brand">
-            <Image src="/withly-app-icon.svg" alt="Withly Logo" width={20} height={20} />
-            <span className="app-brand-copy">
-              <strong>Withly</strong>
-              <small>Private companionship workspace</small>
-            </span>
-          </Link>
-
-          <Link className="secondary-button compact app-sidebar-cta" href="/requests/new">
-            <PlusCircle size={16} />
-            New request
-          </Link>
-
-          <section className="app-sidebar-pulse" aria-label="Workspace pulse">
-            <div className="app-sidebar-pulse-copy">
-              <p className="kicker">Workspace pulse</p>
-              <strong>{pulseTitle}</strong>
-              <p>{pulseDescription}</p>
-            </div>
-            <div className="app-sidebar-pulse-stats">
-              <span>
-                <strong>{inboxCount}</strong>
-                Inbox
-              </span>
-              <span>
-                <strong>{unreadNotifs}</strong>
-                Alerts
-              </span>
-              <span>
-                <strong>{showAdmin ? "On" : "Off"}</strong>
-                Admin
-              </span>
-            </div>
-          </section>
-        </div>
-
-        <nav className="app-nav">
-          <p className="app-nav-group-label">Workspace</p>
-          {navItems.map((item) => {
-            const active = item.match(pathname);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`app-nav-link ${active ? "active" : ""}`}
-                aria-current={active ? "page" : undefined}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-                {item.badge && item.badge > 0 ? (
-                  <span className="nav-badge" aria-label={`${item.badge} pending`}>
-                    {item.badge}
-                  </span>
-                ) : null}
-              </Link>
-            );
-          })}
-
-          {showAdmin ? (
-            <>
-              <p className="app-nav-group-label">Control</p>
-              <Link
-                href="/admin"
-                className={`app-nav-link ${isActive(pathname, "/admin") ? "active" : ""}`}
-                aria-current={isActive(pathname, "/admin") ? "page" : undefined}
-              >
-                <ShieldAlert size={18} />
-                <span>Admin</span>
-              </Link>
-            </>
-          ) : null}
-        </nav>
-
-        <div className="app-nav-footer">
-          <SignOutButton />
-        </div>
-      </aside>
-
-      <div className="app-main">
-        <header className="app-topbar">
-          <div className="app-topbar-title">
-            <Link href="/feed" className="app-topbar-brand">
-              <Image src="/withly-app-icon.svg" alt="Withly Logo" width={20} height={20} />
+    <div className="withly-app-shell">
+      <header className="withly-app-header">
+        <div className="withly-topbar">
+          <div className="withly-topbar-left">
+            <Link href="/feed" className="withly-wordmark">
               Withly
             </Link>
-            <span className="kicker">{showAdmin ? "Admin enabled" : "Workspace overview"}</span>
-            <strong>{activeTitle}</strong>
-            <p>{activeDescription}</p>
+            <nav className="withly-primary-nav" aria-label="Primary">
+              {navItems.map((item) => {
+                const active = item.key === activeNav;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`withly-primary-link ${active ? "active" : ""}`}
+                    aria-current={active ? "page" : undefined}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
           </div>
-          <div className="app-topbar-actions">
-            <div className="app-topbar-meta">
-              <span className="app-topbar-meta-pill">
-                <Sparkles size={14} />
-                {unreadNotifs > 0
-                  ? `${unreadNotifs} fresh alert${unreadNotifs === 1 ? "" : "s"}`
-                  : inboxCount > 0
-                    ? `${inboxCount} inbox follow-up${inboxCount === 1 ? "" : "s"}`
-                    : "Quiet workspace"}
-              </span>
-              <span className="app-topbar-meta-pill subtle">
-                <ShieldCheck size={14} />
-                {showAdmin ? "Admin access" : "Private member space"}
-              </span>
-            </div>
 
-            <div className="app-topbar-action-row">
-              <div className="app-user-chip">
-                <ProfileAvatar name={profileName} url={profileAvatarUrl} size="sm" />
-                <div className="app-user-chip-copy">
-                  <strong>{profileName}</strong>
-                  <small>{showAdmin ? "Admin account" : "Member account"}</small>
-                </div>
-              </div>
-              {inboxCount > 0 ? (
-                <Link className="ghost-button compact" href="/inbox">
-                  {inboxCount} waiting
-                </Link>
-              ) : null}
-              {unreadNotifs > 0 ? (
-                <Link className="ghost-button compact" href="/inbox" title={`${unreadNotifs} unread notifications`}>
-                  <Bell size={16} />
-                  {unreadNotifs}
-                </Link>
-              ) : null}
-              {permission === "default" && VAPID_PUBLIC_KEY ? (
-                <button type="button" className="ghost-button compact" onClick={() => void enable()} title="Enable push notifications">
-                  <Bell size={16} />
-                  Enable alerts
-                </button>
-              ) : null}
-              {permission === "granted" ? (
-                <button type="button" className="ghost-button compact" onClick={() => void disable()} title="Disable push notifications">
-                  <BellOff size={16} />
-                </button>
-              ) : null}
-              <Link className="ghost-button compact" href="/account">
-                <Settings size={16} />
-                Settings
+          <div className="withly-topbar-right">
+            {unreadCount > 0 ? (
+              <Link className="withly-meta-pill" href="/inbox">
+                <Bell size={16} />
+                {unreadCount} fresh alerts
               </Link>
-              <SignOutButton className="ghost-button compact" />
-            </div>
-          </div>
-        </header>
-
-        <main className="app-content">
-          {notice ? (
-            <div className="summary-callout" role="status" aria-live="polite">
-              <strong>System Notice: </strong>
-              <span>{notice}</span>
-            </div>
-          ) : null}
-          {children}
-        </main>
-      </div>
-
-      <nav className="app-bottom-nav" aria-label="Primary (mobile)">
-        {bottomItems.map((item) => {
-          const active = item.match(pathname);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`app-bottom-link ${active ? "active" : ""}`}
-              aria-current={active ? "page" : undefined}
-            >
-              <span className="app-bottom-icon-wrap">
-                {item.icon}
-                {item.badge && item.badge > 0 ? (
-                  <span className="nav-badge-small" aria-label={`${item.badge} pending`}>
-                    {item.badge}
-                  </span>
-                ) : null}
-              </span>
-              <span>{item.label}</span>
+            ) : null}
+            {showAdmin ? (
+              <Link className="withly-meta-pill subtle" href="/admin">
+                <ShieldCheck size={16} />
+                Admin access
+              </Link>
+            ) : null}
+            {permission === "default" && VAPID_PUBLIC_KEY ? (
+              <button type="button" className="withly-meta-pill subtle" onClick={() => void enable()}>
+                <Bell size={16} />
+                Enable alerts
+              </button>
+            ) : null}
+            {permission === "granted" ? (
+              <button type="button" className="withly-meta-pill subtle" onClick={() => void disable()} aria-label="Disable alerts">
+                <BellOff size={16} />
+                Alerts on
+              </button>
+            ) : null}
+            <Link href="/requests/new" className="withly-create-button">
+              Create Request
             </Link>
-          );
-        })}
+            <SignOutButton className="withly-signout-button" />
+          </div>
+        </div>
+      </header>
+
+      <main className="withly-page-shell">
+        {notice ? (
+          <div className="withly-status-banner" role="status" aria-live="polite">
+            {notice}
+          </div>
+        ) : null}
+        {children}
+      </main>
+
+      <nav className="withly-mobile-nav" aria-label="Primary mobile">
+        <Link href="/feed" className={`withly-mobile-link ${activeNav === "home" ? "active" : ""}`}>
+          <Compass size={18} />
+          <span>Home</span>
+        </Link>
+        <Link href="/requests/new" className={`withly-mobile-link ${activeNav === "requests" ? "active" : ""}`}>
+          <PlusCircle size={18} />
+          <span>Requests</span>
+        </Link>
+        <Link href="/inbox" className={`withly-mobile-link ${pathname.startsWith("/inbox") || pathname.startsWith("/sessions") ? "active" : ""}`}>
+          <Inbox size={18} />
+          <span>Inbox</span>
+          {inboxCount > 0 ? <strong>{inboxCount}</strong> : null}
+        </Link>
+        <Link href="/profile" className={`withly-mobile-link ${activeNav === "profile" ? "active" : ""}`}>
+          <UserRound size={18} />
+          <span>Profile</span>
+        </Link>
+        <Link href="/account" className={`withly-mobile-link ${activeNav === "settings" ? "active" : ""}`}>
+          <Settings size={18} />
+          <span>Settings</span>
+        </Link>
       </nav>
     </div>
   );
