@@ -156,6 +156,7 @@ main {
   height: calc(100vh - 28px);
   padding: 22px 18px 18px;
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 16px;
   overflow: hidden;
   color: #edf5fb;
@@ -272,6 +273,11 @@ main {
   display: grid;
   gap: 8px;
   align-content: start;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
 }
 
 .app-nav-group-label {
@@ -313,7 +319,7 @@ main {
 }
 
 .app-nav-footer {
-  margin-top: auto;
+  margin-top: 0;
   padding-top: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -2957,10 +2963,17 @@ body::after {
   align-items: flex-end;
   gap: 10px;
   max-width: min(100%, 760px);
+  min-width: 0;
 }
 
 .app-topbar-action-row {
   justify-content: flex-end;
+  row-gap: 8px;
+  max-width: 100%;
+}
+
+.app-topbar-action-row > * {
+  flex-shrink: 0;
 }
 
 .primary-button {
@@ -3287,6 +3300,71 @@ body::after {
   box-shadow: none;
 }
 
+@media (max-height: 940px) {
+  .app-sidebar {
+    gap: 12px;
+    padding: 18px 14px 14px;
+  }
+
+  .app-sidebar-top {
+    gap: 12px;
+  }
+
+  .app-sidebar-pulse {
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .app-sidebar-pulse-copy p:last-child {
+    display: none;
+  }
+
+  .app-sidebar-pulse-stats span {
+    padding: 10px;
+  }
+
+  .app-nav-link {
+    padding: 10px 12px;
+  }
+}
+
+@media (max-height: 760px) {
+  .app-sidebar-pulse {
+    display: none;
+  }
+
+  .app-brand {
+    padding: 10px 12px;
+  }
+
+  .app-brand-copy small {
+    display: none;
+  }
+
+  .app-sidebar {
+    padding-top: 16px;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .app-sidebar-cta {
+    min-height: 40px;
+    padding: 9px 12px;
+  }
+
+  .app-nav {
+    gap: 4px;
+  }
+
+  .app-nav-link {
+    padding: 7px 10px;
+    font-size: 0.95rem;
+  }
+
+  .app-nav-footer {
+    display: none;
+  }
+}
+
 @media (max-width: 1180px) {
   .feed-list,
   .profile-editor-hero,
@@ -3322,6 +3400,10 @@ body::after {
 @media (max-width: 1440px) {
   .app-topbar-meta {
     display: none;
+  }
+
+  .app-topbar-title p {
+    max-width: 38ch;
   }
 }
 
