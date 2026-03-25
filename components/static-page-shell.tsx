@@ -29,8 +29,8 @@ export function StaticPageShell({ kicker, title, intro, sections }: StaticPageSh
           <Link className="ghost-button compact" href="/">
             Home
           </Link>
-          <Link className="ghost-button compact" href="/workspace">
-            Workspace
+          <Link className="ghost-button compact" href="/explore">
+            Explore
           </Link>
         </div>
       </section>

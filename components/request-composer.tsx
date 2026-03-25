@@ -290,7 +290,7 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
                 </div>
                 <div>
                   <strong>Live safety check-ins</strong>
-                  <p>Keep arrival and SOS tools ready once the request turns into an active workspace.</p>
+                  <p>Keep arrival and SOS tools ready once the request turns into an active plan.</p>
                 </div>
               </label>
             </div>
@@ -384,13 +384,13 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
       <aside className="composer-reference-side">
         <div className="composer-side-card">
           <h3>Why Withly?</h3>
-          <p>Our companions are vetted for intentionality. Every request is an opportunity for meaningful coexistence.</p>
+          <p>Clear requests lead to calmer replies. Thoughtful details help the right person recognize the fit quickly.</p>
         </div>
 
         <div className="composer-side-image">
-          <Image src={referenceMedia.homeArtwork[2]} alt="Intentional quiet workspace" fill sizes="(max-width: 1280px) 100vw, 280px" />
+          <Image src={referenceMedia.homeArtwork[2]} alt="Intentional quiet planning scene" fill sizes="(max-width: 1280px) 100vw, 280px" />
           <div className="composer-side-image-copy">
-            <span>Workspace vibe</span>
+            <span>Atmosphere</span>
             <strong>Intentional Quietude</strong>
           </div>
         </div>

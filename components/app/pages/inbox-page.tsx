@@ -27,7 +27,7 @@ export function InboxPage({
         <div>
           <p className="sanctuary-kicker">Inbox</p>
           <h1>Keep replies moving with calm clarity.</h1>
-          <p>Review introductions, confirm the right fit, and keep matched plans coordinated in one shared workspace.</p>
+          <p>Review introductions, confirm the right fit, and keep matched plans coordinated in one shared thread.</p>
         </div>
         <span className="sanctuary-chip">{pendingCount + (hasSession ? 1 : 0)} active threads</span>
       </section>

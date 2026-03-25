@@ -4,10 +4,10 @@ import { useMemo, useState } from "react";
 import { ShieldAlert, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { deleteRequestAction, submitJoinRequestAction } from "@/app/workspace/actions";
+import { deleteRequestAction, hideThreadAction, submitJoinRequestAction } from "@/app/workspace/actions";
 import { JoinReviewPanel } from "@/components/app/join-review-panel";
 import { StatusBadge } from "@/components/app/status-badge";
-import type { FeedRequestCard, WorkspaceJoinReview, WorkspaceRequest } from "@/lib/supabase/types";
+import type { WorkspaceJoinReview, WorkspaceRequest } from "@/lib/supabase/types";
 import { formatDateTime } from "@/lib/utils";
 
 type RequestDetail = {
@@ -25,14 +25,12 @@ type RequestDetail = {
 export function RequestDetailPage({
   detail,
   preview,
-  isOwner,
   myRequest,
   joinReviews,
   unavailableMessage = "",
 }: {
   detail: RequestDetail;
   preview: boolean;
-  isOwner: boolean;
   myRequest: WorkspaceRequest | null;
   joinReviews: WorkspaceJoinReview[];
   unavailableMessage?: string;
@@ -54,6 +52,17 @@ export function RequestDetailPage({
     detail.meetupAt ? formatDateTime(detail.meetupAt) : null,
     detail.hostDisplayName ? `Hosted by ${detail.hostDisplayName}` : null,
   ].filter(Boolean);
+  const hasWorkspaceAccess = Boolean(myRequest);
+  const canReviewJoinRequests = myRequest?.status === "open";
+  const requestSummary = myRequest
+    ? [
+        `Status: ${myRequest.status}`,
+        myRequest.status === "open" ? `${myRequest.pendingJoinCount} pending join request(s)` : null,
+        myRequest.partnerDisplayName ? `Connected with ${myRequest.partnerDisplayName}` : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : "";
 
   return (
     <div className="workspace-page">
@@ -88,7 +97,7 @@ export function RequestDetailPage({
           </div>
         ) : null}
 
-        {!isOwner ? (
+        {!hasWorkspaceAccess ? (
           <div className="join-box request-detail-join">
             <textarea
               rows={3}
@@ -125,11 +134,10 @@ export function RequestDetailPage({
           </div>
         ) : null}
 
-        {isOwner && myRequest ? (
+        {myRequest ? (
           <div className="summary-callout summary-callout-row">
             <div>
-              Status: <strong>{myRequest.status}</strong> · {myRequest.pendingJoinCount} pending join request(s)
-              {myRequest.partnerDisplayName ? ` · Matched with ${myRequest.partnerDisplayName}` : ""}
+              {requestSummary}
             </div>
             <button
               className="secondary-button compact"
@@ -140,11 +148,23 @@ export function RequestDetailPage({
                   setStatus("This action is only available after sign-in.");
                   return;
                 }
-                if (!confirm("Are you sure you want to delete this request? This action cannot be undone.")) return;
+
+                const deletingChat = myRequest.status !== "open";
+                if (
+                  !confirm(
+                    deletingChat
+                      ? "Delete this chat from your history? It disappears for you, but stays for the other participant."
+                      : "Are you sure you want to delete this request? This action cannot be undone."
+                  )
+                ) {
+                  return;
+                }
 
                 setIsDeleting(true);
                 void (async () => {
-                  const result = await deleteRequestAction({ requestId: detail.id });
+                  const result = deletingChat
+                    ? await hideThreadAction({ requestId: detail.id })
+                    : await deleteRequestAction({ requestId: detail.id });
                   setStatus(result.message);
                   setIsDeleting(false);
                   if (result.ok) {
@@ -155,13 +175,13 @@ export function RequestDetailPage({
               }}
             >
               <Trash2 size={16} />
-              {isDeleting ? "..." : "Delete Request"}
+              {isDeleting ? "..." : myRequest.status === "open" ? "Delete Request" : "Delete Chat"}
             </button>
           </div>
         ) : null}
       </section>
 
-      {isOwner ? <JoinReviewPanel entries={joinReviews} preview={preview} onStatus={setStatus} /> : null}
+      {canReviewJoinRequests ? <JoinReviewPanel entries={joinReviews} preview={preview} onStatus={setStatus} /> : null}
     </div>
   );
 }

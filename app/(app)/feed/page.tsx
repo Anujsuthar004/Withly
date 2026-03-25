@@ -13,16 +13,13 @@ export default async function FeedPage() {
       <section className="sanctuary-page-intro">
         <div>
           <p className="sanctuary-kicker">Curation Hub</p>
-          <h1>
-            Your Intentional <span>Workspace</span> for Companionship.
-          </h1>
+          <h1>Find requests worth replying to.</h1>
           <p>
-            A tailored selection of requests waiting for your presence. Designed for quiet connections and shared
-            experiences.
+            A calmer feed of requests looking for steady company, practical help, and clear plans.
           </p>
         </div>
         <div className="sanctuary-page-actions">
-          {snapshot.activeSession ? <span className="sanctuary-chip">1 active workspace</span> : null}
+          {snapshot.activeSession ? <span className="sanctuary-chip">1 live plan</span> : null}
           <span className="sanctuary-chip">{feed.length} open requests</span>
           <Link className="withly-create-button subtle" href="/requests/new">
             Create Request

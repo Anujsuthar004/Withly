@@ -64,7 +64,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             <article className="hero-signal-card tone-sand">
               <span>Private handoff</span>
               <strong>1 tap</strong>
-              <p>Move from public preview into a private workspace as soon as both people align.</p>
+              <p>Move from public preview into a private thread as soon as both people align.</p>
             </article>
           </div>
 

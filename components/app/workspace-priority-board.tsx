@@ -53,7 +53,7 @@ export function WorkspacePriorityBoard({
         : preview
           ? {
               kicker: "Preview mode",
-              title: "Explore the workspace before posting.",
+              title: "Explore the app before posting.",
               description: "You can browse the layout now. Sign in when you are ready to publish, review replies, and move into chat.",
               primaryHref: "/requests/new",
               primaryLabel: "Create a request",

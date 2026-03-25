@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BellRing, Trash2 } from "lucide-react";
 
-import { deleteRequestAction } from "@/app/workspace/actions";
+import { deleteRequestAction, hideThreadAction } from "@/app/workspace/actions";
 
 import type { RequestStatus, WorkspaceRequest } from "@/lib/supabase/types";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils";
@@ -25,6 +25,20 @@ export function MyRequestsList({ requests }: { requests: WorkspaceRequest[] }) {
 
     setBusyId(requestId);
     const result = await deleteRequestAction({ requestId });
+    setBusyId(null);
+
+    if (result.ok) {
+      router.refresh();
+    } else {
+      alert(result.message);
+    }
+  }
+
+  async function handleHideThread(requestId: string) {
+    if (!confirm("Delete this chat from your history? It disappears for you, but stays for the other participant.")) return;
+
+    setBusyId(requestId);
+    const result = await hideThreadAction({ requestId });
     setBusyId(null);
 
     if (result.ok) {
@@ -112,11 +126,11 @@ export function MyRequestsList({ requests }: { requests: WorkspaceRequest[] }) {
                 className="secondary-button compact"
                 type="button"
                 disabled={busyId === request.id}
-                onClick={() => void handleDelete(request.id)}
-                title="Delete request"
+                onClick={() => void (request.status === "open" ? handleDelete(request.id) : handleHideThread(request.id))}
+                title={request.status === "open" ? "Delete request" : "Delete chat"}
               >
                 <Trash2 size={16} />
-                {busyId === request.id ? "..." : "Delete"}
+                {busyId === request.id ? "..." : request.status === "open" ? "Delete" : "Delete chat"}
               </button>
             </div>
           </article>

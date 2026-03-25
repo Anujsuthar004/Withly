@@ -41,14 +41,12 @@ export default async function RequestDetailRoute({ params }: { params: Promise<{
     tags: feedCard?.tags,
   };
 
-  const isOwner = Boolean(myRequest);
   const joinReviews = workspace.snapshot.incomingJoinRequests.filter((entry) => entry.requestId === id);
 
   return (
     <RequestDetailPage
       detail={detail}
       preview={workspace.preview}
-      isOwner={isOwner}
       myRequest={myRequest}
       joinReviews={joinReviews}
       unavailableMessage={workspace.setupError || undefined}

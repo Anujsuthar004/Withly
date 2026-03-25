@@ -17,6 +17,7 @@ import {
   createRequestSchema,
   deleteAvailabilityWindowSchema,
   deleteRequestSchema,
+  hideThreadSchema,
   joinCommunitySchema,
   joinRequestSchema,
   markNotificationsReadSchema,
@@ -739,6 +740,56 @@ export async function deleteRequestAction(input: unknown): Promise<ActionResult>
   }
 }
 
+export async function hideThreadAction(input: unknown): Promise<ActionResult> {
+  try {
+    const auth = await requireSupabaseSession();
+    if (auth.error || !auth.supabase || !auth.user) {
+      return auth.error ?? { ok: false, message: "Sign in to continue." };
+    }
+
+    const parsed = hideThreadSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid chat deletion payload." };
+    }
+
+    const rateLimitError = await enforceAuthenticatedActionLimit(auth.user.id, "hide-thread", 20, 10 * 60 * 1000);
+    if (rateLimitError) {
+      return rateLimitError;
+    }
+
+    const { error } = await auth.supabase.rpc("hide_request_thread", {
+      request_id_input: parsed.data.requestId,
+    });
+
+    if (error) {
+      await logAppEvent({
+        level: "warn",
+        category: "thread.hide",
+        message: "Chat deletion failed.",
+        context: { userId: auth.user.id, requestId: parsed.data.requestId, error: error.message },
+      }).catch(() => undefined);
+      return { ok: false, message: error.message };
+    }
+
+    await logAppEvent({
+      level: "info",
+      category: "thread.hide",
+      message: "Chat hidden for user.",
+      context: { userId: auth.user.id, requestId: parsed.data.requestId },
+    }).catch(() => undefined);
+
+    revalidatePath("/feed");
+    revalidatePath("/inbox");
+    revalidatePath("/requests");
+    revalidatePath(`/requests/${parsed.data.requestId}`);
+    revalidatePath(`/sessions/${parsed.data.requestId}`);
+    return { ok: true, message: "Chat removed from your history." };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not delete this chat right now.";
+    return { ok: false, message };
+  }
+}
+
 // -- Feature 1: Safety Check-Ins --
 
 export async function submitCheckInAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
@@ -1092,5 +1143,3 @@ export async function joinCommunityAction(_prev: ActionResult, formData: FormDat
     return { ok: false, message };
   }
 }
-
-

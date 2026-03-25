@@ -12,7 +12,7 @@ export function SiteFooter() {
           <Image src="/withly-app-icon.svg" alt="Withly Logo" width={20} height={20} />
           Withly
         </Link>
-        <h2>Keep the public window small. Let the real coordination happen inside the workspace.</h2>
+        <h2>Keep the public window small. Let the real coordination happen in a private thread.</h2>
         <p>Calmer coordination for plans, errands, and the moments you do not want to handle alone.</p>
       </div>
 

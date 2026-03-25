@@ -14,7 +14,7 @@ export default async function ExplorePage() {
       <section className="section-title">
         <p className="kicker">Explore</p>
         <h2>Browse open requests before you sign in.</h2>
-        <p>You can browse the public basics here, then move into your workspace when you want to respond or post.</p>
+        <p>You can browse the public basics here, then step into your private feed when you want to respond or post.</p>
         <div className="section-action-row">
           <Link className="primary-button compact" href="/?next=%2Ffeed">
             Sign in to respond

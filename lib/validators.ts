@@ -142,6 +142,10 @@ export const deleteRequestSchema = z.object({
   requestId: z.string().uuid(),
 });
 
+export const hideThreadSchema = z.object({
+  requestId: z.string().uuid(),
+});
+
 export const updateProfileSchema = z.object({
   displayName: z.string().trim().min(2).max(60),
   aboutMe: z.string().trim().max(300),

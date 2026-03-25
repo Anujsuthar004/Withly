@@ -7,7 +7,7 @@ test.describe("navigation and page accessibility", () => {
     });
 
     expect(response.status()).toBe(307);
-    expect(response.headers().location).toMatch(/\/workspace$/);
+    expect(response.headers().location).toMatch(/\/feed$/);
   });
 
   test("landing page has working footer links", async ({ page }) => {

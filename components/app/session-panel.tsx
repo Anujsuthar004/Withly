@@ -3,9 +3,10 @@
 import { useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { CalendarDays, HeartHandshake, MapPin, Mail, ShieldAlert, Share2 } from "lucide-react";
+import { CalendarDays, HeartHandshake, MapPin, Mail, ShieldAlert, Share2, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-import { submitCheckInAction, triggerSosAction } from "@/app/workspace/actions";
+import { hideThreadAction, submitCheckInAction, triggerSosAction } from "@/app/workspace/actions";
 import { ChatRoom } from "@/components/chat-room";
 import { SUPPORT_EMAIL } from "@/lib/env";
 import { referenceMedia, referenceSessionChecklist } from "@/lib/reference-content";
@@ -23,6 +24,8 @@ export function SessionPanel({
   onStatus: (message: string) => void;
   embedded?: boolean;
 }) {
+  const router = useRouter();
+  const [isDeleting, startDeleteTransition] = useTransition();
   const checklist = session.checkInEnabled ? referenceSessionChecklist : referenceSessionChecklist.slice(0, 2);
 
   return (
@@ -37,12 +40,12 @@ export function SessionPanel({
             </div>
           </div>
 
-          <nav className="workspace-session-rail-nav" aria-label="Workspace sections">
+          <nav className="workspace-session-rail-nav" aria-label="Plan sections">
             <Link href="/profile" className="workspace-session-rail-link">
               Trust Dashboard
             </Link>
             <Link href={`/sessions/${session.requestId}`} className="workspace-session-rail-link active">
-              Active Workspace
+              Live Plan
             </Link>
           </nav>
 
@@ -60,7 +63,7 @@ export function SessionPanel({
       <div className="workspace-session-main">
         <div className="workspace-session-header">
           <div>
-            <p className="sanctuary-kicker">Workspace / R-1042</p>
+            <p className="sanctuary-kicker">Private Thread / R-1042</p>
             <h2>{session.requestTitle}</h2>
           </div>
 
@@ -143,8 +146,33 @@ export function SessionPanel({
               </Link>
             </div>
 
+            <section className="workspace-side-card workspace-delete-card">
+              <h3>Delete chat</h3>
+              <p>Remove this conversation from your history. The other participant keeps their copy.</p>
+              <button
+                type="button"
+                className="sanctuary-ghost-button danger"
+                disabled={isDeleting}
+                onClick={() => {
+                  if (!confirm("Delete this chat from your history? It disappears for you, but stays for the other participant.")) return;
+
+                  startDeleteTransition(async () => {
+                    const result = await hideThreadAction({ requestId: session.requestId });
+                    onStatus(result.message);
+                    if (result.ok) {
+                      router.push(embedded ? "/inbox" : "/requests");
+                      router.refresh();
+                    }
+                  });
+                }}
+              >
+                <Trash2 size={14} />
+                {isDeleting ? "Deleting..." : "Delete chat"}
+              </button>
+            </section>
+
             <div className="workspace-side-gallery">
-              <Image src={referenceMedia.workspaceGallery} alt="Workspace reference" fill sizes="(max-width: 960px) 100vw, 320px" />
+              <Image src={referenceMedia.workspaceGallery} alt="Planning reference" fill sizes="(max-width: 960px) 100vw, 320px" />
             </div>
 
             <SessionSafetyActions session={session} onStatus={onStatus} />

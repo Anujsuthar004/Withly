@@ -14,7 +14,7 @@ interface AuthPanelProps {
   nextPath?: string;
 }
 
-export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
+export function AuthPanel({ nextPath = "/feed" }: AuthPanelProps) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
@@ -92,7 +92,7 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
         return;
       }
 
-      setStatus("Welcome back. Preparing your secure workspace...");
+      setStatus("Welcome back. Opening your private feed...");
       setStatusTone("success");
       router.push(nextPath);
       router.refresh();
@@ -190,8 +190,8 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
       </div>
 
       <div className="auth-copy">
-        <h2>Sign in and keep every plan in one place.</h2>
-        <p>Create an account, confirm your email, and manage requests, replies, and follow-up from one workspace.</p>
+        <h2>Sign in and keep every plan moving.</h2>
+        <p>Create an account, confirm your email, and handle requests, replies, and follow-up in one calm flow.</p>
       </div>
 
       <div className="auth-trust-strip" aria-label="Trust and privacy highlights">
@@ -206,7 +206,7 @@ export function AuthPanel({ nextPath = "/workspace" }: AuthPanelProps) {
           <LockKeyhole size={16} />
           <div>
             <strong>Private coordination</strong>
-            <span>Exact logistics stay inside the workspace until both people are aligned.</span>
+            <span>Exact logistics stay inside the thread until both people are aligned.</span>
           </div>
         </article>
       </div>

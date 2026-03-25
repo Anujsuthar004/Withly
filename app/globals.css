@@ -3454,6 +3454,12 @@ body::after {
   font-size: 0.86rem;
   font-weight: 700;
   line-height: 1;
+  transition:
+    transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.24s ease,
+    background-color 0.24s ease,
+    border-color 0.24s ease,
+    color 0.24s ease;
 }
 
 .status-dot,
@@ -3467,7 +3473,8 @@ body::after {
 .sanctuary-primary-button,
 .sanctuary-ghost-button,
 .withly-create-button,
-.composer-submit-button {
+.composer-submit-button,
+.withly-signout-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3480,7 +3487,14 @@ body::after {
   font-weight: 800;
   letter-spacing: -0.02em;
   text-decoration: none;
-  transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.24s ease,
+    opacity 0.2s ease,
+    background 0.24s ease,
+    color 0.24s ease,
+    border-color 0.24s ease,
+    filter 0.24s ease;
 }
 
 .primary-button,
@@ -3495,8 +3509,11 @@ body::after {
 .primary-button:hover,
 .sanctuary-primary-button:hover,
 .withly-create-button:hover,
-.composer-submit-button:hover {
-  transform: translateY(-1px);
+.composer-submit-button:hover,
+.withly-signout-button:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 22px 42px rgba(0, 104, 85, 0.2);
+  filter: saturate(1.04);
 }
 
 .secondary-button {
@@ -3559,12 +3576,19 @@ body::after {
 }
 
 .withly-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
   font-family: var(--font-heading);
   font-size: 1.9rem;
   font-weight: 800;
   color: var(--teal);
   letter-spacing: -0.05em;
   text-decoration: none;
+}
+
+.withly-wordmark-logo {
+  flex: 0 0 auto;
 }
 
 .withly-primary-link {
@@ -3690,6 +3714,12 @@ body::after {
   padding: 0.85rem 1.15rem;
   font-size: 0.88rem;
   font-weight: 700;
+  transition:
+    transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.24s ease,
+    background-color 0.24s ease,
+    color 0.24s ease,
+    border-color 0.24s ease;
 }
 
 .sanctuary-filter-pill.active,
@@ -3702,6 +3732,98 @@ body::after {
 .sanctuary-tag.clear {
   background: rgba(255, 219, 202, 0.84);
   color: #6e3819;
+}
+
+.footer-link-button,
+.filter-pill,
+.filter-tag,
+.sanctuary-load-button,
+.profile-upload-button,
+.workspace-session-rail-cta,
+.workspace-session-rail-link,
+.withly-mobile-link,
+.inbox-queue-card,
+.composer-floating-submit {
+  transition:
+    transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.24s ease,
+    background-color 0.24s ease,
+    border-color 0.24s ease,
+    color 0.24s ease,
+    filter 0.24s ease;
+}
+
+.withly-meta-pill:hover,
+.footer-link-button:hover,
+.sanctuary-filter-pill:hover,
+.sanctuary-tag:hover,
+.sanctuary-inline-tag:hover,
+.composer-text-button:hover,
+.filter-pill:hover,
+.filter-tag:hover,
+.sanctuary-load-button:hover,
+.profile-upload-button:hover,
+.workspace-session-rail-link:hover,
+.withly-mobile-link:hover,
+.workspace-session-rail-cta:hover,
+.workspace-side-action-card:hover,
+.inbox-queue-card:hover,
+.composer-floating-submit:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 18px 34px rgba(20, 44, 66, 0.12);
+}
+
+.withly-meta-pill:active,
+.footer-link-button:active,
+.sanctuary-filter-pill:active,
+.sanctuary-tag:active,
+.sanctuary-inline-tag:active,
+.composer-text-button:active,
+.filter-pill:active,
+.filter-tag:active,
+.primary-button:active,
+.secondary-button:active,
+.ghost-button:active,
+.sanctuary-primary-button:active,
+.sanctuary-ghost-button:active,
+.withly-create-button:active,
+.composer-submit-button:active,
+.withly-signout-button:active,
+.sanctuary-load-button:active,
+.profile-upload-button:active,
+.workspace-session-rail-cta:active,
+.workspace-side-action-card:active,
+.inbox-queue-card:active,
+.composer-floating-submit:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.primary-button svg,
+.secondary-button svg,
+.ghost-button svg,
+.sanctuary-primary-button svg,
+.sanctuary-ghost-button svg,
+.withly-create-button svg,
+.composer-submit-button svg,
+.withly-signout-button svg,
+.withly-meta-pill svg,
+.sanctuary-load-button svg,
+.composer-floating-submit svg {
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.primary-button:hover svg,
+.secondary-button:hover svg,
+.ghost-button:hover svg,
+.sanctuary-primary-button:hover svg,
+.sanctuary-ghost-button:hover svg,
+.withly-create-button:hover svg,
+.composer-submit-button:hover svg,
+.withly-signout-button:hover svg,
+.withly-meta-pill:hover svg,
+.sanctuary-load-button:hover svg,
+.composer-floating-submit:hover svg {
+  transform: translateX(2px);
 }
 
 .sanctuary-search {
@@ -4891,6 +5013,10 @@ body::after {
   color: inherit;
   text-decoration: none;
   box-shadow: var(--shadow);
+  transition:
+    transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.24s ease,
+    filter 0.24s ease;
 }
 
 .workspace-side-action-card.tone-peach {
@@ -4901,6 +5027,10 @@ body::after {
 .workspace-side-action-card.tone-green {
   background: linear-gradient(135deg, rgba(0, 104, 85, 0.84) 0%, rgba(35, 131, 109, 0.9) 100%);
   color: #fff;
+}
+
+.workspace-side-action-card:hover {
+  filter: saturate(1.04);
 }
 
 .workspace-safety-card {

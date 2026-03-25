@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, BellOff, Compass, Inbox, PlusCircle, Settings, ShieldCheck, UserRound } from "lucide-react";
@@ -139,6 +140,7 @@ export function AppShell(props: AppShellProps) {
       <header className="withly-app-header">
         <div className="withly-topbar">
           <div className="withly-topbar-left">
+            <Image src="/withly-app-icon.svg" alt="Withly Logo" width={28} height={28} className="withly-wordmark-logo" />
             <Link href="/feed" className="withly-wordmark">
               Withly
             </Link>

@@ -6,7 +6,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
-  const nextPath = normalizeNextPath(requestUrl.searchParams.get("next"), "/workspace");
+  const nextPath = normalizeNextPath(requestUrl.searchParams.get("next"), "/feed");
   const code = requestUrl.searchParams.get("code");
 
   if (!hasSupabaseEnv || !code) {

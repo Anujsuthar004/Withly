@@ -23,7 +23,7 @@ export default function PrivacyPage() {
         {
           title: "How we use it",
           body: [
-            "We use your data to authenticate you, show your workspace, match participants, support private in-app chat, respond to support requests, and enforce safety and moderation rules.",
+            "We use your data to authenticate you, show your feed, requests, and inbox, match participants, support private in-app chat, respond to support requests, and enforce safety and moderation rules.",
             "We do not expose matched participant identities, full request history, or private messages in the public feed.",
           ],
         },

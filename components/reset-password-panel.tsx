@@ -58,8 +58,8 @@ export function ResetPasswordPanel() {
               return;
             }
 
-            setStatus("Password updated. Redirecting to your workspace...");
-            router.push("/workspace");
+            setStatus("Password updated. Taking you back to the feed...");
+            router.push("/feed");
             router.refresh();
           });
         }}

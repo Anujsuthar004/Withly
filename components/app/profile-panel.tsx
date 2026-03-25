@@ -254,7 +254,7 @@ export function ProfilePanel({
                   <LockKeyhole size={16} />
                   <div>
                     <strong>End-to-end tracking</strong>
-                    <span>Private workspaces keep the plan, updates, and check-ins together.</span>
+                    <span>Private threads keep the plan, updates, and check-ins together.</span>
                   </div>
                 </li>
               </ul>

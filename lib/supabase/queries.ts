@@ -7,7 +7,7 @@ import { adminDashboardSchema, feedRequestCardSchema, workspaceSnapshotSchema } 
 
 const feedUnavailableMessage = "Open requests are temporarily unavailable. Please try again shortly.";
 const requestUnavailableMessage = "That request is temporarily unavailable. Please try again shortly.";
-const workspaceUnavailableMessage = "Workspace data is temporarily unavailable. Please refresh in a moment.";
+const workspaceUnavailableMessage = "Private plan data is temporarily unavailable. Please refresh in a moment.";
 
 function normalizeFeedPayload(payload: unknown): FeedRequestCard[] | null {
   const parsed = feedRequestCardSchema.array().safeParse(payload ?? []);
