@@ -5157,9 +5157,13 @@ body::after {
     font-size: 1.6rem;
   }
 
-  .withly-topbar-right .withly-create-button {
-    padding-inline: 1rem;
-    font-size: 0.84rem;
+  .withly-topbar-right .withly-create-button,
+  .withly-topbar-right .withly-signout-button {
+    display: none;
+  }
+
+  .withly-page-shell {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
   }
 
   .withly-mobile-nav {
