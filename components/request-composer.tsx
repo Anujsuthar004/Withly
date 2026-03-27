@@ -370,13 +370,13 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
               </span>
             </div>
             <button className="composer-submit-button" type="submit" disabled={preview || isPending || !canSubmit}>
-              <Send size={16} />
+              {!preview && isPending ? <span className="btn-spinner" /> : <Send size={16} />}
               {preview ? "Preview mode only" : isPending ? "Posting..." : "Post Request"}
             </button>
           </div>
 
           <button className="composer-floating-submit" type="submit" disabled={preview || isPending || !canSubmit} aria-label="Post request">
-            <Send size={24} />
+            {isPending ? <span className="btn-spinner btn-spinner--lg" /> : <Send size={24} />}
           </button>
         </form>
       </div>

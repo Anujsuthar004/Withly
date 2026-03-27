@@ -347,7 +347,7 @@ export function FeedList({
                           disabled={preview || deleteBusyId === request.id}
                           onClick={() => void handleDelete(request.id)}
                         >
-                          <Trash2 size={14} />
+                          {deleteBusyId === request.id ? <span className="btn-spinner" /> : <Trash2 size={14} />}
                           {deleteBusyId === request.id ? "Deleting..." : "Delete"}
                         </button>
                       </>
@@ -414,6 +414,7 @@ export function FeedList({
                           })();
                         }}
                       >
+                        {submitBusy && <span className="btn-spinner" />}
                         {submitBusy ? "Sending..." : "Send join request"}
                       </button>
                     </div>

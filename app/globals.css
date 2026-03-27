@@ -5228,6 +5228,30 @@ body::after {
   }
 }
 
+/* ── Button spinner ─────────────────────────────────────────── */
+
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2.5px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: btn-spin 0.65s linear infinite;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.btn-spinner--lg {
+  width: 20px;
+  height: 20px;
+  border-width: 3px;
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ── Skeleton loading ──────────────────────────────────────── */
 
 @keyframes skeleton-shimmer {

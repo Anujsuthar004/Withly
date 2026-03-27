@@ -212,7 +212,7 @@ export function ChatRoom({ requestId, currentUserId, initialMessages, onStatus }
             <Smile size={16} />
           </button>
           <button type="submit" className="workspace-chat-send" disabled={isPending || body.trim().length === 0}>
-            <SendHorizontal size={16} />
+            {isPending ? <span className="btn-spinner" /> : <SendHorizontal size={16} />}
           </button>
         </div>
       </form>

@@ -145,7 +145,7 @@ export function AccountPanel({ preview, onStatus }: { preview: boolean; onStatus
             </label>
 
             <button className="secondary-button" type="submit" disabled={preview || isEcPending || !ecName || !ecPhone}>
-              <ShieldAlert size={16} />
+              {!preview && isEcPending ? <span className="btn-spinner" /> : <ShieldAlert size={16} />}
               {preview ? "Preview mode only" : isEcPending ? "Saving..." : "Save Emergency Contact"}
             </button>
           </form>
@@ -337,7 +337,7 @@ export function AccountPanel({ preview, onStatus }: { preview: boolean; onStatus
             </label>
 
             <button className="primary-button" type="submit" disabled={preview || isPending}>
-              <Trash2 size={16} />
+              {!preview && isPending ? <span className="btn-spinner" /> : <Trash2 size={16} />}
               {preview ? "Preview mode only" : isPending ? "Processing..." : "Delete my account"}
             </button>
           </form>

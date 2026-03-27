@@ -166,7 +166,7 @@ export function SessionPanel({
                   });
                 }}
               >
-                <Trash2 size={14} />
+                {isDeleting ? <span className="btn-spinner" /> : <Trash2 size={14} />}
                 {isDeleting ? "Deleting..." : "Delete chat"}
               </button>
             </section>
@@ -225,12 +225,12 @@ function SessionSafetyActions({ session, onStatus }: { session: WorkspaceSession
       <div className="workspace-safety-actions">
         {session.checkInEnabled ? (
           <button type="button" className="sanctuary-ghost-button" onClick={() => handleCheckIn("ok")} disabled={isPending}>
-            <HeartHandshake size={14} />
+            {isPending ? <span className="btn-spinner" /> : <HeartHandshake size={14} />}
             Send I&apos;m OK
           </button>
         ) : null}
         <button type="button" className="sanctuary-primary-button danger" onClick={handleSos} disabled={isPending}>
-          <ShieldAlert size={14} />
+          {isPending ? <span className="btn-spinner" /> : <ShieldAlert size={14} />}
           Trigger SOS
         </button>
       </div>

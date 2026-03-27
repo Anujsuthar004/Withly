@@ -129,8 +129,8 @@ export function MyRequestsList({ requests }: { requests: WorkspaceRequest[] }) {
                 onClick={() => void (request.status === "open" ? handleDelete(request.id) : handleHideThread(request.id))}
                 title={request.status === "open" ? "Delete request" : "Delete chat"}
               >
-                <Trash2 size={16} />
-                {busyId === request.id ? "..." : request.status === "open" ? "Delete" : "Delete chat"}
+                {busyId === request.id ? <span className="btn-spinner" /> : <Trash2 size={16} />}
+                {busyId === request.id ? "Deleting..." : request.status === "open" ? "Delete" : "Delete chat"}
               </button>
             </div>
           </article>

@@ -330,6 +330,7 @@ export function ProfilePanel({
                   onClick={handleAvatarUpload}
                   disabled={preview || isAvatarPending || !selectedAvatarFile}
                 >
+                  {!preview && isAvatarPending && selectedAvatarFile && <span className="btn-spinner" />}
                   {preview ? "Preview mode only" : isAvatarPending && selectedAvatarFile ? "Uploading..." : "Upload photo"}
                 </button>
                 <button
@@ -338,6 +339,7 @@ export function ProfilePanel({
                   onClick={handleAvatarRemoval}
                   disabled={preview || isAvatarPending || (!selectedAvatarFile && !profile.avatarUrl)}
                 >
+                  {!preview && isAvatarPending && <span className="btn-spinner" />}
                   {preview ? "Preview mode only" : isAvatarPending ? "Working..." : selectedAvatarFile ? "Clear selection" : "Remove photo"}
                 </button>
               </div>
@@ -480,6 +482,7 @@ export function ProfilePanel({
         </section>
 
         <button className="composer-submit-button" type="submit" disabled={preview || isPending || isAvatarPending}>
+          {!preview && isPending && <span className="btn-spinner" />}
           {preview ? "Preview mode only" : isPending ? "Saving..." : "Save profile details"}
         </button>
       </form>

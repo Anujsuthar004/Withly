@@ -107,6 +107,7 @@ export function JoinReviewPanel({
                 disabled={preview || busyId === entry.id}
                 onClick={() => void handleReview(entry.id, "declined")}
               >
+                {!preview && busyId === entry.id && <span className="btn-spinner" />}
                 {preview ? "Preview mode only" : busyId === entry.id ? "Working..." : "Decline"}
               </button>
               <button
@@ -115,6 +116,7 @@ export function JoinReviewPanel({
                 disabled={preview || busyId === entry.id}
                 onClick={() => void handleReview(entry.id, "accepted")}
               >
+                {!preview && busyId === entry.id && <span className="btn-spinner" />}
                 {preview ? "Preview mode only" : busyId === entry.id ? "Working..." : "Accept"}
               </button>
             </div>
