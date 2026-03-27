@@ -5223,3 +5223,21 @@ body::after {
     right: 1rem;
   }
 }
+
+/* ── Skeleton loading ──────────────────────────────────────── */
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+.skeleton-block {
+  background: linear-gradient(
+    90deg,
+    rgba(189, 201, 196, 0.18) 25%,
+    rgba(189, 201, 196, 0.36) 50%,
+    rgba(189, 201, 196, 0.18) 75%
+  );
+  background-size: 1200px 100%;
+  animation: skeleton-shimmer 1.6s infinite linear;
+}

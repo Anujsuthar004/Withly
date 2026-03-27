@@ -13,6 +13,11 @@ import { getSupabaseAdminClientOrNull } from "@/lib/supabase/admin";
  */
 export async function POST(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET?.trim();
+  const isProduction = process.env.APP_ENV?.trim().toLowerCase() === "production";
+
+  if (!cronSecret && isProduction) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
 
   if (cronSecret) {
     const authHeader = request.headers.get("authorization") ?? "";

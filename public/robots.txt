@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /account
+Disallow: /inbox
+Disallow: /feed
+Disallow: /requests
+Disallow: /sessions
+Disallow: /profile
+Disallow: /alerts
+Disallow: /api/
+
+Sitemap: https://withly.in/sitemap.xml

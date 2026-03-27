@@ -4,7 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 
 import { hasSupabaseEnv, requireSupabaseEnv } from "@/lib/env";
 
-const PROTECTED_PREFIXES = ["/workspace", "/account", "/admin", "/inbox", "/profile", "/requests", "/sessions", "/feed"];
+const PROTECTED_PREFIXES = ["/workspace", "/account", "/admin", "/inbox", "/profile", "/requests", "/sessions", "/feed", "/alerts"];
 
 function isProtectedRoute(pathname: string) {
   return PROTECTED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));

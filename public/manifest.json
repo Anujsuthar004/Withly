@@ -1,0 +1,18 @@
+{
+  "name": "Withly",
+  "short_name": "Withly",
+  "description": "A private companionship platform for plans, errands, and everyday moments.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f2ee",
+  "theme_color": "#0f6b61",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/withly-app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

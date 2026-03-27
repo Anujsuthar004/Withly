@@ -838,7 +838,12 @@ export async function markNotificationsReadAction(_prev: ActionResult, formData:
     }
 
     const rawIds = formData.get("notificationIds");
-    const ids = typeof rawIds === "string" ? JSON.parse(rawIds) : [];
+    let ids: unknown[] = [];
+    try {
+      ids = typeof rawIds === "string" ? JSON.parse(rawIds) : [];
+    } catch {
+      return { ok: false, message: "Invalid notification IDs." };
+    }
     const parsed = markNotificationsReadSchema.safeParse({ notificationIds: ids });
     if (!parsed.success) return { ok: false, message: "Invalid notification IDs." };
 

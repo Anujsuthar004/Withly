@@ -1,7 +1,7 @@
 import { emptyWorkspaceSnapshot, previewFeed, previewWorkspace } from "@/lib/mock-data";
 import { PROFILE_AVATAR_BUCKET } from "@/lib/avatar";
 import { hasSupabaseEnv, isProduction } from "@/lib/env";
-import type { AdminDashboard, FeedRequestCard, WorkspaceSnapshot } from "@/lib/supabase/types";
+import type { AdminDashboard, FeedRequestCard, ModerationReviewEntry, WorkspaceSnapshot } from "@/lib/supabase/types";
 import { getSupabaseServerClientOrNull } from "@/lib/supabase/server";
 import { adminDashboardSchema, feedRequestCardSchema, notificationSchema, workspaceSnapshotSchema } from "@/lib/validators";
 
@@ -267,7 +267,7 @@ export async function getAdminDashboard() {
 
   return {
     ...dashboard,
-    moderationReviews: (reviews || []) as any[],
+    moderationReviews: (reviews || []) as ModerationReviewEntry[],
   };
 }
 
