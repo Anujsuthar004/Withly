@@ -3,7 +3,7 @@ import { PROFILE_AVATAR_BUCKET } from "@/lib/avatar";
 import { hasSupabaseEnv, isProduction } from "@/lib/env";
 import type { AdminDashboard, FeedRequestCard, WorkspaceSnapshot } from "@/lib/supabase/types";
 import { getSupabaseServerClientOrNull } from "@/lib/supabase/server";
-import { adminDashboardSchema, feedRequestCardSchema, workspaceSnapshotSchema } from "@/lib/validators";
+import { adminDashboardSchema, feedRequestCardSchema, notificationSchema, workspaceSnapshotSchema } from "@/lib/validators";
 
 const feedUnavailableMessage = "Open requests are temporarily unavailable. Please try again shortly.";
 const requestUnavailableMessage = "That request is temporarily unavailable. Please try again shortly.";
@@ -365,6 +365,15 @@ export async function getMyRequestsPageState() {
 export async function getInboxPageState() {
   const [user, workspace] = await Promise.all([getAuthenticatedUser(), getWorkspaceSnapshot()]);
   return { user, hasSupabaseEnv, ...workspace };
+}
+
+export async function getAlertsPageState() {
+  const supabase = await getSupabaseServerClientOrNull();
+  if (!supabase) return { notifications: [] };
+
+  const { data } = await supabase.rpc("get_my_notifications", { limit_count: 30 });
+  const parsed = notificationSchema.array().safeParse(data ?? []);
+  return { notifications: parsed.success ? parsed.data : [] };
 }
 
 export async function getProfilePageState() {

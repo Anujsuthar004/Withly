@@ -20,7 +20,7 @@ type AppShellProps = {
 function getActiveNav(pathname: string) {
   if (pathname.startsWith("/profile")) return "profile";
   if (pathname.startsWith("/account") || pathname.startsWith("/admin")) return "settings";
-  if (pathname.startsWith("/requests") || pathname.startsWith("/inbox") || pathname.startsWith("/sessions")) return "requests";
+  if (pathname.startsWith("/requests") || pathname.startsWith("/inbox") || pathname.startsWith("/sessions") || pathname.startsWith("/alerts")) return "requests";
   return "home";
 }
 
@@ -163,7 +163,7 @@ export function AppShell(props: AppShellProps) {
 
           <div className="withly-topbar-right">
             {unreadCount > 0 ? (
-              <Link className="withly-meta-pill" href="/inbox">
+              <Link className="withly-meta-pill" href="/alerts">
                 <Bell size={16} />
                 {unreadCount} fresh alerts
               </Link>
