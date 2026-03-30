@@ -7,14 +7,23 @@ import { formatDateTime } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export default async function ExplorePage() {
-  const { feed, feedError } = await getExplorePageState(18);
+  const { feed, feedError, isSampleFeed } = await getExplorePageState(18);
 
   return (
     <main className="marketing-page">
       <section className="section-title">
         <p className="kicker">Explore</p>
-        <h2>Browse open requests before you sign in.</h2>
-        <p>You can browse the public basics here, then step into your private feed when you want to respond or post.</p>
+        {isSampleFeed ? (
+          <>
+            <h2>Here is what the feed looks like.</h2>
+            <p>No active requests right now — these are samples. Sign up to be among the first to post.</p>
+          </>
+        ) : (
+          <>
+            <h2>Browse open requests before you sign in.</h2>
+            <p>You can browse the public basics here, then step into your private feed when you want to respond or post.</p>
+          </>
+        )}
         <div className="section-action-row">
           <Link className="primary-button compact" href="/?next=%2Ffeed">
             Sign in to respond
@@ -64,11 +73,13 @@ export default async function ExplorePage() {
                     </span>
                   ))}
                 </div>
-                <div className="button-row card-action-row">
-                  <Link className="ghost-button compact" href={`/explore/requests/${request.id}`}>
-                    View details
-                  </Link>
-                </div>
+                {!isSampleFeed ? (
+                  <div className="button-row card-action-row">
+                    <Link className="ghost-button compact" href={`/explore/requests/${request.id}`}>
+                      View details
+                    </Link>
+                  </div>
+                ) : null}
               </article>
             ))}
           </div>

@@ -12,9 +12,11 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage({ searchParams }: { searchParams: Promise<Record<string, string | string[]>> }) {
   const params = await searchParams;
-  const { user, feed, feedError, hasSupabaseEnv } = await getLandingPageState();
+  const { user, feed, feedError, hasSupabaseEnv, isSampleFeed } = await getLandingPageState();
   const nextPath = normalizeNextPath(params.next);
-  const verifiedPreviewCount = feed.filter((request) => request.verifiedOnly).length;
+  // Use live counts for stats — show 0 when only sample data is available
+  const liveCount = isSampleFeed ? 0 : feed.length;
+  const verifiedPreviewCount = isSampleFeed ? 0 : feed.filter((request) => request.verifiedOnly).length;
 
   if (user) {
     redirect(nextPath);
@@ -53,7 +55,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
           <div className="hero-intro-grid" aria-label="Platform highlights">
             <article className="hero-signal-card">
               <span>Live window</span>
-              <strong>{feed.length}</strong>
+              <strong>{liveCount}</strong>
               <p>Requests visible right now before sign-in.</p>
             </article>
             <article className="hero-signal-card tone-teal">
@@ -98,22 +100,32 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         </section>
       ) : null}
 
-      {feed.length > 0 ? (
-        <section className="preview-section" id="open-requests">
+      <section className="preview-section" id="open-requests">
           <div className="section-title preview-section-head">
             <div>
               <p className="kicker">Open Requests</p>
-              <h2>A small public window into what is active right now.</h2>
-              <p>
-                {hasSupabaseEnv
-                  ? "Only the basic request details are shown before sign-in."
-                  : "A sample preview is showing right now while account services are offline."}
-              </p>
+              {isSampleFeed ? (
+                <>
+                  <h2>Here is what an active feed looks like.</h2>
+                  <p>No active requests right now — these are samples. Be among the first to post.</p>
+                </>
+              ) : (
+                <>
+                  <h2>A small public window into what is active right now.</h2>
+                  <p>
+                    {hasSupabaseEnv
+                      ? "Only the basic request details are shown before sign-in."
+                      : "A sample preview is showing right now while account services are offline."}
+                  </p>
+                </>
+              )}
             </div>
-            <div className="preview-section-head-note" aria-label="Feed summary">
-              <span className="mini-chip">{feed.length} active now</span>
-              <span className="mini-chip">{verifiedPreviewCount} verified-only</span>
-            </div>
+            {!isSampleFeed ? (
+              <div className="preview-section-head-note" aria-label="Feed summary">
+                <span className="mini-chip">{feed.length} active now</span>
+                <span className="mini-chip">{verifiedPreviewCount} verified-only</span>
+              </div>
+            ) : null}
           </div>
 
           <div className="preview-grid">
@@ -147,7 +159,6 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             ))}
           </div>
         </section>
-      ) : null}
 
       <SiteFooter />
     </main>

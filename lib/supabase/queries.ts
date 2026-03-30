@@ -118,8 +118,8 @@ async function fetchLandingFeed(limit = 8) {
   const supabase = await getSupabaseServerClientOrNull();
   if (!supabase) {
     return !isProduction
-      ? { feed: previewFeed.slice(0, limit), feedError: "" }
-      : { feed: [] as FeedRequestCard[], feedError: feedUnavailableMessage };
+      ? { feed: previewFeed.slice(0, limit), feedError: "", isSampleFeed: true }
+      : { feed: [] as FeedRequestCard[], feedError: feedUnavailableMessage, isSampleFeed: false };
   }
 
   const { data, error } = await supabase.rpc("get_public_request_feed", {
@@ -127,15 +127,20 @@ async function fetchLandingFeed(limit = 8) {
   });
 
   if (error) {
-    return { feed: [] as FeedRequestCard[], feedError: feedUnavailableMessage };
+    return { feed: [] as FeedRequestCard[], feedError: feedUnavailableMessage, isSampleFeed: false };
   }
 
   const normalized = normalizeFeedPayload(data);
   if (!normalized) {
-    return { feed: [] as FeedRequestCard[], feedError: feedUnavailableMessage };
+    return { feed: [] as FeedRequestCard[], feedError: feedUnavailableMessage, isSampleFeed: false };
   }
 
-  return { feed: normalized.slice(0, limit), feedError: "" };
+  // When the DB has no live requests yet, show sample data so the page looks alive
+  if (normalized.length === 0) {
+    return { feed: previewFeed.slice(0, limit), feedError: "", isSampleFeed: true };
+  }
+
+  return { feed: normalized.slice(0, limit), feedError: "", isSampleFeed: false };
 }
 
 export async function getLandingFeed(limit = 8) {
@@ -278,6 +283,7 @@ export async function getLandingPageState() {
     feed: landingFeed.feed,
     feedError: landingFeed.feedError,
     hasSupabaseEnv,
+    isSampleFeed: landingFeed.isSampleFeed,
   };
 }
 
@@ -322,7 +328,7 @@ export async function getWorkspacePageState() {
 
 export async function getExplorePageState(limit = 18) {
   const landingFeed = await fetchLandingFeed(limit);
-  return { feed: landingFeed.feed, feedError: landingFeed.feedError, hasSupabaseEnv };
+  return { feed: landingFeed.feed, feedError: landingFeed.feedError, hasSupabaseEnv, isSampleFeed: landingFeed.isSampleFeed };
 }
 
 export async function getAppLayoutState() {
