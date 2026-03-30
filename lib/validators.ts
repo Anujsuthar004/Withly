@@ -123,6 +123,18 @@ export const adminDashboardSchema = z.object({
   ),
 });
 
+export const adminUserSchema = z.object({
+  id: z.string().uuid(),
+  displayName: z.string(),
+  homeArea: z.string(),
+  verificationTier: z.enum(["email", "phone", "id_verified"]),
+  role: z.enum(["member", "admin"]),
+  createdAt: z.string(),
+  trustScore: z.number(),
+  requestCount: z.number(),
+  openRequestCount: z.number(),
+});
+
 export const createRequestSchema = z.object({
   lane: z.enum(["social", "errand"]),
   title: z.string().trim().min(6).max(120),

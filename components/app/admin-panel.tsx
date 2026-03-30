@@ -1,17 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldAlert, ShieldCheck, Siren, Trash2 } from "lucide-react";
+import { ShieldAlert, ShieldCheck, Siren, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { resolveDeletionRequestAction, resolveReportAction } from "@/app/workspace/actions";
-import type { AdminDashboard, ModerationReport } from "@/lib/supabase/types";
+import type { AdminDashboard, AdminUser, ModerationReport } from "@/lib/supabase/types";
 import { formatRelativeTime } from "@/lib/utils";
 
 type ReportSeverity = "critical" | "high" | "medium" | "low";
 type ReportView = "active" | "all" | "open" | "reviewing" | "resolved";
 type DeletionView = "pending" | "all" | "resolved";
 type ModerationView = "pending" | "all";
+type UserView = "all" | "active" | "admins";
 
 function getHoursSince(value: string) {
   const parsed = new Date(value);
@@ -85,6 +86,8 @@ export function AdminPanel({
   const [reportView, setReportView] = useState<ReportView>("active");
   const [deletionView, setDeletionView] = useState<DeletionView>("pending");
   const [aiModView, setAiModView] = useState<ModerationView>("pending");
+  const [userView, setUserView] = useState<UserView>("all");
+  const [userSearch, setUserSearch] = useState("");
   const [severityFilter, setSeverityFilter] = useState<ReportSeverity | "all">("all");
   const [reportSearch, setReportSearch] = useState("");
 
@@ -603,6 +606,84 @@ export function AdminPanel({
               </article>
             );
           })}
+        </div>
+      </section>
+
+      <section className="panel-section">
+        <div className="form-section-head">
+          <h4>
+            <Users size={16} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.4rem" }} />
+            Members
+          </h4>
+          <p>Every account that has signed up — sorted by join date, newest first.</p>
+        </div>
+
+        <div className="feed-toolbar admin-toolbar">
+          <label className="search-input">
+            <input
+              type="search"
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              placeholder="Search by name or area"
+            />
+          </label>
+
+          <div className="filter-pill-group" role="tablist" aria-label="User filters">
+            <button type="button" className={`filter-pill ${userView === "all" ? "active" : ""}`} onClick={() => setUserView("all")}>
+              All
+            </button>
+            <button type="button" className={`filter-pill ${userView === "active" ? "active" : ""}`} onClick={() => setUserView("active")}>
+              Have requests
+            </button>
+            <button type="button" className={`filter-pill ${userView === "admins" ? "active" : ""}`} onClick={() => setUserView("admins")}>
+              Admins
+            </button>
+          </div>
+
+          <div className="feed-toolbar-meta">
+            <span>{dashboard.users?.length ?? 0} total members</span>
+          </div>
+        </div>
+
+        <div className="review-list">
+          {(() => {
+            const allUsers: AdminUser[] = dashboard.users ?? [];
+            const filtered = allUsers.filter((u) => {
+              if (userView === "active" && u.requestCount === 0) return false;
+              if (userView === "admins" && u.role !== "admin") return false;
+              if (!userSearch.trim()) return true;
+              return `${u.displayName} ${u.homeArea}`.toLowerCase().includes(userSearch.trim().toLowerCase());
+            });
+
+            if (filtered.length === 0) {
+              return <div className="empty-card">No members match this view.</div>;
+            }
+
+            return filtered.map((u) => (
+              <article key={u.id} className="review-card admin-review-card">
+                <div className="summary-head">
+                  <div>
+                    <div className="admin-card-pill-row">
+                      <span className={`status-pill ${u.verificationTier === "id_verified" ? "severity-low" : u.verificationTier === "phone" ? "status-reviewing" : "status-open"}`}>
+                        {u.verificationTier === "id_verified" ? "ID verified" : u.verificationTier === "phone" ? "Phone" : "Email"}
+                      </span>
+                      {u.role === "admin" ? <span className="status-pill severity-critical">admin</span> : null}
+                      {u.openRequestCount > 0 ? (
+                        <span className="status-pill status-open">{u.openRequestCount} open</span>
+                      ) : null}
+                    </div>
+                    <h4>{u.displayName}</h4>
+                    <p>{u.homeArea || "No area set"} · user {u.id.slice(0, 8)}</p>
+                  </div>
+                  <div className="admin-card-meta-stack">
+                    <span className="mini-chip">joined {formatRelativeTime(u.createdAt)}</span>
+                    <span className="mini-chip">trust {Math.round(u.trustScore)}</span>
+                    <span className="mini-chip">{u.requestCount} request{u.requestCount !== 1 ? "s" : ""}</span>
+                  </div>
+                </div>
+              </article>
+            ));
+          })()}
         </div>
       </section>
 

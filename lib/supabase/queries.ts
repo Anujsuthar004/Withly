@@ -3,7 +3,7 @@ import { PROFILE_AVATAR_BUCKET } from "@/lib/avatar";
 import { hasSupabaseEnv, isProduction } from "@/lib/env";
 import type { AdminDashboard, FeedRequestCard, ModerationReviewEntry, WorkspaceSnapshot } from "@/lib/supabase/types";
 import { getSupabaseServerClientOrNull } from "@/lib/supabase/server";
-import { adminDashboardSchema, feedRequestCardSchema, notificationSchema, workspaceSnapshotSchema } from "@/lib/validators";
+import { adminDashboardSchema, adminUserSchema, feedRequestCardSchema, notificationSchema, workspaceSnapshotSchema } from "@/lib/validators";
 
 const feedUnavailableMessage = "Open requests are temporarily unavailable. Please try again shortly.";
 const requestUnavailableMessage = "That request is temporarily unavailable. Please try again shortly.";
@@ -260,7 +260,12 @@ export async function getAdminDashboard() {
     return null;
   }
 
-  const { data, error } = await supabase.rpc("get_admin_dashboard");
+  const [{ data, error }, { data: reviews }, { data: usersRaw }] = await Promise.all([
+    supabase.rpc("get_admin_dashboard"),
+    supabase.rpc("get_pending_moderation"),
+    supabase.rpc("get_admin_users", { limit_count: 100 }),
+  ]);
+
   if (error) {
     return null;
   }
@@ -268,11 +273,12 @@ export async function getAdminDashboard() {
   const dashboard = normalizeAdminDashboard(data);
   if (!dashboard) return null;
 
-  const { data: reviews } = await supabase.rpc("get_pending_moderation");
+  const users = adminUserSchema.array().safeParse(usersRaw ?? []);
 
   return {
     ...dashboard,
     moderationReviews: (reviews || []) as ModerationReviewEntry[],
+    users: users.success ? users.data : [],
   };
 }
 

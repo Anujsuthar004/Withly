@@ -125,6 +125,18 @@ export interface AccountDeletionRequest {
   displayName: string | null;
 }
 
+export interface AdminUser {
+  id: string;
+  displayName: string;
+  homeArea: string;
+  verificationTier: "email" | "phone" | "id_verified";
+  role: "member" | "admin";
+  createdAt: string;
+  trustScore: number;
+  requestCount: number;
+  openRequestCount: number;
+}
+
 export interface AdminDashboard {
   overview: {
     usersTotal: number;
@@ -136,6 +148,7 @@ export interface AdminDashboard {
   reports: ModerationReport[];
   deletionRequests: AccountDeletionRequest[];
   moderationReviews?: ModerationReviewEntry[];
+  users?: AdminUser[];
 }
 
 export interface WorkspaceSnapshot {
