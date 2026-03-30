@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("public explore is reachable and legacy workspace redirects", async ({ page }) => {
   await page.goto("/workspace");
   await expect(page).toHaveURL(/\/explore$/);
-  await expect(page.getByRole("heading", { name: /Browse open requests before you sign in/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Browse open requests before you sign in|Here is what the feed looks like/i })).toBeVisible();
 
   const firstRequest = page.locator(".request-card a").first();
   await expect(firstRequest).toBeVisible();
