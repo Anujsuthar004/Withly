@@ -2,7 +2,7 @@ import type { RequestLane } from "@/lib/supabase/types";
 
 export const referenceMedia = {
   homeArtwork: [
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuBFQhdSHz_thYGVnilomjdD7TyZam-bP3BU8O4BsJrzkPvlr1ZlkDjHWRmrQ0SweRFgj45XBEOGVGLbla-KT7wz1r-wVbVodj4C5bRjNefi_OX1-qqGytOzRprjRas4ekNkIioRZG-B92om-YFqh0oTjUpjvnX7vfqUoxrC46plWpMzdXjNaG2QdOe6wxoUMDSu29bbshkUDYDCSXLrOVKf0zyr4XIRg6vl_CDbsGOmUgYg2WQiQ4vKfEn2AKrvYRF1s4XYbvS2HQ",
+    "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&q=80",
     "https://lh3.googleusercontent.com/aida-public/AB6AXuDbLq1Zs71BOD_UILLYPQnWbOOH2geBc7rJtru8kPviBxpUARw8IKbuyEQ-WfTnf39nK2c-5JPb1MSAEUqJrWustCwKXKj9uMdMhe2uM9LKHMVLS0jFsXxts3xmJJxg8ecasWZ3ssCjPWj-W2PfSlp2yWCS2P8gnQyb2MJM11lZ8fv-X9KH7ZDFf74kMtUjTkv6_C65Ub-sK_WMqYIgXJFoq5sL8hpGKV_7dPwsZtYRIcT74xCj8kvTsobNf69E4zIR7jZhL2mqTw",
     "https://lh3.googleusercontent.com/aida-public/AB6AXuCkzDrkgbBJ2c6HDQNTpJuvg8_BaiXPYxHfye8_c2z3gsevKVPD9aQBY6YS9XtG2e_ZCLnUlIkG8Edb03G2iklpEh1DE2Sn9FN5swJguh1AkKpbY_pN3abFdnE0bu8oRfjIc24xTVZRBPmkbh9bD_mN89aj3BdfrgpA38m-ZBp-ZWTqlQblD-SEEvOX1DYlNzcER4kJiNoVDxVpwXB7I7poDwQlzToVAW7VBax-OII7_hdCqhbWzUYLUyyjlM_JrDmE-8qOnTBRAw",
   ],
