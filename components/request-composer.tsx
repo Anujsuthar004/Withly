@@ -15,6 +15,7 @@ import { formatDateTime } from "@/lib/utils";
 interface RequestComposerProps {
   preview: boolean;
   onStatus: (message: string) => void;
+  statusMessage?: string;
 }
 
 const defaultTags: Record<RequestLane, string[]> = {
@@ -45,7 +46,7 @@ const laneCards: Array<{
   },
 ];
 
-export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
+export function RequestComposer({ preview, onStatus, statusMessage }: RequestComposerProps) {
   const router = useRouter();
   const [lane, setLane] = useState<RequestLane>("social");
   const [title, setTitle] = useState("");
@@ -73,7 +74,8 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
 
   const basicsReady = title.trim().length >= 6 && description.trim().length >= 24;
   const logisticsReady = areaLabel.trim().length >= 3;
-  const canSubmit = basicsReady && logisticsReady && (!hasTurnstileEnv || Boolean(captchaToken));
+  const captchaReady = !hasTurnstileEnv || Boolean(captchaToken);
+  const canSubmit = basicsReady && logisticsReady && captchaReady;
 
   const progress = [
     true,
@@ -358,6 +360,7 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
             ) : null}
           </section>
 
+          {statusMessage && <p className="composer-submit-status">{statusMessage}</p>}
           <div className="composer-submit-row">
             <div className="composer-submit-note">
               <CheckCircle2 size={16} />
@@ -366,7 +369,9 @@ export function RequestComposer({ preview, onStatus }: RequestComposerProps) {
                   ? "Preview mode is on. Sign in to publish."
                   : canSubmit
                     ? "Ready to publish."
-                    : "Add a stronger title, description, and area before publishing."}
+                    : basicsReady && logisticsReady && !captchaReady
+                      ? "Complete the security check to publish."
+                      : "Add a stronger title, description, and area before publishing."}
               </span>
             </div>
             <button className="composer-submit-button" type="submit" disabled={preview || isPending || !canSubmit}>

@@ -4362,6 +4362,12 @@ body::after {
   padding-top: 0.5rem;
 }
 
+.composer-submit-status {
+  font-size: 0.9rem;
+  color: var(--text-soft);
+  padding: 0.5rem 0;
+}
+
 .composer-submit-row {
   display: flex;
   justify-content: space-between;

@@ -17,7 +17,7 @@ export function RequestNewPage({ preview, initialStatus }: { preview: boolean; i
         <span className="sanctuary-chip">3 step flow</span>
       </section>
       {status ? <div className="withly-status-banner">{status}</div> : null}
-      <RequestComposer preview={preview} onStatus={setStatus} />
+      <RequestComposer preview={preview} onStatus={setStatus} statusMessage={status} />
     </div>
   );
 }

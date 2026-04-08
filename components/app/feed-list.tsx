@@ -1,45 +1,24 @@
 "use client";
 
 import { useDeferredValue, useMemo, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Clock3, MapPin, ShieldAlert, ShieldCheck, Star, Trash2, Users } from "lucide-react";
+import { Clock, Compass, ShieldAlert, ShieldCheck, Star, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { deleteRequestAction, submitJoinRequestAction } from "@/app/workspace/actions";
+import { StatusBadge } from "@/components/app/status-badge";
 import type { FeedRequestCard, RequestLane } from "@/lib/supabase/types";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils";
-import { getFeedArtwork, getFeedPerson, getFeedVariant, getLaneLabel } from "@/lib/reference-content";
-
-function formatEditorialSchedule(dateValue: string | null) {
-  if (!dateValue) return "Flexible timing";
-
-  const date = new Date(dateValue);
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
-}
-
-function getLaneFilterLabel(lane: "all" | RequestLane) {
-  if (lane === "all") return "All Requests";
-  return lane === "social" ? "Social Plus-One" : "Errand Companion";
-}
 
 export function FeedList({
   feed,
   preview = false,
   ownerRequestIds = [],
-  activeSessionRequestId = null,
   onStatus,
 }: {
   feed: FeedRequestCard[];
   preview?: boolean;
   ownerRequestIds?: string[];
-  activeSessionRequestId?: string | null;
   onStatus?: (message: string) => void;
 }) {
   const router = useRouter();
@@ -52,7 +31,6 @@ export function FeedList({
   const [joinDrafts, setJoinDrafts] = useState<Record<string, string>>({});
   const [joinBusyId, setJoinBusyId] = useState<string | null>(null);
   const [expandedJoinId, setExpandedJoinId] = useState<string | null>(null);
-  const [submittedJoinIds, setSubmittedJoinIds] = useState<Set<string>>(new Set());
   const [deleteBusyId, setDeleteBusyId] = useState<string | null>(null);
   const [dismissedRequestIds, setDismissedRequestIds] = useState<string[]>([]);
   const [feedback, setFeedback] = useState("");
@@ -97,6 +75,14 @@ export function FeedList({
     [dismissedRequestIds, filteredFeed]
   );
 
+  const activeFilterCount = [
+    laneFilter !== "all",
+    showVerifiedOnly,
+    hideOwnRequests,
+    Boolean(activeTag),
+    Boolean(search.trim()),
+  ].filter(Boolean).length;
+
   async function handleDelete(requestId: string) {
     if (preview) {
       const message = "This action is only available after sign-in.";
@@ -137,305 +123,243 @@ export function FeedList({
   }
 
   return (
-    <section className="sanctuary-feed-shell">
-      <div className="sanctuary-filter-bar">
-        <div className="sanctuary-filter-pills" role="tablist" aria-label="Feed filters">
-          {(["all", "errand", "social"] as const).map((lane) => (
-            <button
-              key={lane}
-              type="button"
-              className={`sanctuary-filter-pill ${laneFilter === lane ? "active" : ""}`}
-              onClick={() => setLaneFilter(lane)}
-            >
-              {getLaneFilterLabel(lane)}
+    <section className="panel feed-panel">
+      <div className="panel-heading">
+        <div>
+          <p className="kicker">Discovery Feed</p>
+          <h3>Discover requests nearby.</h3>
+        </div>
+        <span className="status-dot">
+          <Compass size={16} />
+          {visibleFeed.length} live requests
+        </span>
+      </div>
+      <p className="panel-intro">Search by mood, narrow the list fast, and open only the requests that feel like a real fit.</p>
+
+      <div className="feed-toolbar">
+        {feed.length > 0 ? (
+          <label className="search-input">
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search by mood, area, or tags"
+            />
+          </label>
+        ) : null}
+
+        <div className="feed-filter-row">
+          <div className="filter-pill-group" role="tablist" aria-label="Lane filters">
+            <button type="button" className={`filter-pill ${laneFilter === "all" ? "active" : ""}`} onClick={() => setLaneFilter("all")}>
+              All
             </button>
-          ))}
-          <button
-            type="button"
-            className={`sanctuary-filter-pill ${showVerifiedOnly ? "active" : ""}`}
-            onClick={() => setShowVerifiedOnly((current) => !current)}
-          >
-            Verified only
-          </button>
-          <button
-            type="button"
-            className={`sanctuary-filter-pill ${hideOwnRequests ? "active" : ""}`}
-            onClick={() => setHideOwnRequests((current) => !current)}
-          >
-            Hide my posts
-          </button>
+            <button type="button" className={`filter-pill ${laneFilter === "social" ? "active" : ""}`} onClick={() => setLaneFilter("social")}>
+              Social
+            </button>
+            <button type="button" className={`filter-pill ${laneFilter === "errand" ? "active" : ""}`} onClick={() => setLaneFilter("errand")}>
+              Errand
+            </button>
+          </div>
+
+          <div className="filter-pill-group">
+            <button
+              type="button"
+              className={`filter-pill ${showVerifiedOnly ? "active" : ""}`}
+              onClick={() => setShowVerifiedOnly((current) => !current)}
+            >
+              Verified only
+            </button>
+            <button
+              type="button"
+              className={`filter-pill ${hideOwnRequests ? "active" : ""}`}
+              onClick={() => setHideOwnRequests((current) => !current)}
+            >
+              Hide my posts
+            </button>
+            {activeFilterCount > 0 ? (
+              <button type="button" className="filter-pill" onClick={clearFilters}>
+                Clear filters
+              </button>
+            ) : null}
+          </div>
         </div>
 
-        <label className="sanctuary-search">
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search requests by mood, area, or tag"
-          />
-        </label>
+        {popularTags.length > 0 ? (
+          <div className="filter-tag-row">
+            {popularTags.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                className={`filter-tag ${activeTag === tag ? "active" : ""}`}
+                onClick={() => setActiveTag((current) => (current === tag ? "" : tag))}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="feed-toolbar-meta">
+          <span>
+            Showing {visibleFeed.length} of {feed.length} requests
+          </span>
+          {activeFilterCount > 0 ? <span>{activeFilterCount} filter{activeFilterCount === 1 ? "" : "s"} active</span> : null}
+        </div>
       </div>
 
-      {popularTags.length > 0 ? (
-        <div className="sanctuary-tag-row">
-          {popularTags.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              className={`sanctuary-tag ${activeTag === tag ? "active" : ""}`}
-              onClick={() => setActiveTag((current) => (current === tag ? "" : tag))}
-            >
-              {tag}
-            </button>
-          ))}
-          {(laneFilter !== "all" || showVerifiedOnly || hideOwnRequests || activeTag || search.trim()) && (
-            <button type="button" className="sanctuary-tag clear" onClick={clearFilters}>
-              Clear
-            </button>
-          )}
-        </div>
-      ) : null}
+      {feedback ? <StatusBadge message={feedback} /> : null}
 
-      {feedback ? <div className="withly-status-banner">{feedback}</div> : null}
+      <div className="feed-list">
+        {visibleFeed.length === 0 ? (
+          <div className="empty-card">
+            <strong>No requests match this view yet.</strong>
+            <span>Try clearing one filter or widening the search so more options can surface.</span>
+          </div>
+        ) : null}
 
-      {visibleFeed.length === 0 ? (
-        <div className="sanctuary-empty-card">
-          <strong>{feed.length === 0 ? "No active requests yet." : "No requests match this view."}</strong>
-          <p>
-            {feed.length === 0
-              ? "Be the first to post a clear, grounded request."
-              : "Widen the filters a little and more options will surface."}
-          </p>
-          {feed.length === 0 ? (
-            <Link className="withly-create-button subtle" href="/requests/new">
-              Create Request
-            </Link>
-          ) : null}
-        </div>
-      ) : (
-        <div className="sanctuary-feed-grid">
-          {visibleFeed.map((request, index) => {
-            const variant = getFeedVariant(index);
-            const isOwner = ownerRequestIdSet.has(request.id);
-            const joinOpen = expandedJoinId === request.id && !isOwner;
-            const submitBusy = joinBusyId === request.id;
+        {visibleFeed.map((request) => (
+          <article key={request.id} className={`request-card lane-${request.lane}`}>
+            <div className="request-card-top">
+              <div>
+                <span className="request-lane">{request.lane === "social" ? "Social" : "Errand"}</span>
+                <h4>{request.title}</h4>
+              </div>
+              <div className="card-chip-row">
+                {ownerRequestIdSet.has(request.id) ? <span className="mini-chip">Your request</span> : null}
+                {request.verifiedOnly ? (
+                  <span className="mini-chip">
+                    <ShieldAlert size={14} />
+                    Verified only
+                  </span>
+                ) : null}
+                <span className="mini-chip">{formatRelativeTime(request.createdAt)}</span>
+              </div>
+            </div>
 
-            return (
-              <article
-                key={request.id}
-                className={`request-card sanctuary-request-card sanctuary-request-card--${variant} lane-${request.lane}`}
-              >
-                {(variant === "feature" || variant === "wide") && (
-                  <div className="sanctuary-request-art">
-                    <Image
-                      src={getFeedArtwork(index)}
-                      alt={request.title}
-                      fill
-                      sizes={variant === "feature" ? "(max-width: 960px) 100vw, 34vw" : "(max-width: 960px) 100vw, 18vw"}
-                    />
-                    <span className={`sanctuary-lane-chip tone-${request.lane}`}>{getLaneLabel(request.lane)}</span>
-                  </div>
-                )}
+            <p className="request-description">{request.description}</p>
 
-                <div className="sanctuary-request-body">
-                  <div className="sanctuary-request-head">
-                    <div>
-                      {variant !== "feature" && variant !== "wide" ? (
-                        <span className={`sanctuary-lane-chip tone-${request.lane}`}>{getLaneLabel(request.lane)}</span>
-                      ) : null}
-                      <div className="sanctuary-request-kicker">
-                        <CalendarDays size={14} />
-                        <span>{formatEditorialSchedule(request.meetupAt)}</span>
-                      </div>
-                      <Link href={`/requests/${request.id}`} className="sanctuary-request-title">
-                        {request.title}
-                      </Link>
-                    </div>
-                    <div className="sanctuary-request-badges">
-                      {isOwner ? <span className="sanctuary-chip">Your request</span> : null}
-                      {request.verifiedOnly ? (
-                        <span className="sanctuary-chip">
-                          <ShieldAlert size={12} />
-                          Verified only
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
+            {request.areaLabel || request.meetupAt || request.hostDisplayName ? (
+              <div className="request-meta">
+                {request.areaLabel ? <span>{request.areaLabel}</span> : null}
+                {request.meetupAt ? <span>{formatDateTime(request.meetupAt)}</span> : null}
+                {request.hostDisplayName ? <span>{request.hostDisplayName}</span> : null}
+              </div>
+            ) : (
+              <p className="request-privacy-note">Exact meetup details are shared privately after both people are aligned.</p>
+            )}
 
-                  <p className="sanctuary-request-description">{request.description}</p>
+            <div className="card-chip-row" style={{ marginTop: "0.5rem", marginBottom: "0.5rem", flexWrap: "wrap", opacity: 0.9 }}>
+              <span className="mini-chip" title="Host Trust Score">
+                <Star size={12} /> {request.hostTrustScore}/100 Trust
+              </span>
+              <span className="mini-chip" title={`Host Verification: ${request.hostVerificationTier}`}>
+                <ShieldCheck size={12} /> {request.hostVerificationTier === "id_verified" ? "ID Verified" : request.hostVerificationTier === "phone" ? "Phone" : "Email"}
+              </span>
+              {request.compatibilityScore !== null ? (
+                <span className="mini-chip" title="Companion Compatibility Score">
+                  {request.compatibilityScore}% Match
+                </span>
+              ) : null}
+              {request.maxCompanions > 1 ? (
+                <span className="mini-chip" title="Group Request">
+                  <Users size={12} /> Up to {request.maxCompanions} others
+                </span>
+              ) : null}
+              {request.expiresAt ? (
+                <span className="mini-chip" title={`Expires at ${formatDateTime(request.expiresAt)}`}>
+                  <Clock size={12} /> Ephemeral
+                </span>
+              ) : null}
+            </div>
 
-                  <div className="sanctuary-request-meta">
-                    <span>
-                      <MapPin size={14} />
-                      {request.areaLabel || "Exact landmark shared privately"}
-                    </span>
-                    <span>
-                      <Clock3 size={14} />
-                      {request.meetupAt ? formatDateTime(request.meetupAt) : "Timing shared in chat"}
-                    </span>
-                    <span>
-                      <Star size={14} />
-                      Trust score {request.hostTrustScore}
-                    </span>
-                  </div>
+            <div className="tag-row">
+              {request.tags.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  className={`tag-chip ${activeTag === tag ? "active" : ""}`}
+                  onClick={() => setActiveTag((current) => (current === tag ? "" : tag))}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
 
-                  <div className="sanctuary-request-footer">
-                    <div className="sanctuary-host-chip">
-                      <div className="sanctuary-host-avatars">
-                        {variant === "compact" ? (
-                          <>
-                            {[0, 1, 2].map((offset) => (
-                              <span key={offset} className="sanctuary-avatar-stack">
-                                <Image src={getFeedPerson(index + offset)} alt="" fill sizes="32px" />
-                              </span>
-                            ))}
-                            <span className="sanctuary-avatar-more">+{Math.max(1, request.maxCompanions)}</span>
-                          </>
-                        ) : (
-                          <span className="sanctuary-avatar-single">
-                            <Image src={getFeedPerson(index)} alt="" fill sizes="40px" />
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <strong>{request.hostDisplayName || "Protected member"}</strong>
-                        <small>
-                          {request.hostVerificationTier === "id_verified"
-                            ? "Certified companion"
-                            : request.hostVerificationTier === "phone"
-                              ? "Phone verified"
-                              : "Email verified"}
-                        </small>
-                      </div>
-                    </div>
+            {ownerRequestIdSet.has(request.id) ? (
+              <div className="button-row request-card-actions">
+                <Link className="secondary-button compact" href={`/requests/${request.id}`}>
+                  Open request
+                </Link>
+                <button
+                  className="ghost-button compact danger-button"
+                  type="button"
+                  disabled={preview || deleteBusyId === request.id}
+                  onClick={() => void handleDelete(request.id)}
+                >
+                  <Trash2 size={16} />
+                  {deleteBusyId === request.id ? "Deleting..." : "Delete request"}
+                </button>
+              </div>
+            ) : (
+              <div className="button-row request-card-actions">
+                <button
+                  className="primary-button compact"
+                  type="button"
+                  disabled={preview}
+                  onClick={() => {
+                    setExpandedJoinId((current) => (current === request.id ? null : request.id));
+                  }}
+                >
+                  {preview ? "Sign in to join" : expandedJoinId === request.id ? "Cancel" : "Request to join"}
+                </button>
+              </div>
+            )}
 
-                    <div className="sanctuary-action-row">
-                      {request.compatibilityScore !== null ? <span className="sanctuary-fit-pill">{request.compatibilityScore}% fit</span> : null}
-                      {request.maxCompanions > 1 ? (
-                        <span className="sanctuary-fit-pill">
-                          <Users size={12} />
-                          Up to {request.maxCompanions}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {request.tags.length > 0 ? (
-                    <div className="sanctuary-card-tags">
-                      {request.tags.map((tag) => (
-                        <button
-                          key={tag}
-                          type="button"
-                          className={`sanctuary-inline-tag ${activeTag === tag ? "active" : ""}`}
-                          onClick={() => setActiveTag((current) => (current === tag ? "" : tag))}
-                        >
-                          {tag}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  <div className="sanctuary-card-actions">
-                    {isOwner ? (
-                      <>
-                        <Link className="sanctuary-ghost-button" href={`/requests/${request.id}`}>
-                          Open request
-                        </Link>
-                        <button
-                          className="sanctuary-ghost-button danger"
-                          type="button"
-                          disabled={preview || deleteBusyId === request.id}
-                          onClick={() => void handleDelete(request.id)}
-                        >
-                          {deleteBusyId === request.id ? <span className="btn-spinner" /> : <Trash2 size={14} />}
-                          {deleteBusyId === request.id ? "Deleting..." : "Delete"}
-                        </button>
-                      </>
-                    ) : activeSessionRequestId === request.id ? (
-                      <Link className="sanctuary-primary-button" href="/inbox">
-                        Open chat
-                      </Link>
-                    ) : submittedJoinIds.has(request.id) ? (
-                      <button className="sanctuary-ghost-button" type="button" disabled>
-                        Join request sent
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          className="sanctuary-primary-button"
-                          type="button"
-                          disabled={preview}
-                          onClick={() => setExpandedJoinId((current) => (current === request.id ? null : request.id))}
-                        >
-                          {preview ? "Sign in to join" : joinOpen ? "Cancel" : variant === "compact" ? "Join Circle" : "Interested"}
-                        </button>
-                        <Link className="sanctuary-ghost-button" href={`/requests/${request.id}`}>
-                          View details
-                          <ArrowRight size={14} />
-                        </Link>
-                      </>
-                    )}
-                  </div>
-
-                  {joinOpen ? (
-                    <div className="sanctuary-join-box">
-                      <textarea
-                        rows={2}
-                        value={joinDrafts[request.id] ?? ""}
-                        onChange={(event) => setJoinDrafts((current) => ({ ...current, [request.id]: event.target.value }))}
-                        placeholder="Add a short intro so the request owner knows why you're a fit."
-                        maxLength={220}
-                        disabled={preview || submitBusy}
-                      />
-                      <button
-                        className="sanctuary-primary-button"
-                        type="button"
-                        disabled={preview || submitBusy}
-                        onClick={() => {
-                          setJoinBusyId(request.id);
-                          void (async () => {
-                            try {
-                              const result = await submitJoinRequestAction({
-                                requestId: request.id,
-                                introMessage: joinDrafts[request.id] ?? "",
-                              });
-                              onStatus?.(result.message);
-                              if (result.ok) {
-                                setJoinDrafts((current) => ({ ...current, [request.id]: "" }));
-                                setExpandedJoinId(null);
-                                setSubmittedJoinIds((current) => new Set([...current, request.id]));
-                                router.refresh();
-                              }
-                            } catch {
-                              onStatus?.("Something went wrong. Please try again.");
-                            } finally {
-                              setJoinBusyId(null);
-                            }
-                          })();
-                        }}
-                      >
-                        {submitBusy && <span className="btn-spinner" />}
-                        {submitBusy ? "Sending..." : "Send join request"}
-                      </button>
-                    </div>
-                  ) : null}
-
-                  <div className="sanctuary-request-footnote">{formatRelativeTime(request.createdAt)}</div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      )}
-
-      {visibleFeed.length > 0 ? (
-        <div className="sanctuary-load-more">
-          <div className="sanctuary-load-line" />
-          <button type="button" className="sanctuary-load-button">
-            Explore More Requests
-          </button>
-        </div>
-      ) : null}
+            {expandedJoinId === request.id && !ownerRequestIdSet.has(request.id) ? (
+              <div className="join-box">
+                <textarea
+                  rows={2}
+                  value={joinDrafts[request.id] ?? ""}
+                  onChange={(event) =>
+                    setJoinDrafts((current) => ({ ...current, [request.id]: event.target.value }))
+                  }
+                  placeholder="Add a short intro so the request owner knows why you're a fit."
+                  maxLength={220}
+                  disabled={preview || joinBusyId === request.id}
+                />
+                <button
+                  className="primary-button compact"
+                  type="button"
+                  disabled={preview || joinBusyId === request.id}
+                  onClick={() => {
+                    setJoinBusyId(request.id);
+                    void (async () => {
+                      try {
+                        const result = await submitJoinRequestAction({
+                          requestId: request.id,
+                          introMessage: joinDrafts[request.id] ?? "",
+                        });
+                        onStatus?.(result.message);
+                        if (result.ok) {
+                          setJoinDrafts((current) => ({ ...current, [request.id]: "" }));
+                          setExpandedJoinId(null);
+                          router.refresh();
+                        }
+                      } catch {
+                        onStatus?.("Something went wrong. Please try again.");
+                      } finally {
+                        setJoinBusyId(null);
+                      }
+                    })();
+                  }}
+                >
+                  {joinBusyId === request.id ? "Sending..." : "Send join request"}
+                </button>
+              </div>
+            ) : null}
+          </article>
+        ))}
+      </div>
     </section>
   );
 }
