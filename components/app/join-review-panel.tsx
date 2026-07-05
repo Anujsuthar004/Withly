@@ -1,12 +1,62 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldAlert } from "lucide-react";
+import { Bell, MessageCircle, ShieldCheck, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { reviewJoinRequestAction } from "@/app/workspace/actions";
 import type { WorkspaceJoinReview } from "@/lib/supabase/types";
 import { formatRelativeTime } from "@/lib/utils";
+
+/* Static notification data for the redesign */
+const NOTIFICATIONS = [
+  { icon: "chat", text: "Aarav sent a message in Passport office morning run", time: "3m", unread: true },
+  { icon: "bell", text: "Mira requested to join Gallery opening with a short dinner after", time: "11m", unread: true },
+  { icon: "star", text: "Your trust score rose to 68 after a completed session", time: "2h", unread: false },
+  { icon: "shield", text: "Phone verification approved — you can now post verified-only requests", time: "1d", unread: false },
+];
+
+function NotifIcon({ type }: { type: string }) {
+  switch (type) {
+    case "chat":
+      return <MessageCircle size={17} />;
+    case "star":
+      return <Star size={17} />;
+    case "shield":
+      return <ShieldCheck size={17} />;
+    default:
+      return <Bell size={17} />;
+  }
+}
+
+function getNotifStyle(type: string) {
+  switch (type) {
+    case "chat":
+      return { color: "var(--accent2)", bg: "var(--accent-soft)" };
+    case "star":
+      return { color: "var(--gold)", bg: "rgba(224,154,79,0.14)" };
+    case "shield":
+      return { color: "var(--teal)", bg: "var(--teal-soft)" };
+    default:
+      return { color: "var(--teal)", bg: "var(--teal-soft)" };
+  }
+}
+
+function getInitials(name: string) {
+  return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+}
+
+function getGradient(name: string) {
+  const GRADIENTS = [
+    "linear-gradient(135deg,#6C7BD6,#9A6CD6)",
+    "linear-gradient(135deg,#3FA796,#2C7A6B)",
+    "linear-gradient(135deg,#E0864B,#C65D3B)",
+    "linear-gradient(135deg,#B37FE0,#8C4FC4)",
+    "linear-gradient(135deg,#D6497E,#B32E63)",
+  ];
+  const hash = [...name].reduce((sum, c) => sum + c.charCodeAt(0), 0);
+  return GRADIENTS[hash % GRADIENTS.length];
+}
 
 export function JoinReviewPanel({
   entries,
@@ -48,81 +98,97 @@ export function JoinReviewPanel({
     }
   }
 
-  if (entries.length === 0) {
-    return (
-      <section className="panel review-panel">
-      <div className="panel-heading">
-        <div>
-          <p className="kicker">Join review</p>
-          <h3>Review the people who want to join.</h3>
-        </div>
-          <span className="status-dot">
-            <ShieldAlert size={16} />
-            No pending
-          </span>
-        </div>
-        <p className="panel-intro">Replies stay in one place so you can look for alignment, clarity, and any safety signals before deciding.</p>
-        <div className="empty-card">No pending join requests right now.</div>
-      </section>
-    );
-  }
-
   return (
-    <section className="panel review-panel">
-      <div className="panel-heading">
-        <div>
-          <p className="kicker">Join Review</p>
-          <h3>Review the people who want to join.</h3>
+    <div className="wl-inbox" style={{ maxWidth: 820 }}>
+      {/* Join requests */}
+      <section>
+        <h3 className="wl-section-title">Join requests</h3>
+        <div className="wl-inbox-list">
+          {entries.length === 0 ? (
+            <div className="wl-empty-card">
+              <strong>No pending join requests</strong>
+              <span>When someone wants to join your request, it will show up here.</span>
+            </div>
+          ) : null}
+
+          {entries.map((entry) => {
+            const initials = getInitials(entry.joinerDisplayName);
+            const grad = getGradient(entry.joinerDisplayName);
+
+            return (
+              <article key={entry.id} className="wl-join-card">
+                <div className="wl-join-header">
+                  <div className="wl-join-avatar-wrap">
+                    <div className="wl-join-avatar" style={{ background: grad }}>
+                      {initials}
+                    </div>
+                    <span className="wl-active-dot" />
+                  </div>
+                  <div className="wl-join-info">
+                    <div className="wl-join-name-row">
+                      <strong>{entry.joinerDisplayName}</strong>
+                      <span className="wl-trust-pill">Trust 72</span>
+                    </div>
+                    <div className="wl-join-meta">
+                      wants to join · {entry.requestTitle} · {formatRelativeTime(entry.createdAt)}
+                    </div>
+                  </div>
+                </div>
+
+                <p className="wl-join-intro">&quot;{entry.introMessage || "No intro included."}&quot;</p>
+
+                {cardErrors[entry.id] ? (
+                  <div className="inline-error" role="alert">
+                    {cardErrors[entry.id]}
+                  </div>
+                ) : null}
+
+                <div className="wl-join-actions">
+                  <button
+                    className="wl-btn-teal"
+                    type="button"
+                    disabled={preview || busyId === entry.id}
+                    onClick={() => void handleReview(entry.id, "accepted")}
+                  >
+                    {busyId === entry.id ? "Working..." : "Accept & open chat"}
+                  </button>
+                  <button
+                    className="wl-btn-ghost"
+                    type="button"
+                    disabled={preview || busyId === entry.id}
+                    onClick={() => void handleReview(entry.id, "declined")}
+                  >
+                    {busyId === entry.id ? "Working..." : "Decline"}
+                  </button>
+                </div>
+              </article>
+            );
+          })}
         </div>
-        <span className="status-dot">
-          <ShieldAlert size={16} />
-          {entries.length} pending
-        </span>
-      </div>
-      <p className="panel-intro">Read each introduction with enough context to make a quick, confident decision without losing the thread.</p>
+      </section>
 
-      <div className="review-list">
-        {entries.map((entry) => (
-          <article key={entry.id} className="review-card">
-            <div className="summary-head">
-              <div>
-                <h4>{entry.joinerDisplayName}</h4>
-                <p>{entry.requestTitle}</p>
+      {/* Notifications */}
+      <section>
+        <h3 className="wl-section-title">Notifications</h3>
+        <div className="wl-notif-card">
+          {NOTIFICATIONS.map((n, i) => {
+            const style = getNotifStyle(n.icon);
+            return (
+              <div key={i} className={`wl-notif-row ${n.unread ? "wl-notif-unread" : ""}`}>
+                <span
+                  className="wl-notif-icon"
+                  style={{ color: style.color, background: style.bg }}
+                >
+                  <NotifIcon type={n.icon} />
+                </span>
+                <div className="wl-notif-text">{n.text}</div>
+                <span className="wl-notif-time">{n.time}</span>
+                {n.unread && <span className="wl-notif-dot" />}
               </div>
-              <span className="mini-chip">{formatRelativeTime(entry.createdAt)}</span>
-            </div>
-            <p className="review-about">{entry.joinerAboutMe || "No public bio yet."}</p>
-            <blockquote>{entry.introMessage || "No intro included."}</blockquote>
-
-            {cardErrors[entry.id] ? (
-              <div className="inline-error" role="alert">
-                {cardErrors[entry.id]}
-              </div>
-            ) : null}
-
-            <div className="button-row">
-              <button
-                className="secondary-button compact"
-                type="button"
-                disabled={preview || busyId === entry.id}
-                onClick={() => void handleReview(entry.id, "declined")}
-              >
-                {!preview && busyId === entry.id && <span className="btn-spinner" />}
-                {preview ? "Preview mode only" : busyId === entry.id ? "Working..." : "Decline"}
-              </button>
-              <button
-                className="primary-button compact"
-                type="button"
-                disabled={preview || busyId === entry.id}
-                onClick={() => void handleReview(entry.id, "accepted")}
-              >
-                {!preview && busyId === entry.id && <span className="btn-spinner" />}
-                {preview ? "Preview mode only" : busyId === entry.id ? "Working..." : "Accept"}
-              </button>
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
+            );
+          })}
+        </div>
+      </section>
+    </div>
   );
 }

@@ -1,14 +1,12 @@
 "use client";
 
 import { type ReactNode, useMemo, useState, useTransition } from "react";
-import Image from "next/image";
-import { ArrowRight, CalendarClock, CheckCircle2, MapPin, MessageCircleMore, Send, Shield, ShoppingBag, Sparkles, Users } from "lucide-react";
+import { CalendarClock, Check, CheckCircle2, MapPin, Send, ShoppingBag, MessageCircleMore, Users, Star, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { createRequestAction } from "@/app/workspace/actions";
 import { TurnstileWidget } from "@/components/turnstile-widget";
 import { TURNSTILE_SITE_KEY, hasTurnstileEnv } from "@/lib/env";
-import { referenceMedia } from "@/lib/reference-content";
 import type { RequestLane } from "@/lib/supabase/types";
 import { formatDateTime } from "@/lib/utils";
 
@@ -23,29 +21,6 @@ const defaultTags: Record<RequestLane, string[]> = {
   errand: ["structured", "on-time", "supportive"],
 };
 
-const laneCards: Array<{
-  lane: RequestLane;
-  title: string;
-  description: string;
-  icon: ReactNode;
-  tone: "soft" | "peach";
-}> = [
-  {
-    lane: "errand",
-    title: "Errand",
-    description: "Groceries, pharmacy runs, or dry cleaning pickup. Someone to handle the logistics while you stay focused.",
-    icon: <ShoppingBag size={28} />,
-    tone: "soft",
-  },
-  {
-    lane: "social",
-    title: "Social",
-    description: "Coffee chats, museum visits, or a walk in the park. Purely human connection.",
-    icon: <MessageCircleMore size={28} />,
-    tone: "peach",
-  },
-];
-
 export function RequestComposer({ preview, onStatus, statusMessage }: RequestComposerProps) {
   const router = useRouter();
   const [lane, setLane] = useState<RequestLane>("social");
@@ -59,6 +34,7 @@ export function RequestComposer({ preview, onStatus, statusMessage }: RequestCom
   const [maxCompanions, setMaxCompanions] = useState(1);
   const [verifiedOnly, setVerifiedOnly] = useState(true);
   const [checkInEnabled, setCheckInEnabled] = useState(true);
+  const [ephemeral, setEphemeral] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
   const [turnstileKey, setTurnstileKey] = useState(0);
   const [isPending, startTransition] = useTransition();
@@ -77,129 +53,81 @@ export function RequestComposer({ preview, onStatus, statusMessage }: RequestCom
   const captchaReady = !hasTurnstileEnv || Boolean(captchaToken);
   const canSubmit = basicsReady && logisticsReady && captchaReady;
 
-  const progress = [
-    true,
-    basicsReady,
-    basicsReady && logisticsReady,
+  const checklist = [
+    { label: "Title added", done: title.trim().length >= 6 },
+    { label: "Description looks good", done: description.trim().length >= 24 },
+    { label: "Area helps matching", done: areaLabel.trim().length >= 3 },
+    { label: "Tags help matching", done: parsedTags.length >= 2 },
   ];
 
   return (
-    <div className="composer-reference-shell">
-      <div className="composer-reference-main">
-        <div className="composer-progress">
-          {progress.map((complete, index) => (
-            <span key={index} className={complete ? "active" : ""} />
-          ))}
-        </div>
+    <div className="wl-compose-grid">
+      {/* ─── Left column: Form ─── */}
+      <div className="wl-compose-col">
+        <div className="wl-compose-card">
+          <div>
+            <span className="wl-compose-step">Step 1 of 3 — Compose</span>
+            <h2 className="wl-compose-title">Post a request</h2>
+          </div>
 
-        <form
-          className="composer-reference-form"
-          onSubmit={(event) => {
-            event.preventDefault();
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
 
-            startTransition(async () => {
-              const result = await createRequestAction({
-                lane,
-                title,
-                description,
-                areaLabel,
-                meetupAt: meetupAt || null,
-                radiusKm,
-                tags: parsedTags,
-                verifiedOnly,
-                checkInEnabled,
-                maxCompanions,
-                expiresAt: expiresAt || undefined,
-                captchaToken,
+              startTransition(async () => {
+                const result = await createRequestAction({
+                  lane,
+                  title,
+                  description,
+                  areaLabel,
+                  meetupAt: meetupAt || null,
+                  radiusKm,
+                  tags: parsedTags,
+                  verifiedOnly,
+                  checkInEnabled,
+                  maxCompanions,
+                  expiresAt: expiresAt || undefined,
+                  captchaToken,
+                });
+
+                onStatus(result.message);
+                if (!result.ok) {
+                  setCaptchaToken("");
+                  setTurnstileKey((current) => current + 1);
+                  return;
+                }
+
+                router.push("/requests");
               });
-
-              onStatus(result.message);
-              if (!result.ok) {
-                setCaptchaToken("");
-                setTurnstileKey((current) => current + 1);
-                return;
-              }
-
-              router.push("/requests");
-            });
-          }}
-        >
-          <section className="composer-stage">
-            <div className="composer-stage-head">
-              <div>
-                <h2>1. Choose a Category</h2>
-                <p>Define the nature of your request to find the right companion.</p>
-              </div>
-            </div>
-
-            <div className="composer-category-grid">
-              {laneCards.map((option) => {
-                const active = option.lane === lane;
-
-                return (
-                  <button
-                    key={option.lane}
-                    type="button"
-                    className={`composer-category-card tone-${option.tone} ${active ? "active" : ""}`}
-                    onClick={() => {
-                      setLane(option.lane);
-                      setTags(defaultTags[option.lane].join(", "));
-                    }}
-                  >
-                    <span className="composer-category-icon">{option.icon}</span>
-                    <strong>{option.title}</strong>
-                    <p>{option.description}</p>
-                    <span className="composer-category-link">
-                      {active ? "Selected" : "Select Category"}
-                      <ArrowRight size={16} />
-                    </span>
-                  </button>
-                );
-              })}
-
+            }}
+          >
+            {/* Lane switch */}
+            <div className="wl-lane-switch">
               <button
                 type="button"
-                className="composer-category-card composer-category-card--wide"
-                onClick={() => document.getElementById("request-title-field")?.focus()}
+                className={`wl-lane-btn ${lane === "social" ? "active" : ""}`}
+                onClick={() => { setLane("social"); setTags(defaultTags.social.join(", ")); }}
               >
-                <div className="composer-category-wide-icon">
-                  <Sparkles size={22} />
-                </div>
-                <div>
-                  <strong>Custom Request</strong>
-                  <p>Something unique that doesn&apos;t fit a standard box.</p>
-                </div>
-                <ArrowRight size={16} />
+                🎟 Social plus-one
+              </button>
+              <button
+                type="button"
+                className={`wl-lane-btn ${lane === "errand" ? "active" : ""}`}
+                onClick={() => { setLane("errand"); setTags(defaultTags.errand.join(", ")); }}
+              >
+                🧺 Errand companion
               </button>
             </div>
 
-            <div className="composer-stage-actions">
-              <button type="button" className="composer-text-button" onClick={() => router.push("/feed")}>
-                Cancel
-              </button>
-              <span className="composer-inline-note">
-                {basicsReady ? "Task details ready to refine." : "Choose a category, then name the plan clearly."}
-              </span>
-            </div>
-          </section>
-
-          <section className={`composer-stage ${basicsReady ? "ready" : "muted"}`}>
-            <div className="composer-stage-head">
-              <div>
-                <h2>2. Task Details</h2>
-                <p>Share just enough context for the right companion to recognize the fit quickly.</p>
-              </div>
-            </div>
-
-            <div className="composer-underlines">
-              <label className="composer-line-field composer-line-field--full">
-                <span>What are we doing?</span>
+            {/* Fields */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 20 }}>
+              <label className="wl-compose-field">
+                Title
                 <input
-                  id="request-title-field"
                   type="text"
                   value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  placeholder={lane === "social" ? "e.g. New exhibit at SFMOMA" : "e.g. Weekly grocery run at the local market"}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder={lane === "social" ? "e.g. New exhibit at the museum" : "e.g. Weekly grocery run"}
                   minLength={6}
                   maxLength={120}
                   required
@@ -207,12 +135,12 @@ export function RequestComposer({ preview, onStatus, statusMessage }: RequestCom
                 />
               </label>
 
-              <label className="composer-line-field composer-line-field--full">
-                <span>Describe the tone</span>
+              <label className="wl-compose-field">
+                Description
                 <textarea
                   value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  placeholder="What should the other person know about the pace, intent, and kind of presence that would help?"
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="What should the companion know about the pace, intent, and kind of presence that would help?"
                   minLength={24}
                   maxLength={600}
                   rows={4}
@@ -221,211 +149,145 @@ export function RequestComposer({ preview, onStatus, statusMessage }: RequestCom
                 />
               </label>
 
-              <div className="composer-two-up">
-                <label className="composer-line-field">
-                  <span>Where</span>
-                  <div className="composer-line-input">
-                    <MapPin size={16} />
-                    <input
-                      type="text"
-                      value={areaLabel}
-                      onChange={(event) => setAreaLabel(event.target.value)}
-                      placeholder="Select location"
-                      minLength={3}
-                      maxLength={120}
-                      required
-                      disabled={preview || isPending}
-                    />
-                  </div>
+              <div className="wl-compose-two">
+                <label className="wl-compose-field">
+                  Area / Neighborhood
+                  <input
+                    type="text"
+                    value={areaLabel}
+                    onChange={(e) => setAreaLabel(e.target.value)}
+                    placeholder="e.g. Lower Parel"
+                    minLength={3}
+                    maxLength={120}
+                    required
+                    disabled={preview || isPending}
+                  />
                 </label>
-
-                <label className="composer-line-field">
-                  <span>When</span>
-                  <div className="composer-line-input">
-                    <CalendarClock size={16} />
-                    <input
-                      type="datetime-local"
-                      value={meetupAt}
-                      onChange={(event) => setMeetupAt(event.target.value)}
-                      disabled={preview || isPending}
-                    />
-                  </div>
+                <label className="wl-compose-field">
+                  Tags
+                  <input
+                    type="text"
+                    value={tags}
+                    onChange={(e) => setTags(e.target.value)}
+                    placeholder="comma, separated, tags"
+                    disabled={preview || isPending}
+                  />
                 </label>
               </div>
-            </div>
-          </section>
 
-          <section className={`composer-stage ${logisticsReady ? "ready" : "muted"}`}>
-            <div className="composer-stage-head">
-              <div>
-                <h2>3. Intent &amp; Preferences</h2>
-                <p>Set expectations, safety defaults, and a few lightweight discovery signals.</p>
-              </div>
-            </div>
-
-            <div className="composer-preference-grid">
-              <label className={`composer-preference-card ${verifiedOnly ? "active" : ""}`}>
-                <input
-                  type="checkbox"
-                  checked={verifiedOnly}
-                  onChange={(event) => setVerifiedOnly(event.target.checked)}
-                  disabled={preview || isPending}
-                />
-                <div className="composer-preference-icon">
-                  <Shield size={18} />
-                </div>
-                <div>
-                  <strong>Verified responses only</strong>
-                  <p>Keep replies limited to companions with stronger trust signals.</p>
-                </div>
-              </label>
-
-              <label className={`composer-preference-card ${checkInEnabled ? "active" : ""}`}>
-                <input
-                  type="checkbox"
-                  checked={checkInEnabled}
-                  onChange={(event) => setCheckInEnabled(event.target.checked)}
-                  disabled={preview || isPending}
-                />
-                <div className="composer-preference-icon">
-                  <Sparkles size={18} />
-                </div>
-                <div>
-                  <strong>Live safety check-ins</strong>
-                  <p>Keep arrival and SOS tools ready once the request turns into an active plan.</p>
-                </div>
-              </label>
-            </div>
-
-            <div className="composer-advanced-grid">
-              <label className="composer-line-field">
-                <span>Max companions</span>
-                <div className="composer-line-input">
-                  <Users size={16} />
+              <div className="wl-compose-two">
+                <label className="wl-compose-field">
+                  When
+                  <input
+                    type="datetime-local"
+                    value={meetupAt}
+                    onChange={(e) => setMeetupAt(e.target.value)}
+                    disabled={preview || isPending}
+                  />
+                </label>
+                <label className="wl-compose-field">
+                  Max companions
                   <input
                     type="number"
                     min={1}
                     max={10}
                     value={maxCompanions}
-                    onChange={(event) => setMaxCompanions(Number(event.target.value))}
+                    onChange={(e) => setMaxCompanions(Number(e.target.value))}
                     disabled={preview || isPending}
                   />
-                </div>
-              </label>
+                </label>
+              </div>
+            </div>
 
-              <label className="composer-line-field">
-                <span>Auto-expire at</span>
-                <div className="composer-line-input">
-                  <CalendarClock size={16} />
-                  <input
-                    type="datetime-local"
-                    value={expiresAt}
-                    onChange={(event) => setExpiresAt(event.target.value)}
-                    disabled={preview || isPending}
-                  />
+            {/* Toggles */}
+            <div className="wl-toggle-panel" style={{ marginTop: 20 }}>
+              <div className="wl-toggle-row" onClick={() => setVerifiedOnly((c) => !c)}>
+                <div className="wl-toggle-copy">
+                  <strong>Verified members only</strong>
+                  <small>Only ID-verified companions can respond</small>
                 </div>
-              </label>
-
-              <label className="composer-line-field">
-                <span>Discovery radius</span>
-                <div className="composer-range-wrap">
-                  <input
-                    type="range"
-                    min={1}
-                    max={25}
-                    value={radiusKm}
-                    onChange={(event) => setRadiusKm(Number(event.target.value))}
-                    disabled={preview || isPending}
-                  />
-                  <strong>{radiusKm} km</strong>
+                <div className={`wl-toggle-track ${verifiedOnly ? "on" : "off"}`}>
+                  <span className="wl-toggle-knob" />
                 </div>
-              </label>
-
-              <label className="composer-line-field">
-                <span>Tags</span>
-                <input
-                  type="text"
-                  value={tags}
-                  onChange={(event) => setTags(event.target.value)}
-                  placeholder="comma, separated, tags"
-                  disabled={preview || isPending}
-                />
-              </label>
+              </div>
+              <div className="wl-toggle-divider" />
+              <div className="wl-toggle-row" onClick={() => setEphemeral((c) => !c)}>
+                <div className="wl-toggle-copy">
+                  <strong>Ephemeral</strong>
+                  <small>Auto-expire after a few hours</small>
+                </div>
+                <div className={`wl-toggle-track ${ephemeral ? "on" : "off"}`}>
+                  <span className="wl-toggle-knob" />
+                </div>
+              </div>
             </div>
 
             {hasTurnstileEnv ? (
-              <div className="composer-captcha-wrap">
+              <div style={{ marginTop: 16 }}>
                 <TurnstileWidget key={turnstileKey} siteKey={TURNSTILE_SITE_KEY} onToken={setCaptchaToken} theme="light" />
               </div>
             ) : null}
-          </section>
 
-          {statusMessage && <p className="composer-submit-status">{statusMessage}</p>}
-          <div className="composer-submit-row">
-            <div className="composer-submit-note">
-              <CheckCircle2 size={16} />
-              <span>
-                {preview
-                  ? "Preview mode is on. Sign in to publish."
-                  : canSubmit
-                    ? "Ready to publish."
-                    : basicsReady && logisticsReady && !captchaReady
-                      ? "Complete the security check to publish."
-                      : "Add a stronger title, description, and area before publishing."}
-              </span>
+            {statusMessage && <p style={{ marginTop: 8, color: "var(--accent2)", fontWeight: 600, fontSize: 14 }}>{statusMessage}</p>}
+
+            <div className="wl-compose-actions" style={{ marginTop: 20 }}>
+              <button type="button" className="wl-btn-ghost" onClick={() => router.push("/feed")}>
+                Save draft
+              </button>
+              <button className="wl-btn-gradient" type="submit" disabled={preview || isPending || !canSubmit} style={{ flex: 1 }}>
+                {preview ? "Preview mode only" : isPending ? "Posting..." : "Publish request"}
+              </button>
             </div>
-            <button className="composer-submit-button" type="submit" disabled={preview || isPending || !canSubmit}>
-              {!preview && isPending ? <span className="btn-spinner" /> : <Send size={16} />}
-              {preview ? "Preview mode only" : isPending ? "Posting..." : "Post Request"}
-            </button>
-          </div>
-
-          <button className="composer-floating-submit" type="submit" disabled={preview || isPending || !canSubmit} aria-label="Post request">
-            {isPending ? <span className="btn-spinner btn-spinner--lg" /> : <Send size={24} />}
-          </button>
-        </form>
+          </form>
+        </div>
       </div>
 
-      <aside className="composer-reference-side">
-        <div className="composer-side-card">
-          <h3>Why Withly?</h3>
-          <p>Clear requests lead to calmer replies. Thoughtful details help the right person recognize the fit quickly.</p>
+      {/* ─── Right rail: Preview + Checklist ─── */}
+      <aside className="wl-compose-rail">
+        <span className="wl-preview-label">Live preview</span>
+
+        {/* Preview card mimicking the real card */}
+        <div className="wl-card">
+          <div
+            className="wl-card-bar"
+            style={{
+              background: lane === "social"
+                ? "linear-gradient(90deg, var(--accent), var(--gold))"
+                : "linear-gradient(90deg, var(--teal), #4FC4A8)"
+            }}
+          />
+          <div className="wl-card-body">
+            <div className="wl-card-meta-line">
+              <span>{lane === "social" ? "Social plus-one" : "Errand companion"}</span>
+              <span className="wl-meta-dot" />
+              <span>just now</span>
+            </div>
+            <h4 className="wl-card-title">{title.trim() || "Your request title"}</h4>
+            <p className="wl-card-desc">{description.trim() || "Add a description to preview how it'll appear in the feed."}</p>
+            <div className="wl-card-chips">
+              {areaLabel.trim() && (
+                <span className="wl-meta-chip">
+                  <MapPin size={12} />
+                  {areaLabel}
+                </span>
+              )}
+              {parsedTags.slice(0, 3).map((tag) => (
+                <span key={tag} className="wl-tag-chip">#{tag}</span>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="composer-side-image">
-          <Image src={referenceMedia.homeArtwork[2]} alt="Intentional quiet planning scene" fill sizes="(max-width: 1280px) 100vw, 280px" />
-          <div className="composer-side-image-copy">
-            <span>Atmosphere</span>
-            <strong>Intentional Quietude</strong>
-          </div>
-        </div>
-
-        <div className="composer-preview-card">
-          <div className="composer-preview-head">
-            <span>{lane === "social" ? "Social" : "Errand"}</span>
-            <span>{formatDateTime(meetupAt || null)}</span>
-          </div>
-          <h3>{title.trim() || "Your request title will appear here."}</h3>
-          <p>{description.trim() || "A calm, specific description helps the right companion recognize the fit quickly."}</p>
-          <dl className="composer-preview-details">
-            <div>
-              <dt>Where</dt>
-              <dd>{areaLabel.trim() || "Choose a neighborhood or landmark"}</dd>
+        {/* Checklist */}
+        <div className="wl-checklist">
+          {checklist.map((item) => (
+            <div key={item.label} className={`wl-checklist-item ${item.done ? "done" : "pending"}`}>
+              <span className="wl-checklist-dot">
+                <Check size={11} />
+              </span>
+              {item.label}
             </div>
-            <div>
-              <dt>Radius</dt>
-              <dd>{radiusKm} km</dd>
-            </div>
-            <div>
-              <dt>Companions</dt>
-              <dd>{maxCompanions === 1 ? "1-on-1" : `Up to ${maxCompanions}`}</dd>
-            </div>
-          </dl>
-          <div className="composer-preview-tags">
-            {parsedTags.slice(0, 4).map((tag) => (
-              <span key={tag}>{tag}</span>
-            ))}
-          </div>
+          ))}
         </div>
       </aside>
     </div>

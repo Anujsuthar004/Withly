@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useEffectEvent, useMemo, useRef, useState, useTransition } from "react";
-import Image from "next/image";
-import { Paperclip, SendHorizontal, Smile, WifiOff } from "lucide-react";
+import { Send, WifiOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { sendMessageAction } from "@/app/workspace/actions";
 import { hasSupabaseEnv } from "@/lib/env";
-import { getFeedPerson, getInitials } from "@/lib/reference-content";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { SessionMessage } from "@/lib/supabase/types";
 import { formatRelativeTime } from "@/lib/utils";
@@ -17,11 +15,6 @@ interface ChatRoomProps {
   currentUserId: string;
   initialMessages: SessionMessage[];
   onStatus: (message: string) => void;
-}
-
-function getAvatarForName(name: string) {
-  const hash = [...name].reduce((sum, letter) => sum + letter.charCodeAt(0), 0);
-  return getFeedPerson(hash);
 }
 
 export function ChatRoom({ requestId, currentUserId, initialMessages, onStatus }: ChatRoomProps) {
@@ -109,74 +102,44 @@ export function ChatRoom({ requestId, currentUserId, initialMessages, onStatus }
     };
   }, [requestId]);
 
-  const participantChips = useMemo(() => {
-    const names = Array.from(
-      new Set(messages.filter((message) => message.senderType === "user").map((message) => message.senderName))
-    ).slice(0, 3);
-
-    return names.length > 0 ? names : ["You"];
-  }, [messages]);
-
   return (
-    <div className="workspace-chat-shell">
-      <div className="workspace-chat-top">
-        <div className="workspace-chat-participants">
-          {participantChips.map((name) => (
-            <span key={name} className="workspace-chat-participant">
-              {getInitials(name)}
-            </span>
-          ))}
-        </div>
-        <span className="workspace-chat-count">{participantChips.length} companions active</span>
-      </div>
-
+    <>
       {isDisconnected ? (
-        <div className="workspace-chat-banner" role="status" aria-live="polite">
+        <div className="wl-chat-banner" role="status" aria-live="polite">
           <WifiOff size={14} />
           Live updates paused. Reload the page to reconnect.
         </div>
       ) : null}
 
-      <div ref={scrollRef} className="workspace-chat-thread">
-        {messages.length === 0 ? <div className="workspace-chat-empty">No messages yet. Confirm the exact landmark and share your ETA here.</div> : null}
+      {/* Thread */}
+      <div ref={scrollRef} className="wl-chat-thread">
+        {messages.length === 0 ? (
+          <div className="wl-chat-empty">No messages yet. Confirm the exact landmark and share your ETA here.</div>
+        ) : null}
 
         {messages.map((message) => {
-          if (message.senderType === "system") {
-            return (
-              <div key={message.id} className="workspace-chat-system">
-                <span>{message.body}</span>
-              </div>
-            );
-          }
-
           const isSelf = message.senderId === currentUserId;
+          const isSystem = message.senderType === "system";
 
           return (
-            <article key={message.id} className={`workspace-chat-message ${isSelf ? "self" : ""}`}>
-              {!isSelf ? (
-                <span className="workspace-chat-avatar">
-                  <Image src={getAvatarForName(message.senderName)} alt={message.senderName} fill sizes="40px" />
-                </span>
-              ) : (
-                <span className="workspace-chat-you">YOU</span>
-              )}
-
-              <div className="workspace-chat-bubble-wrap">
-                <div className="workspace-chat-bubble">
-                  <p>{message.body}</p>
-                </div>
-                <div className="workspace-chat-meta">
-                  <span>{message.senderName}</span>
-                  <span>{formatRelativeTime(message.createdAt)}</span>
-                </div>
+            <div
+              key={message.id}
+              className={`wl-bubble-wrap ${isSelf ? "wl-bubble-self" : ""} ${isSystem ? "wl-bubble-system" : ""}`}
+            >
+              <div className={`wl-bubble ${isSelf ? "wl-bubble-me" : isSystem ? "wl-bubble-sys" : "wl-bubble-them"}`}>
+                {message.body}
               </div>
-            </article>
+              <span className={`wl-bubble-meta ${isSelf ? "wl-meta-right" : ""}`}>
+                {isSystem ? "System" : message.senderName} · {formatRelativeTime(message.createdAt)}
+              </span>
+            </div>
           );
         })}
       </div>
 
+      {/* Composer */}
       <form
-        className="workspace-chat-form"
+        className="wl-chat-composer"
         onSubmit={(event) => {
           event.preventDefault();
 
@@ -199,23 +162,19 @@ export function ChatRoom({ requestId, currentUserId, initialMessages, onStatus }
         <input
           type="text"
           value={body}
-          onChange={(event) => setBody(event.target.value)}
-          placeholder="Type a message or drop a file..."
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="Message…"
           maxLength={700}
           disabled={isPending}
         />
-        <div className="workspace-chat-form-actions">
-          <button type="button" aria-label="Attach file" disabled>
-            <Paperclip size={16} />
-          </button>
-          <button type="button" aria-label="Add emoji" disabled>
-            <Smile size={16} />
-          </button>
-          <button type="submit" className="workspace-chat-send" disabled={isPending || body.trim().length === 0}>
-            {isPending ? <span className="btn-spinner" /> : <SendHorizontal size={16} />}
-          </button>
-        </div>
+        <button
+          type="submit"
+          className="wl-send-btn"
+          disabled={isPending || body.trim().length === 0}
+        >
+          <Send size={19} />
+        </button>
       </form>
-    </div>
+    </>
   );
 }
