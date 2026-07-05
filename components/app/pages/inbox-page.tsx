@@ -74,7 +74,7 @@ export function InboxPage({
         <div className="workspace-main">
           <section id="active-session">
             {snapshot.activeSession ? (
-              <SessionPanel session={snapshot.activeSession} currentUserId={snapshot.profile.id} onStatus={setStatus} embedded />
+              <SessionPanel session={snapshot.activeSession} currentUserId={snapshot.profile.id} onStatus={setStatus} />
             ) : (
               <section className="panel sanctuary-panel">
                 <div className="panel-heading">

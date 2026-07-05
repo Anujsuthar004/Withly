@@ -32,12 +32,7 @@ export default async function FeedPage() {
           {feedError}
         </section>
       ) : (
-        <FeedList
-          feed={feed}
-          preview={preview}
-          ownerRequestIds={ownerRequestIds}
-          activeSessionRequestId={snapshot.activeSession?.requestId ?? null}
-        />
+        <FeedList feed={feed} preview={preview} ownerRequestIds={ownerRequestIds} />
       )}
     </div>
   );
