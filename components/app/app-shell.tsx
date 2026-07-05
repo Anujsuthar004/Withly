@@ -101,10 +101,12 @@ export function AppShell({
       <aside className="app-sidebar" aria-label="Primary">
         <div className="app-sidebar-top">
           <Link href="/feed" className="app-brand">
-            <Image src="/tagalong-app-icon.svg" alt="Tag Along Logo" width={20} height={20} />
+            <span className="app-brand-logo" aria-hidden>
+              <Image src="/withly-logo.svg" alt="" width={24} height={24} />
+            </span>
             <span className="app-brand-copy">
-              <strong>Tag Along</strong>
-              <small>Private companionship workspace</small>
+              <strong>Withly</strong>
+              <small>Go together</small>
             </span>
           </Link>
 
@@ -148,6 +150,13 @@ export function AppShell({
         </nav>
 
         <div className="app-nav-footer">
+          <div className="app-user-rail">
+            <ProfileAvatar name={profileName} url={profileAvatarUrl} size="sm" />
+            <div className="app-user-rail-copy">
+              <strong>{profileName}</strong>
+              <small>{showAdmin ? "Admin account" : "Verified member"}</small>
+            </div>
+          </div>
           <SignOutButton />
         </div>
       </aside>
@@ -156,8 +165,10 @@ export function AppShell({
         <header className="app-topbar">
           <div className="app-topbar-title">
             <Link href="/feed" className="app-topbar-brand">
-              <Image src="/tagalong-app-icon.svg" alt="Tag Along Logo" width={20} height={20} />
-              Tag Along
+              <span className="app-brand-logo" aria-hidden>
+                <Image src="/withly-logo.svg" alt="" width={22} height={22} />
+              </span>
+              Withly
             </Link>
             <span className="kicker">{activeItem?.label ?? (showAdmin ? "Admin enabled" : "Member account")}</span>
             <strong>{showAdmin ? "Admin enabled" : "Member account"}</strong>

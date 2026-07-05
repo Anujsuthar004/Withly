@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { Clock, Compass, ShieldAlert, ShieldCheck, Star, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -233,6 +233,17 @@ export function FeedList({
                   </span>
                 ) : null}
                 <span className="mini-chip">{formatRelativeTime(request.createdAt)}</span>
+                {request.compatibilityScore !== null ? (
+                  <div className="wl-match" title="Companion compatibility">
+                    <div
+                      className="wl-match-ring"
+                      style={{ "--match": `${request.compatibilityScore}%` } as CSSProperties}
+                    >
+                      <span>{request.compatibilityScore}</span>
+                    </div>
+                    <div className="wl-match-label">Match</div>
+                  </div>
+                ) : null}
               </div>
             </div>
 
