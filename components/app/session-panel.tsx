@@ -2,13 +2,12 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { HeartHandshake, MessageCircleMore, ShieldAlert } from "lucide-react";
+import { AlertTriangle, ShieldCheck } from "lucide-react";
 
 import { submitCheckInAction, triggerSosAction } from "@/app/workspace/actions";
 import { ChatRoom } from "@/components/chat-room";
 import type { WorkspaceSession } from "@/lib/supabase/types";
 import { SUPPORT_EMAIL } from "@/lib/env";
-import { formatDateTime } from "@/lib/utils";
 
 export function SessionPanel({
   session,
@@ -19,57 +18,72 @@ export function SessionPanel({
   currentUserId: string;
   onStatus: (message: string) => void;
 }) {
+  const [sos, setSos] = useState(false);
+
   return (
-    <section className="panel session-panel">
-      <div className="panel-heading">
-        <div>
-          <p className="kicker">Session</p>
-          <h3>Chat for confirmed plans.</h3>
+    <div className="wl-session" style={{ maxWidth: 820 }}>
+      {/* SOS banner */}
+      {sos && (
+        <div className="wl-sos-banner">
+          <AlertTriangle size={22} />
+          <div className="wl-sos-body">
+            <strong>SOS sent to your emergency contact</strong>
+            <div>Your live location was shared. Stay on the line.</div>
+          </div>
+          <button type="button" className="wl-sos-cancel" onClick={() => setSos(false)}>
+            Cancel
+          </button>
         </div>
-        <span className="status-dot">
-          <MessageCircleMore size={16} />
-          Live chat
-        </span>
-      </div>
-      <p className="panel-intro">Once a plan is confirmed, keep the details, updates, and safety check-ins in one private thread.</p>
+      )}
 
-      <div className="summary-callout summary-callout-teal">
-        <p>Keep first meetups in public places, confirm an exact landmark in chat, and reach out quickly if you need moderation help.</p>
-        <div className="summary-callout-actions">
-          <a className="ghost-button compact" href={`mailto:${SUPPORT_EMAIL}`}>
-            Email support
-          </a>
+      {/* Chat card */}
+      <div className="wl-chat-card">
+        {/* Header */}
+        <div className="wl-chat-header">
+          <div className="wl-chat-partner">
+            <div className="wl-chat-partner-avatar">
+              <div className="wl-chat-avatar-circle" style={{ background: "linear-gradient(135deg,#3FA796,#2C7A6B)" }}>
+                {session.partnerDisplayName?.[0]?.toUpperCase() ?? "?"}
+              </div>
+              <span className="wl-active-dot" />
+            </div>
+            <div className="wl-chat-partner-info">
+              <strong>{session.partnerDisplayName}</strong>
+              <div>{session.requestTitle} · {session.areaLabel}</div>
+            </div>
+          </div>
+          <span className="wl-matched-pill">Matched</span>
         </div>
+
+        {/* Check-in row */}
+        <SessionSafetyActions session={session} onStatus={onStatus} onSos={() => setSos(true)} />
+
+        {/* Chat room */}
+        <ChatRoom
+          requestId={session.requestId}
+          currentUserId={currentUserId}
+          initialMessages={session.messages}
+          onStatus={onStatus}
+        />
       </div>
-
-      <div className="session-summary">
-        <div>
-          <h4>{session.requestTitle}</h4>
-          <p>
-            {session.partnerDisplayName} • {session.areaLabel} • {formatDateTime(session.meetupAt)}
-          </p>
-        </div>
-        <Link className="ghost-button compact" href={`/requests/${session.requestId}`}>
-          View request
-        </Link>
-      </div>
-
-      <SessionSafetyActions session={session} onStatus={onStatus} />
-
-      <ChatRoom
-        requestId={session.requestId}
-        currentUserId={currentUserId}
-        initialMessages={session.messages}
-        onStatus={onStatus}
-      />
-    </section>
+    </div>
   );
 }
 
-function SessionSafetyActions({ session, onStatus }: { session: WorkspaceSession; onStatus: (msg: string) => void }) {
+function SessionSafetyActions({
+  session,
+  onStatus,
+  onSos,
+}: {
+  session: WorkspaceSession;
+  onStatus: (msg: string) => void;
+  onSos: () => void;
+}) {
   const [isPending, startTransition] = useTransition();
+  const [activeCheck, setActiveCheck] = useState<string | null>(null);
 
   function handleCheckIn(status: "ok" | "delayed" | "help") {
+    setActiveCheck(status);
     startTransition(async () => {
       const formData = new FormData();
       formData.set("requestId", session.requestId);
@@ -87,7 +101,7 @@ function SessionSafetyActions({ session, onStatus }: { session: WorkspaceSession
 
   function handleSos() {
     if (!confirm("Are you sure you want to trigger an SOS? This notifies your emergency contact.")) return;
-    
+
     startTransition(async () => {
       const formData = new FormData();
       formData.set("requestId", session.requestId);
@@ -96,35 +110,42 @@ function SessionSafetyActions({ session, onStatus }: { session: WorkspaceSession
       try {
         const result = await triggerSosAction({ ok: false, message: "" }, formData);
         onStatus(result.message);
+        onSos();
       } catch {
         onStatus("Failed to trigger SOS.");
       }
     });
   }
 
+  const checks = [
+    { key: "ok", label: "I'm OK" },
+    { key: "delayed", label: "Running late" },
+    { key: "help", label: "Need help" },
+  ] as const;
+
   return (
-    <div className="summary-callout" style={{ marginBottom: "1.5rem", padding: "1rem" }}>
-      <p style={{ margin: "0 0 0.5rem 0", fontWeight: "bold" }}>Safety Actions</p>
-      <div className="button-row">
-        {session.checkInEnabled && (
-          <button 
-            type="button" 
-            className="secondary-button compact" 
-            onClick={() => handleCheckIn("ok")}
-            disabled={isPending}
-          >
-            <HeartHandshake size={14} /> Send I&apos;m OK
-          </button>
-        )}
-        <button 
-          type="button" 
-          className="danger-button compact primary-button" 
-          onClick={handleSos}
+    <div className="wl-checkin-row">
+      <span className="wl-checkin-label">Check-in:</span>
+      {checks.map((c) => (
+        <button
+          key={c.key}
+          type="button"
+          className={`wl-checkin-pill ${activeCheck === c.key ? "active" : ""}`}
+          onClick={() => handleCheckIn(c.key)}
           disabled={isPending}
         >
-          <ShieldAlert size={14} /> Trigger SOS
+          {c.label}
         </button>
-      </div>
+      ))}
+      <button
+        type="button"
+        className="wl-sos-btn"
+        onClick={handleSos}
+        disabled={isPending}
+      >
+        <AlertTriangle size={13} />
+        SOS
+      </button>
     </div>
   );
 }
