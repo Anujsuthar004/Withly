@@ -29,9 +29,9 @@ export const metadata: Metadata = {
     follow: true,
   },
   icons: {
-    icon: "/withly-app-icon.svg",
-    shortcut: "/withly-app-icon.svg",
-    apple: "/withly-app-icon.svg",
+    icon: "/withly-logo.svg?v=2",
+    shortcut: "/withly-logo.svg?v=2",
+    apple: "/withly-logo.svg?v=2",
   },
   manifest: "/manifest.json",
   openGraph: {
