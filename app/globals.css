@@ -2873,8 +2873,7 @@ main {
 /* Sanctuary Reference Pass */
 
 :root {
-  --font-body: "Inter", "Avenir Next", "Segoe UI", sans-serif;
-  --font-heading: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+
   --bg: #fff9ee;
   --bg-strong: #faf3e7;
   --panel: rgba(250, 243, 231, 0.94);
