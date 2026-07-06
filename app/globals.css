@@ -5,11 +5,11 @@
   --bg: #faf6ef;
   --bg2: #f3ece0;
   --bg-strong: #f3ece0;
-  --surface: #ffffff;
-  --surface2: #f7f2ea;
-  --panel: #ffffff;
-  --panel-strong: #ffffff;
-  --card: #ffffff;
+  --surface: rgba(255, 255, 255, 0.4);
+  --surface2: rgba(255, 255, 255, 0.2);
+  --panel: rgba(255, 255, 255, 0.4);
+  --panel-strong: rgba(255, 255, 255, 0.6);
+  --card: rgba(255, 255, 255, 0.4);
   --ink: #1c1917;
   --ink2: #57534e;
   --text: #1c1917;
@@ -24,12 +24,14 @@
   --teal: #0b7a66;
   --teal-soft: rgba(11, 122, 102, 0.12);
   --gold: #e09a4f;
-  --nav: #181410;
+  --nav: rgba(24, 20, 16, 0.6);
   --navink: #ede7de;
   --barbg: rgba(250, 246, 239, 0.72);
   --shadow: 0 16px 38px rgba(28, 25, 23, 0.09);
   --shadow-strong: 0 24px 50px rgba(28, 25, 23, 0.14);
   --shadowHi: 0 24px 50px rgba(28, 25, 23, 0.14);
+  --glass-edge: rgba(255, 255, 255, 0.6);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
   --radius-xl: 24px;
   --radius-lg: 20px;
   --radius-md: 16px;
@@ -39,11 +41,11 @@
   --bg: #0e0d0c;
   --bg2: #151311;
   --bg-strong: #151311;
-  --surface: #1a1714;
-  --surface2: #211d19;
-  --panel: #1a1714;
-  --panel-strong: #1a1714;
-  --card: #1a1714;
+  --surface: rgba(26, 23, 20, 0.4);
+  --surface2: rgba(26, 23, 20, 0.2);
+  --panel: rgba(26, 23, 20, 0.4);
+  --panel-strong: rgba(26, 23, 20, 0.6);
+  --card: rgba(26, 23, 20, 0.4);
   --ink: #f5f0e8;
   --ink2: #b8b0a5;
   --text: #f5f0e8;
@@ -58,12 +60,14 @@
   --teal: #2fb79a;
   --teal-soft: rgba(47, 183, 154, 0.18);
   --gold: #f0a868;
-  --nav: #0a0908;
+  --nav: rgba(10, 9, 8, 0.6);
   --navink: #ede7de;
   --barbg: rgba(14, 13, 12, 0.72);
   --shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
   --shadow-strong: 0 24px 55px rgba(0, 0, 0, 0.6);
   --shadowHi: 0 24px 55px rgba(0, 0, 0, 0.6);
+  --glass-edge: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
 }
 
 * {
@@ -112,13 +116,13 @@ body::after {
 body::before {
   top: -170px;
   right: -160px;
-  background: rgba(198, 93, 59, 0.06);
+  background: rgba(198, 93, 59, 0.4);
 }
 
 body::after {
   left: -180px;
   bottom: -140px;
-  background: rgba(11, 122, 102, 0.05);
+  background: rgba(11, 122, 102, 0.4);
 }
 
 a {
@@ -2698,10 +2702,10 @@ main {
     gap: 8px;
     padding: 10px;
     border-radius: 22px;
-    background: rgba(255, 255, 255, 0.84);
-    border: 1px solid rgba(21, 35, 50, 0.1);
-    box-shadow: 0 18px 50px rgba(20, 44, 66, 0.18);
-    backdrop-filter: blur(16px);
+    background: var(--surface);
+    border: 1px solid var(--glass-edge);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(24px) saturate(180%);
   }
 
   .app-bottom-link {
@@ -5450,7 +5454,7 @@ body::after {
   --teal: #2fb79a;
   --teal-soft: rgba(47, 183, 154, 0.18);
   --gold: #f0a868;
-  --nav: #0a0908;
+  --nav: rgba(10, 9, 8, 0.6);
   --barbg: rgba(14, 13, 12, 0.72);
   --shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
   --shadow-strong: 0 24px 55px rgba(0, 0, 0, 0.6);
@@ -5500,9 +5504,10 @@ body {
   color: var(--navink);
   background: var(--nav);
   border: none;
+  border-right: 1px solid var(--glass-edge);
   border-radius: 0;
   box-shadow: none;
-  backdrop-filter: none;
+  backdrop-filter: blur(24px) saturate(180%);
 }
 
 .app-sidebar .kicker,
@@ -5563,11 +5568,12 @@ body {
   position: sticky;
   top: 0;
   padding: 16px 28px;
-  background: var(--barbg);
+  background: var(--surface);
   border: none;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--glass-edge);
   border-radius: 0;
-  box-shadow: none;
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(24px) saturate(180%);
   align-items: center;
 }
 
@@ -5748,7 +5754,7 @@ body {
 /* ─── Live card ─── */
 .wl-live-card {
   margin-top: 14px; padding: 14px; border-radius: 16px;
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.07);
+  background: var(--surface2); border: 1px solid var(--glass-edge);
 }
 .wl-live-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .wl-live-dot-wrap { position: relative; display: inline-grid; place-items: center; width: 9px; height: 9px; }
@@ -5888,8 +5894,8 @@ body {
 
 /* ─── Request card (reels-style) ─── */
 .wl-card {
-  border-radius: 24px; background: var(--surface); border: 1px solid var(--line);
-  box-shadow: var(--shadow); overflow: hidden;
+  border-radius: 24px; background: var(--surface); border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow); overflow: hidden; backdrop-filter: blur(24px) saturate(180%);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   animation: wl-rise 0.4s ease both;
 }
@@ -6031,7 +6037,8 @@ body {
 /* Rail card (generic) */
 .wl-rail-card {
   border-radius: 22px; padding: 20px; background: var(--surface);
-  border: 1px solid var(--line); box-shadow: var(--shadow);
+  border: 1px solid var(--glass-edge); box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(24px) saturate(180%);
 }
 .wl-rail-head { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; }
 .wl-rail-head h3 { margin: 0; font-family: var(--font-heading); font-weight: 700; font-size: 15px; }
@@ -6075,8 +6082,9 @@ body {
 .wl-compose-col { display: flex; flex-direction: column; gap: 20px; }
 .wl-compose-card {
   padding: 26px; border-radius: 24px; background: var(--surface);
-  border: 1px solid var(--line); box-shadow: var(--shadow);
+  border: 1px solid var(--glass-edge); box-shadow: var(--glass-shadow);
   display: flex; flex-direction: column; gap: 20px;
+  backdrop-filter: blur(24px) saturate(180%);
 }
 .wl-compose-step {
   font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
@@ -6325,8 +6333,9 @@ body {
 }
 
 .wl-chat-card {
-  border-radius: 24px; background: var(--surface); border: 1px solid var(--line);
-  box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column;
+  border-radius: 24px; background: var(--surface); border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow); overflow: hidden; display: flex; flex-direction: column;
+  backdrop-filter: blur(24px) saturate(180%);
 }
 .wl-chat-header {
   display: flex; align-items: center; gap: 13px; padding: 18px 22px;
