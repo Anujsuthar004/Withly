@@ -259,7 +259,7 @@ export function FeedList({
 
             return (
               <article key={request.id} className="wl-card">
-                <div className="wl-card-bar" style={{ background: accentBar }} />
+
                 <div className="wl-card-body">
                   {/* Header row */}
                   <div className="wl-card-header">

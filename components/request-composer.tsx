@@ -248,14 +248,6 @@ export function RequestComposer({ preview, onStatus, statusMessage }: RequestCom
 
         {/* Preview card mimicking the real card */}
         <div className="wl-card">
-          <div
-            className="wl-card-bar"
-            style={{
-              background: lane === "social"
-                ? "linear-gradient(90deg, var(--accent), var(--gold))"
-                : "linear-gradient(90deg, var(--teal), #4FC4A8)"
-            }}
-          />
           <div className="wl-card-body">
             <div className="wl-card-meta-line">
               <span>{lane === "social" ? "Social plus-one" : "Errand companion"}</span>

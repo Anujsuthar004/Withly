@@ -320,7 +320,7 @@ main {
 .app-nav-link.active {
   background: linear-gradient(135deg, var(--accent), var(--accent2));
   color: #ffffff;
-  box-shadow: 0 10px 22px rgba(168, 71, 42, 0.32);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
 }
 
 .app-nav-link .nav-badge {
@@ -343,7 +343,7 @@ main {
 
 .app-nav-live-dot {
   margin-left: auto;
-  width: 8px;
+  width: 8px; flex: 0 0 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--teal);
@@ -542,7 +542,7 @@ main {
   position: absolute;
   top: 10px;
   right: 11px;
-  width: 8px;
+  width: 8px; flex: 0 0 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--accent);
@@ -2714,7 +2714,7 @@ main {
 
   .app-bottom-link.active {
     color: var(--text);
-    background: rgba(165, 64, 45, 0.1);
+    background: rgba(0, 0, 0, 0.05);
   }
 
   main {
@@ -5217,7 +5217,7 @@ body::after {
 }
 
 .alerts-unread-dot {
-  width: 8px;
+  width: 8px; flex: 0 0 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--teal);
@@ -5536,7 +5536,7 @@ body {
 .app-nav-link.active {
   background: linear-gradient(135deg, var(--accent), var(--accent2));
   color: #ffffff;
-  box-shadow: 0 10px 22px rgba(168, 71, 42, 0.32);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
 }
 
 .app-sidebar .secondary-button {
@@ -5890,7 +5890,7 @@ body {
   animation: wl-rise 0.4s ease both;
 }
 .wl-card:hover { transform: translateY(-3px); box-shadow: var(--shadowHi); }
-.wl-card-bar { height: 5px; }
+
 .wl-card-body { padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 15px; }
 
 /* Card header */
@@ -6473,7 +6473,7 @@ body {
 .wl-notif-text { flex: 1; min-width: 0; line-height: 1.4; font-size: 13.5px; color: var(--ink); }
 .wl-notif-time { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
 .wl-notif-dot {
-  width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: 0 0 auto;
+  width: 8px; flex: 0 0 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: 0 0 auto;
 }
 
 /* ─── Responsive ─── */
