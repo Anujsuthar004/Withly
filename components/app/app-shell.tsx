@@ -11,7 +11,7 @@ import {
   LayoutGrid,
   MessageCircle,
   Plus,
-  Search,
+  Settings,
   UserRound,
 } from "lucide-react";
 
@@ -24,7 +24,6 @@ type NavItem = {
   icon: React.ReactNode;
   match: (pathname: string) => boolean;
   badge?: number;
-  liveDot?: boolean;
 };
 
 function isActive(pathname: string, href: string) {
@@ -71,13 +70,6 @@ function getScreenMeta(pathname: string) {
   return SCREEN_META[pathname] ?? { kicker: "Withly", title: "Withly" };
 }
 
-const LIVE_PEOPLE = [
-  { name: "Zoya", initials: "Z", color: "linear-gradient(135deg,#E0864B,#C65D3B)" },
-  { name: "Aarav", initials: "A", color: "linear-gradient(135deg,#3FA796,#2C7A6B)" },
-  { name: "Mira", initials: "M", color: "linear-gradient(135deg,#D6497E,#B32E63)" },
-  { name: "Kabir", initials: "K", color: "linear-gradient(135deg,#B37FE0,#8C4FC4)" },
-];
-
 export function AppShell({
   children,
   showAdmin,
@@ -85,7 +77,7 @@ export function AppShell({
   notice = "",
   profileName = "Member",
   profileAvatarUrl = "",
-  trustScore = 68,
+  trustScore = 50,
   verificationTier = "email",
 }: {
   children: React.ReactNode;
@@ -105,7 +97,7 @@ export function AppShell({
     () => [
       { href: "/feed", label: "Feed", icon: <Compass size={19} />, match: (p) => isActive(p, "/feed") },
       { href: "/inbox", label: "Inbox", icon: <Inbox size={19} />, match: (p) => isActive(p, "/inbox"), badge: inboxCount },
-      { href: "/sessions", label: "Sessions", icon: <MessageCircle size={19} />, match: (p) => isActive(p, "/sessions"), liveDot: true },
+      { href: "/sessions", label: "Sessions", icon: <MessageCircle size={19} />, match: (p) => isActive(p, "/sessions") },
       { href: "/profile", label: "Profile", icon: <UserRound size={19} />, match: (p) => isActive(p, "/profile") },
       { href: "/requests/new", label: "Compose", icon: <LayoutGrid size={19} />, match: (p) => isActive(p, "/requests/new") },
     ],
@@ -122,7 +114,11 @@ export function AppShell({
     [inboxCount]
   );
 
-  const verifiedLabel = verificationTier === "id_verified" ? "Verified" : verificationTier === "phone" ? "Verified" : "Verified";
+  const verifiedLabel = verificationTier === "id_verified"
+    ? "ID verified"
+    : verificationTier === "phone"
+      ? "Phone verified"
+      : "Email confirmed";
 
   return (
     <div className="app-shell">
@@ -130,8 +126,8 @@ export function AppShell({
       <aside className="app-sidebar" aria-label="Primary">
         <div className="app-sidebar-top">
           <Link href="/feed" className="app-brand">
-            <span className="app-brand-logo" aria-hidden>
-              <Image src="/withly-logo.svg" alt="" width={26} height={26} />
+            <span className="app-brand-logo">
+              <Image src="/withly-logo.svg" alt="Withly Logo" width={26} height={26} />
             </span>
             <span className="app-brand-copy">
               <strong>Withly</strong>
@@ -162,9 +158,6 @@ export function AppShell({
                     {item.badge}
                   </span>
                 ) : null}
-                {item.liveDot && !item.badge ? (
-                  <span className="app-nav-live-dot" />
-                ) : null}
               </Link>
             );
           })}
@@ -180,30 +173,6 @@ export function AppShell({
             </Link>
           ) : null}
         </nav>
-
-        {/* Live now card */}
-        <div className="wl-live-card">
-          <div className="wl-live-card-head">
-            <span className="wl-live-dot-wrap">
-              <span className="wl-live-dot-pulse" />
-              <span className="wl-live-dot" />
-            </span>
-            <span className="wl-live-label">Live now</span>
-          </div>
-          <div className="wl-live-avatars">
-            {LIVE_PEOPLE.map((p) => (
-              <div
-                key={p.name}
-                className="wl-live-avatar"
-                title={p.name}
-                style={{ background: p.color }}
-              >
-                {p.initials}
-              </div>
-            ))}
-            <div className="wl-live-avatar wl-live-more">+9</div>
-          </div>
-        </div>
 
         {/* Spacer */}
         <div style={{ flex: 1 }} />
@@ -226,8 +195,8 @@ export function AppShell({
         <header className="app-topbar">
           <div className="app-topbar-title">
             <Link href="/feed" className="app-topbar-brand">
-              <span className="app-brand-logo" aria-hidden>
-                <Image src="/withly-logo.svg" alt="" width={22} height={22} />
+              <span className="app-brand-logo">
+                <Image src="/withly-logo.svg" alt="Withly Logo" width={22} height={22} />
               </span>
               Withly
             </Link>
@@ -235,13 +204,12 @@ export function AppShell({
             <strong>{screenMeta.title}</strong>
           </div>
 
-          <label className="app-topbar-search">
-            <Search size={16} />
-            <input type="search" placeholder="Search people, plans, tags" />
-          </label>
-
           <div className="app-topbar-actions">
-            <Link href="/inbox" className="app-topbar-bell" title="Notifications">
+            <Link href="/account" className="app-topbar-bell" title="Account settings" aria-label="Account settings">
+              <Settings size={19} />
+            </Link>
+            <span className="app-mobile-signout"><SignOutButton /></span>
+            <Link href="/alerts" className="app-topbar-bell" title="Notifications">
               <Bell size={19} />
               {(unreadNotifs > 0 || inboxCount > 0) && (
                 <span className="bell-dot" />

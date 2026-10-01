@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { APP_ENV, CRON_SECRET } from "@/lib/env";
 import { getSupabaseAdminClientOrNull } from "@/lib/supabase/admin";
 
 /**
@@ -9,11 +10,11 @@ import { getSupabaseAdminClientOrNull } from "@/lib/supabase/admin";
  * Designed to be called by Vercel Cron, Supabase Edge Function, or any scheduler.
  *
  * Authorization: Vercel Cron sends `Authorization: Bearer <CRON_SECRET>`.
- * If CRON_SECRET is not set, the endpoint is open (dev-friendly).
+ * In production, a missing secret fails closed. Development may omit it.
  */
-export async function POST(request: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET?.trim();
-  const isProduction = process.env.APP_ENV?.trim().toLowerCase() === "production";
+async function expireRequests(request: NextRequest) {
+  const cronSecret = CRON_SECRET;
+  const isProduction = APP_ENV === "production";
 
   if (!cronSecret && isProduction) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
@@ -43,4 +44,12 @@ export async function POST(request: NextRequest) {
     { ok: true, expiredCount: data ?? 0 },
     { headers: { "Cache-Control": "no-store" } }
   );
+}
+
+export async function GET(request: NextRequest) {
+  return expireRequests(request);
+}
+
+export async function POST(request: NextRequest) {
+  return expireRequests(request);
 }

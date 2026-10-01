@@ -140,8 +140,8 @@ export const createRequestSchema = z.object({
   title: z.string().trim().min(6).max(120),
   description: z.string().trim().min(24).max(600),
   areaLabel: z.string().trim().min(3).max(120),
-  meetupAt: z.string().trim().nullable(),
-  expiresAt: z.string().trim().nullable().optional(),
+  meetupAt: z.string().datetime().nullable(),
+  expiresAt: z.string().datetime().nullable().optional(),
   radiusKm: z.number().int().min(1).max(25),
   tags: z.array(z.string().trim().min(1).max(24)).min(1).max(6),
   verifiedOnly: z.boolean(),
@@ -221,6 +221,7 @@ export const authCredentialSchema = z.object({
 
 export const signUpSchema = authCredentialSchema.extend({
   displayName: z.string().trim().min(2).max(60),
+  acceptedTerms: z.literal(true, { error: "You must be at least 18 and accept the legal terms." }),
   captchaToken: z.string().trim().optional().nullable(),
 });
 
@@ -268,11 +269,6 @@ export const resolveSosSchema = z.object({
   status: z.enum(["resolved", "false_alarm"]).optional().default("resolved"),
 });
 
-export const upgradeVerificationSchema = z.object({
-  tier: z.enum(["phone", "id_verified"]),
-  phoneHash: z.string().trim().optional().nullable(),
-});
-
 export const createCommunitySchema = z.object({
   name: z.string().trim().min(3).max(80),
   description: z.string().trim().max(400).optional().default(""),
@@ -295,4 +291,19 @@ export const notificationSchema = z.object({
   refId: z.string().uuid().nullable(),
   read: z.boolean(),
   createdAt: z.string(),
+});
+
+export const pushSubscriptionSchema = z.object({
+  endpoint: z.string().url().max(2048).refine((value) => {
+    const url = new URL(value);
+    const allowedHosts = ["fcm.googleapis.com", "updates.push.services.mozilla.com", "web.push.apple.com"];
+    return url.protocol === "https:"
+      && !url.username && !url.password && !url.port
+      && (allowedHosts.includes(url.hostname) || url.hostname.endsWith(".notify.windows.com"));
+  }, "Unsupported browser push service."),
+  expirationTime: z.number().nullable().optional(),
+  keys: z.object({
+    p256dh: z.string().min(32).max(256).regex(/^[A-Za-z0-9_-]+$/),
+    auth: z.string().min(8).max(128).regex(/^[A-Za-z0-9_-]+$/),
+  }),
 });

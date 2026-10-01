@@ -14,6 +14,13 @@ export default function CommunityGuidelinesPage() {
       intro="These are the operating norms for a public companionship platform. They are enforced through blocking, reporting, moderation review, and account action when needed."
       sections={[
         {
+          title: "Who may participate",
+          body: [
+            "Withly is for adults aged 18 and older. Do not create accounts for minors, invite minors to meetups, or use the service to seek sexual, exploitative, or otherwise inappropriate contact.",
+            "Email confirmation is not identity verification. Treat every first meetup as a meeting with someone you do not yet know.",
+          ],
+        },
+        {
           title: "Before a meetup",
           body: [
             "Keep first meetups in public places, set a precise landmark, agree on timing in chat, and do not pressure anyone to share private contact details before they are comfortable.",
@@ -25,6 +32,7 @@ export default function CommunityGuidelinesPage() {
           body: [
             "Respect boundaries, communicate clearly, and leave if the situation stops feeling safe. Consent is ongoing and can be withdrawn at any time.",
             "Do not threaten, intimidate, record without consent, or push for location changes that were not agreed in advance.",
+            "The in-app SOS alert only notifies the matched companion. For immediate danger or a medical emergency, move to safety and contact local emergency services directly.",
           ],
         },
         {

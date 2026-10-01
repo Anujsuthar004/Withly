@@ -29,23 +29,23 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
           <div className="eyebrow-row">
             <span className="eyebrow-pill">
               <ShieldCheck size={16} />
-              Private by default
+              Public spaces & cafes
             </span>
             <span className="eyebrow-pill muted">
               <Waves size={16} />
-              Verified members
+              Zero-dating pressure
             </span>
           </div>
 
-          <h1>Find someone to go with.</h1>
+          <h1>Never work or study from a cafe alone again.</h1>
           <p>
-            Find company for plans, errands, and in-between moments without sharing more than you need. Browse the
-            basics first, then move into a private space once a plan is confirmed.
+            Find focus partners, coworking companions, and coffee buddies in your area.
+            Low-stakes accountability sprints in public spaces — headphones on for work, friendly conversation over coffee.
           </p>
 
           <div className="hero-action-row">
             <a className="primary-button compact" href="#open-requests">
-              Browse open requests
+              Browse open sessions
             </a>
             <Link className="ghost-button compact" href="/safety/reporting">
               How safety works
@@ -56,12 +56,12 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             <article className="hero-signal-card">
               <span>Live window</span>
               <strong>{liveCount}</strong>
-              <p>Requests visible right now before sign-in.</p>
+              <p>Sessions visible right now before sign-in.</p>
             </article>
             <article className="hero-signal-card tone-teal">
               <span>Protected replies</span>
               <strong>{verifiedPreviewCount}</strong>
-              <p>Current previews marked verified-only.</p>
+              <p>Current previews limited to email-confirmed replies.</p>
             </article>
             <article className="hero-signal-card tone-sand">
               <span>Private handoff</span>
@@ -73,18 +73,18 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
           <div className="bullet-grid">
             <article>
               <Sparkles size={18} />
-              <strong>Verified profiles</strong>
-              <span>Confirmed accounts help keep the community accountable and easier to trust.</span>
+              <strong>Body-Doubling Boost</strong>
+              <span>Share a table and set a focus goal together. Work independently with company nearby.</span>
             </article>
             <article>
               <ShieldCheck size={18} />
-              <strong>Private by default</strong>
-              <span>Only the essentials are visible before sign-in so personal details stay protected.</span>
+              <strong>Public-space plans, email-confirmed accounts</strong>
+              <span>Plan to meet in cafes, libraries, or coworking spaces. Email confirmation is not identity or venue verification.</span>
             </article>
             <article>
               <ArrowRight size={18} />
-              <strong>Easy coordination</strong>
-              <span>Once a plan is confirmed, you can keep messages and timing in one place.</span>
+              <strong>Low-Pressure Coordination</strong>
+              <span>Confirm session timing, coordinate your table, and check in securely.</span>
             </article>
           </div>
         </div>
@@ -123,7 +123,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             {!isSampleFeed ? (
               <div className="preview-section-head-note" aria-label="Feed summary">
                 <span className="mini-chip">{feed.length} active now</span>
-                <span className="mini-chip">{verifiedPreviewCount} verified-only</span>
+                <span className="mini-chip">{verifiedPreviewCount} email-confirmed only</span>
               </div>
             ) : null}
           </div>
@@ -133,10 +133,10 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
               <article key={request.id} className={`request-card lane-${request.lane}`}>
                 <div className="request-card-top">
                   <div>
-                    <span className="request-lane">{request.lane === "social" ? "Social" : "Errand"}</span>
+                    <span className="request-lane">{request.lane === "social" ? "Coworking & Focus" : "Coffee Walk"}</span>
                     <h3>{request.title}</h3>
                   </div>
-                  {request.verifiedOnly ? <span className="mini-chip">Verified only</span> : null}
+                  {request.verifiedOnly ? <span className="mini-chip">Email-confirmed only</span> : null}
                 </div>
                 <p className="request-description">{request.description}</p>
                 {request.areaLabel || request.meetupAt || request.hostDisplayName ? (

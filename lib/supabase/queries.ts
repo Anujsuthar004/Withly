@@ -1,7 +1,7 @@
 import { emptyWorkspaceSnapshot, previewFeed, previewWorkspace } from "@/lib/mock-data";
 import { PROFILE_AVATAR_BUCKET } from "@/lib/avatar";
 import { hasSupabaseEnv, isProduction } from "@/lib/env";
-import type { AdminDashboard, FeedRequestCard, ModerationReviewEntry, WorkspaceSnapshot } from "@/lib/supabase/types";
+import type { AdminDashboard, FeedRequestCard, ModerationReviewEntry, TrustedCompanion, WorkspaceSnapshot } from "@/lib/supabase/types";
 import { getSupabaseServerClientOrNull } from "@/lib/supabase/server";
 import { adminDashboardSchema, adminUserSchema, feedRequestCardSchema, notificationSchema, workspaceSnapshotSchema } from "@/lib/validators";
 
@@ -122,7 +122,7 @@ async function fetchLandingFeed(limit = 8) {
       : { feed: [] as FeedRequestCard[], feedError: feedUnavailableMessage, isSampleFeed: false };
   }
 
-  const { data, error } = await supabase.rpc("get_public_request_feed", {
+  const { data, error } = await supabase.rpc("get_public_request_feed_v2", {
     limit_count: limit,
   });
 
@@ -135,9 +135,11 @@ async function fetchLandingFeed(limit = 8) {
     return { feed: [] as FeedRequestCard[], feedError: feedUnavailableMessage, isSampleFeed: false };
   }
 
-  // When the DB has no live requests yet, show sample data so the page looks alive
+  // Sample data is development-only; production must never present fictional activity.
   if (normalized.length === 0) {
-    return { feed: previewFeed.slice(0, limit), feedError: "", isSampleFeed: true };
+    return !isProduction
+      ? { feed: previewFeed.slice(0, limit), feedError: "", isSampleFeed: true }
+      : { feed: [] as FeedRequestCard[], feedError: "", isSampleFeed: false };
   }
 
   return { feed: normalized.slice(0, limit), feedError: "", isSampleFeed: false };
@@ -306,12 +308,55 @@ export async function getMyAvailability() {
     return { availability: [], error: error.message };
   }
 
-  // Raw data from RPC doesn't automatically match TS types perfectly in our mock
-  // but it returns availability_windows records.
-  return { 
-    availability: data as { id: string; day_of_week: number; start_time: string; end_time: string; label: string | null }[], 
-    error: "" 
-  };
+  const availability = Array.isArray(data)
+    ? data.flatMap((entry) => {
+        const row = entry as Record<string, unknown>;
+        const id = typeof row.id === "string" ? row.id : "";
+        const dayOfWeek = Number(row.dayOfWeek);
+        const startTime = typeof row.startTime === "string" ? row.startTime : "";
+        const endTime = typeof row.endTime === "string" ? row.endTime : "";
+        const label = typeof row.label === "string" ? row.label : "";
+        return id && Number.isInteger(dayOfWeek) && startTime && endTime
+          ? [{ id, dayOfWeek, startTime, endTime, label }]
+          : [];
+      })
+    : [];
+
+  return { availability, error: "" };
+}
+
+export async function getTrustedCompanions() {
+  const supabase = await getSupabaseServerClientOrNull();
+  if (!supabase) return { companions: [] as TrustedCompanion[], error: "" };
+
+  const { data, error } = await supabase.rpc("get_trusted_companions");
+  if (error || !Array.isArray(data)) {
+    return { companions: [] as TrustedCompanion[], error: error?.message ?? "Invalid companion data." };
+  }
+
+  const companions = data.flatMap((entry) => {
+    const row = entry as Record<string, unknown>;
+    if (
+      typeof row.id !== "string" ||
+      typeof row.companionId !== "string" ||
+      typeof row.companionName !== "string" ||
+      typeof row.requestId !== "string" ||
+      typeof row.createdAt !== "string"
+    ) {
+      return [];
+    }
+
+    return [{
+      id: row.id,
+      companionId: row.companionId,
+      companionName: row.companionName,
+      companionTrustScore: typeof row.companionTrustScore === "number" ? row.companionTrustScore : 50,
+      requestId: row.requestId,
+      createdAt: row.createdAt,
+    } satisfies TrustedCompanion];
+  });
+
+  return { companions, error: "" };
 }
 
 export async function getWorkspacePageState() {
@@ -351,6 +396,8 @@ export async function getAppLayoutState() {
     role: workspace.snapshot.profile.role,
     profileName: workspace.snapshot.profile.displayName,
     profileAvatarUrl: workspace.snapshot.profile.avatarUrl,
+    trustScore: workspace.snapshot.profile.trustScore,
+    verificationTier: workspace.snapshot.profile.verificationTier,
     inboxCount,
   };
 }
@@ -377,6 +424,22 @@ export async function getMyRequestsPageState() {
 export async function getInboxPageState() {
   const [user, workspace] = await Promise.all([getAuthenticatedUser(), getWorkspaceSnapshot()]);
   return { user, hasSupabaseEnv, ...workspace };
+}
+
+export async function getSessionPageState(requestId: string) {
+  const supabase = await getSupabaseServerClientOrNull();
+  if (!supabase) {
+    return {
+      session: !isProduction && previewWorkspace.activeSession?.requestId === requestId
+        ? previewWorkspace.activeSession : null,
+      currentUserId: !isProduction ? previewWorkspace.profile.id : "",
+    };
+  }
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { session: null, currentUserId: "" };
+  const { data, error } = await supabase.rpc("get_request_session", { request_id_input: requestId });
+  const parsed = workspaceSnapshotSchema.shape.activeSession.safeParse(data);
+  return { session: !error && parsed.success ? parsed.data : null, currentUserId: user.id };
 }
 
 export async function getAlertsPageState() {

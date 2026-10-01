@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { deleteAccountData } from "@/lib/account-deletion";
 
 import { ALLOWED_PROFILE_AVATAR_MIME_TYPES, createProfileAvatarPath, MAX_PROFILE_AVATAR_BYTES, PROFILE_AVATAR_BUCKET } from "@/lib/avatar";
 import { hasSupabaseAdminEnv, hasSupabaseEnv } from "@/lib/env";
@@ -31,7 +32,6 @@ import {
   submitCheckInSchema,
   triggerSosSchema,
   updateProfileSchema,
-  upgradeVerificationSchema,
 } from "@/lib/validators";
 
 interface ActionResult {
@@ -124,6 +124,7 @@ export async function createRequestAction(input: unknown): Promise<ActionResult>
 
   const payload = parsed.data;
   const meetupAt = payload.meetupAt ? new Date(payload.meetupAt).toISOString() : null;
+  const expiresAt = payload.expiresAt ? new Date(payload.expiresAt).toISOString() : null;
 
   const { error } = await auth.supabase.rpc("create_request", {
     lane_input: payload.lane,
@@ -135,6 +136,7 @@ export async function createRequestAction(input: unknown): Promise<ActionResult>
     tags_input: payload.tags,
     verified_only_input: payload.verifiedOnly,
     check_in_enabled_input: payload.checkInEnabled,
+    expires_at_input: expiresAt,
   });
 
   if (error) {
@@ -247,7 +249,7 @@ export async function uploadProfileAvatarAction(formData: FormData): Promise<Act
     return { ok: false, message: uploadError.message };
   }
 
-  const { error: updateError } = await auth.supabase.from("profiles").update({ avatar_path: avatarPath }).eq("id", auth.user.id);
+  const { error: updateError } = await admin.from("profiles").update({ avatar_path: avatarPath }).eq("id", auth.user.id);
 
   if (updateError) {
     await admin.storage.from(PROFILE_AVATAR_BUCKET).remove([avatarPath]);
@@ -257,7 +259,7 @@ export async function uploadProfileAvatarAction(formData: FormData): Promise<Act
     return { ok: false, message: updateError.message };
   }
 
-  if (profile?.avatar_path && profile.avatar_path !== avatarPath) {
+  if (profile?.avatar_path?.startsWith(`${auth.user.id}/`) && profile.avatar_path !== avatarPath) {
     await admin.storage.from(PROFILE_AVATAR_BUCKET).remove([profile.avatar_path]);
   }
 
@@ -292,7 +294,7 @@ export async function removeProfileAvatarAction(): Promise<ActionResult> {
     return { ok: true, message: "No profile photo to remove." };
   }
 
-  const { error: updateError } = await auth.supabase.from("profiles").update({ avatar_path: null }).eq("id", auth.user.id);
+  const { error: updateError } = await createSupabaseAdminClient().from("profiles").update({ avatar_path: null }).eq("id", auth.user.id);
   if (updateError) {
     if (/avatar_path/i.test(updateError.message)) {
       return { ok: false, message: "Profile photos need one quick database update before they can be used." };
@@ -302,7 +304,9 @@ export async function removeProfileAvatarAction(): Promise<ActionResult> {
 
   if (hasSupabaseAdminEnv) {
     const admin = createSupabaseAdminClient();
-    await admin.storage.from(PROFILE_AVATAR_BUCKET).remove([profile.avatar_path]);
+    if (profile.avatar_path.startsWith(`${auth.user.id}/`)) {
+      await admin.storage.from(PROFILE_AVATAR_BUCKET).remove([profile.avatar_path]);
+    }
   }
 
   revalidatePath("/profile");
@@ -462,7 +466,7 @@ export async function completeRequestAction(input: unknown): Promise<ActionResul
   revalidatePath(`/sessions/${parsed.data.requestId}`);
   return {
     ok: true,
-    message: parsed.data.outcome === "completed" ? "Session marked complete." : "Issue recorded for follow-up.",
+    message: "Feedback saved. The session closes when both participants submit feedback. Use Report a concern for moderation follow-up.",
   };
 }
 
@@ -514,6 +518,9 @@ export async function createReportAction(input: unknown): Promise<ActionResult> 
   revalidatePath("/requests");
   revalidatePath(`/requests/${parsed.data.requestId}`);
   revalidatePath("/admin");
+  revalidatePath("/inbox");
+  revalidatePath("/sessions");
+  revalidatePath(`/sessions/${parsed.data.requestId}`);
   return {
     ok: true,
     message: parsed.data.blockTarget ? "Report submitted and user blocked." : "Report submitted.",
@@ -553,7 +560,9 @@ export async function blockUserAction(input: unknown): Promise<ActionResult> {
   });
   revalidatePath("/requests");
   revalidatePath("/inbox");
-  return { ok: true, message: "User blocked." };
+  revalidatePath("/sessions", "layout");
+  revalidatePath("/feed");
+  return { ok: true, message: "User blocked. Active sessions together have ended." };
 }
 
 export async function resolveDeletionRequestAction(input: unknown): Promise<ActionResult> {
@@ -666,22 +675,23 @@ export async function deleteAccountAction(input: unknown): Promise<ActionResult>
   }
 
   const admin = createSupabaseAdminClient();
-  const { error } = await admin.auth.admin.deleteUser(auth.user.id, true);
-  if (error) {
+  try {
+    await deleteAccountData(admin, auth.user.id);
+  } catch {
     await logAppEvent({
       level: "error",
       category: "account.delete",
       message: "Account deletion failed.",
-      context: { userId: auth.user.id, error: error.message },
+      context: { userId: auth.user.id },
     });
-    return { ok: false, message: error.message };
+    return { ok: false, message: "Account deletion could not finish. Please retry or contact support." };
   }
 
   await logAppEvent({
     level: "warn",
     category: "account.delete",
     message: "Account deleted.",
-    context: { userId: auth.user.id, reason: parsed.data.reason },
+    context: {},
   });
 
   revalidatePath("/");
@@ -920,47 +930,6 @@ export async function deleteAvailabilityWindowAction(_prev: ActionResult, formDa
   }
 }
 
-// -- Feature 6: Verification Upgrade --
-
-export async function upgradeVerificationAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
-  try {
-    const auth = await requireSupabaseSession();
-    if (auth.error || !auth.supabase || !auth.user) {
-      return auth.error ?? { ok: false, message: "Sign in to continue." };
-    }
-
-    const parsed = upgradeVerificationSchema.safeParse({
-      tier: formData.get("tier"),
-      phoneHash: formData.get("phoneHash"),
-    });
-    if (!parsed.success) return { ok: false, message: "Invalid verification data." };
-
-    const rateLimitError = await enforceAuthenticatedActionLimit(auth.user.id, "verification", 5, 60 * 60 * 1000);
-    if (rateLimitError) return rateLimitError;
-
-    const { error } = await auth.supabase.rpc("upgrade_verification_tier", {
-      new_tier: parsed.data.tier,
-      phone_hash_input: parsed.data.phoneHash ?? null,
-    });
-
-    if (error) return { ok: false, message: error.message };
-
-    await logAppEvent({
-      level: "info",
-      category: "verification.upgrade",
-      message: "Verification tier upgraded.",
-      context: { userId: auth.user.id, tier: parsed.data.tier },
-    }).catch(() => undefined);
-
-    revalidatePath("/profile");
-    revalidatePath("/account");
-    return { ok: true, message: `Verification upgraded to ${parsed.data.tier}.` };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Could not upgrade verification.";
-    return { ok: false, message };
-  }
-}
-
 // -- Feature 9: Emergency SOS --
 
 export async function setEmergencyContactAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
@@ -1031,7 +1000,10 @@ export async function triggerSosAction(_prev: ActionResult, formData: FormData):
     }).catch(() => undefined);
 
     revalidatePath("/");
-    return { ok: true, message: "SOS alert sent. Your companion and emergency contact have been notified." };
+    return {
+      ok: true,
+      message: "In-app safety alert sent to your companion. Contact local emergency services directly if you are in danger.",
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not trigger SOS.";
     return { ok: false, message };
@@ -1092,7 +1064,7 @@ export async function createCommunityAction(_prev: ActionResult, formData: FormD
     const rateLimitError = await enforceAuthenticatedActionLimit(auth.user.id, "community-create", 5, 24 * 60 * 60 * 1000);
     if (rateLimitError) return rateLimitError;
 
-    const { error } = await auth.supabase.rpc("create_community", {
+    const { data, error } = await auth.supabase.rpc("create_community", {
       name_input: parsed.data.name,
       description_input: parsed.data.description,
       is_private_input: parsed.data.isPrivate,
@@ -1108,7 +1080,7 @@ export async function createCommunityAction(_prev: ActionResult, formData: FormD
     }).catch(() => undefined);
 
     revalidatePath("/");
-    return { ok: true, message: "Community created." };
+    return { ok: true, message: `Community created. Share this ID: ${String(data)}` };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not create community.";
     return { ok: false, message };

@@ -49,12 +49,12 @@ export default async function ExplorePage() {
               <article key={request.id} className={`request-card lane-${request.lane}`}>
                 <div className="request-card-top">
                   <div>
-                    <span className="request-lane">{request.lane === "social" ? "Social" : "Errand"}</span>
+                    <span className="request-lane">{request.lane === "social" ? "Coworking & Focus" : "Coffee Walk"}</span>
                     <h3>
                       <Link href={`/explore/requests/${request.id}`}>{request.title}</Link>
                     </h3>
                   </div>
-                  {request.verifiedOnly ? <span className="mini-chip">Verified only</span> : null}
+                  {request.verifiedOnly ? <span className="mini-chip">Email-confirmed only</span> : null}
                 </div>
                 <p className="request-description">{request.description}</p>
                 {request.areaLabel || request.meetupAt || request.hostDisplayName ? (

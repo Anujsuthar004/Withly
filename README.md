@@ -1,38 +1,51 @@
 # Withly
 
-Withly is a private companionship workspace architected specifically to solve the friction of organizing casual, low-stakes hangouts and errands.
+Withly helps adults find one coworking companion, study partner, or coffee buddy for a clear, low-stakes session in a public space.
 
-Instead of navigating the awkwardness of formal plans, Withly allows users to post highly specific, structured requests. Whether you need an "Errand Companion" to help carry groceries or a "Social Plus-One" to check out a new local spot, Withly prioritizes safety, clear intentions, and verifiable trust.
+## What is implemented
 
-## Technology Stack
+- Supabase email authentication and email-confirmation gating
+- Public request discovery with sensitive meetup details withheld until sign-in
+- One-to-one join requests, matching, private session chat, and completion feedback
+- Expiring requests, recurring availability, notifications, blocking, and reporting
+- In-app safety check-ins and an in-app SOS alert to the matched companion
+- Admin review queues, account export, and deletion-request workflows
+- Row Level Security plus explicitly granted RPC access in Postgres
+- Cloudflare Turnstile on public auth flows and server-side rate limiting
+- Optional browser push notifications through VAPID and a signed database webhook
 
-This application is built for extreme edge performance and deep Row Level Security (RLS).
-- **Frontend**: Next.js 16 (App Router), React 19, TypeScript
-- **Styling**: Vanilla CSS (`globals.css`)
-- **Backend**: Supabase Postgres (with RLS)
-- **Authentication**: Supabase Auth
-- **Realtime**: Supabase Realtime (for private session chat and live notifications)
-- **Validation**: Zod & Server Actions
+Withly does **not** contact emergency services, send an SOS to an external emergency contact, perform criminal background checks, or currently verify government identity. Users should call their local emergency number when they are in danger.
 
-## Core Features
+## Stack
 
-1. **Safety Check-ins**: Active session participants can quickly tap "I'm OK," "Running Late," or "Need Help."
-2. **Emergency SOS**: A persistent panic button in chatrooms that securely dispatches your location to a predefined emergency contact.
-3. **Progressive Verification**: Users earn Trust badges by verifying their Phone, Government ID, or Institutional Email.
-4. **Dynamic Trust Scoring**: An algorithmic (0-100) score that adjusts based on completed sessions, mutual endorsements, and platform behavior.
-5. **Ephemeral Requests**: Requests auto-expire based on user-defined times, preventing stale feeds and ensuring immediate discovery.
-6. **Group Companionship**: Built-in capacity management allows request creators to cap their events (e.g., "Up to 3 people").
-7. **Trust Communities**: Create and join walled-garden networks automatically gated by specific email domains (e.g., `@nyu.edu`).
-8. **AI Content Moderation**: Background screening of user-generated content, automatically queuing high-risk flags into an Admin dashboard.
-9. **Companion Compatibility**: Feed requests actively parse mutual tags, previous interactions, and safety thresholds to display a % match score.
-10. **Availability Windows**: Define your standard recurring free time on your profile for better algorithmic matching.
-11. **Meet-Again Network**: Seamlessly build a private roster of trusted companions after positive sessions.
-12. **Realtime Notifications**: A bell inbox syncing instantly via Supabase to alert you of join requests and chat messages.
+- Next.js 16, React 19, TypeScript
+- Supabase Auth, Postgres, Storage, and Realtime
+- Zod validation and Playwright end-to-end tests
+- Vercel deployment and scheduled request expiry
 
-## Security Philosophy 
+## Local setup
 
-This project operates on a "Trust No Client" philosophy:
-- We rely entirely on Supabase Row Level Security (RLS) instead of application-code trust.
-- Public discovery feeds only expose sanitized, aggregated data blocks.
-- Real-world identities and granular session details are locked exclusively to matched session participants.
-- All mutative server actions go through strict Zod schema parsing before interacting with the database layer.
+1. Install Node.js 24 and run `npm ci`.
+2. Copy `.env.example` to `.env.local` and provide the required values.
+3. Link the Supabase CLI to the intended project and run `supabase db push`.
+4. Start the app with `npm run dev`.
+
+Never expose `SUPABASE_SERVICE_ROLE_KEY`, `TURNSTILE_SECRET_KEY`, `VAPID_PRIVATE_KEY`, `PUSH_WEBHOOK_SECRET`, or `CRON_SECRET` to browser code.
+
+## Verification
+
+```bash
+npm run typecheck
+npm run lint
+npm run build
+npm run test:e2e
+npm audit --omit=dev --audit-level=high
+```
+
+Browser tests run with isolated test configuration and never connect to the live Supabase project. CI also applies every migration to a disposable PostgreSQL 17 database and exercises authorization, matching, completion, expiry, and rate limits. To run that suite locally, set `PGHOST`, `PGPORT`, `PGUSER`, and `PGDATABASE` to an empty test database, then run `bash scripts/test-database.sh`.
+
+Deployment instructions and required production checks are in [`docs/SUPABASE_VERCEL_DEPLOY.md`](docs/SUPABASE_VERCEL_DEPLOY.md) and [`docs/PRODUCTION_RELEASE_CHECKLIST.md`](docs/PRODUCTION_RELEASE_CHECKLIST.md).
+
+## Safety model
+
+The database is the authorization boundary: sensitive tables use RLS, privileged RPCs check the caller, operational logging and rate-limit tables are service-only, and public feed functions return a deliberately limited projection. Application validation remains defense in depth and is not a substitute for database authorization.

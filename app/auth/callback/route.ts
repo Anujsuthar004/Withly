@@ -9,12 +9,19 @@ export async function GET(request: Request) {
   const nextPath = normalizeNextPath(requestUrl.searchParams.get("next"), "/feed");
   const code = requestUrl.searchParams.get("code");
 
+  if (requestUrl.searchParams.has("error")) {
+    return NextResponse.redirect(new URL("/auth/error", requestUrl.origin));
+  }
+
   if (!hasSupabaseEnv || !code) {
     return NextResponse.redirect(new URL(nextPath, requestUrl.origin));
   }
 
   const supabase = await createSupabaseServerClient();
-  await supabase.auth.exchangeCodeForSession(code);
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  if (error) {
+    return NextResponse.redirect(new URL("/auth/error", requestUrl.origin));
+  }
 
   return NextResponse.redirect(new URL(nextPath, requestUrl.origin));
 }

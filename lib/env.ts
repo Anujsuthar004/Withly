@@ -5,7 +5,8 @@ export const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY?.
 export const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
 export const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY?.trim() ?? "";
 export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() ?? "support@withly.app";
-export const APP_ENV = process.env.APP_ENV?.trim().toLowerCase() ?? "development";
+export const APP_ENV = process.env.APP_ENV?.trim().toLowerCase()
+  || (process.env.NODE_ENV === "production" ? "production" : "development");
 
 export const MODERATION_API_URL = process.env.MODERATION_API_URL?.trim() ?? "";
 export const MODERATION_API_KEY = process.env.MODERATION_API_KEY?.trim() ?? "";
@@ -13,13 +14,20 @@ export const GEOCODING_API_KEY = process.env.GEOCODING_API_KEY?.trim() ?? "";
 export const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim() ?? "";
 export const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY?.trim() ?? "";
 export const PUSH_WEBHOOK_SECRET = process.env.PUSH_WEBHOOK_SECRET?.trim() ?? "";
+export const CRON_SECRET = process.env.CRON_SECRET?.trim() ?? "";
 
 export const hasSupabaseEnv = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 export const hasSupabaseAdminEnv = Boolean(hasSupabaseEnv && SUPABASE_SERVICE_ROLE_KEY);
 export const hasTurnstileEnv = Boolean(TURNSTILE_SITE_KEY && TURNSTILE_SECRET_KEY);
+// Browser code can only inspect the public key; the secret is server-only.
+export const hasTurnstileSiteKey = Boolean(TURNSTILE_SITE_KEY);
+export const hasSiteUrl = Boolean(SITE_URL);
+export const hasSupportEmail = Boolean(process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim());
 export const hasModerationEnv = Boolean(MODERATION_API_URL && MODERATION_API_KEY);
 export const hasGeocodingEnv = Boolean(GEOCODING_API_KEY);
 export const hasVapidEnv = Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY);
+export const hasCronSecret = Boolean(CRON_SECRET);
+export const hasPushWebhookSecret = Boolean(PUSH_WEBHOOK_SECRET);
 export const isProduction = APP_ENV === "production";
 
 export function requireSupabaseEnv() {
@@ -43,4 +51,3 @@ export function requireSupabaseAdminEnv() {
     serviceRoleKey: SUPABASE_SERVICE_ROLE_KEY,
   };
 }
-

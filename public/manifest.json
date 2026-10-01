@@ -1,7 +1,7 @@
 {
   "name": "Withly",
   "short_name": "Withly",
-  "description": "A private companionship platform for plans, errands, and everyday moments.",
+  "description": "Find a coworking companion, study partner, or coffee buddy.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f5f2ee",

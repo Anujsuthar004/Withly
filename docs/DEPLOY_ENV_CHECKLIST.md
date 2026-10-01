@@ -16,6 +16,10 @@ In **Vercel → Project → Settings → Environment Variables**, add these for 
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | Your monitored support email |
+| `CRON_SECRET` | Long random secret used by the request-expiry scheduler |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Browser-push public key, if push is enabled |
+| `VAPID_PRIVATE_KEY` | Browser-push private key, if push is enabled |
+| `PUSH_WEBHOOK_SECRET` | Secret shared with the Supabase notification webhook, if push is enabled |
 
 After saving, trigger a **Redeploy** so the new values take effect.
 
@@ -33,11 +37,6 @@ In **Supabase → Authentication → Email Templates**:
 - **Enable email confirmation** (confirm email toggle)
 - Review confirmation and password-reset email templates
 
-In **Supabase → Authentication → Providers** (optional):
-
-- Enable **Google OAuth** if you want social sign-in
-- Set the OAuth callback URL to `https://<project-ref>.supabase.co/auth/v1/callback`
-
 ## 3. Cloudflare Turnstile
 
 In **Cloudflare → Turnstile**:
@@ -48,15 +47,24 @@ In **Cloudflare → Turnstile**:
 4. Copy the **Site Key** → paste into Vercel as `NEXT_PUBLIC_TURNSTILE_SITE_KEY`.
 5. Copy the **Secret Key** → paste into Vercel as `TURNSTILE_SECRET_KEY`.
 
-Without these keys, sign-up, sign-in, password reset, and request creation have **no bot protection**.
+Without these keys in production, protected auth and creation flows fail closed with a service-unavailable response.
 
-## 4. Post-Deploy Verification
+## 4. Database and Scheduled Expiry
+
+- Run `supabase db push` and verify `supabase migration list` shows no pending local migration.
+- Keep the Vercel cron in `vercel.json` enabled, or configure an equivalent scheduler.
+- The daily cleanup scheduler must send `Authorization: Bearer <CRON_SECRET>` to `/api/cron/expire-requests`. Expired requests are already hidden and cannot accept joins before this cleanup runs.
+- If browser push is enabled, configure a Supabase Database Webhook for notification inserts to `/api/push/notify` with the same `PUSH_WEBHOOK_SECRET` bearer token.
+
+## 5. Post-Deploy Verification
 
 After completing the above:
 
-- [ ] Visit `/api/health` and confirm `status: "ok"` and `appEnv: "production"`
+- [ ] Visit `/api/health` and confirm HTTP 200 with `status: "ok"`
 - [ ] Sign up with a new email and confirm the verification email arrives
-- [ ] Sign in and verify redirect to `/workspace`
+- [ ] Sign in and verify redirect to `/feed`
 - [ ] Test forgot-password flow
 - [ ] Verify Turnstile widget appears on the auth forms
-- [ ] Promote the first admin account (see README)
+- [ ] Promote the first admin account with the SQL in the deployment guide
+- [ ] Create an expiring request and invoke the authenticated cron endpoint
+- [ ] Confirm an anonymous feed response does not include meetup area, time, or host identity

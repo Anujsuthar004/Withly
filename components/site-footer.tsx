@@ -13,7 +13,7 @@ export function SiteFooter() {
           Withly
         </Link>
         <h2>Keep the public window small. Let the real coordination happen in a private thread.</h2>
-        <p>Calmer coordination for plans, errands, and the moments you do not want to handle alone.</p>
+        <p>Find company for focused work, study sessions, and coffee breaks in public spaces.</p>
       </div>
 
       <nav className="footer-links" aria-label="Footer">

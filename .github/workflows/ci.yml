@@ -8,6 +8,32 @@ on:
   pull_request:
 
 jobs:
+  database:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: test-only-password
+          POSTGRES_DB: withly_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - name: Verify migrations and database authorization
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: test-only-password
+          PGDATABASE: withly_test
+        run: bash scripts/test-database.sh
+
   verify:
     runs-on: ubuntu-latest
     steps:
@@ -23,11 +49,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
       - name: Typecheck
         run: npm run typecheck
 
       - name: Lint
         run: npm run lint
+
+      - name: Unit regression tests
+        run: npm run test:unit
 
       - name: Build
         run: npm run build
@@ -36,7 +68,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run Playwright
-        run: npm run test:e2e
+        run: npm run test:e2e:ci
 
       - name: Upload Playwright report
         if: always()

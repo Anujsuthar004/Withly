@@ -1,39 +1,30 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import Link from "next/link";
-import { Check, ShieldCheck, Star } from "lucide-react";
+import { CalendarClock, Check, ShieldCheck, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
-  removeProfileAvatarAction,
+  deleteAvailabilityWindowAction,
+  setAvailabilityWindowAction,
   updateProfileAction,
   uploadProfileAvatarAction,
 } from "@/app/workspace/actions";
 import { ProfileAvatar } from "@/components/app/profile-avatar";
-import type { WorkspaceProfile } from "@/lib/supabase/types";
+import type { AvailabilityWindow, TrustedCompanion, WorkspaceProfile } from "@/lib/supabase/types";
 
-const ENDORSEMENTS = [
-  { name: "Aarav", initials: "A", color: "linear-gradient(135deg,#3FA796,#2C7A6B)", text: "punctual and easy to plan with." },
-  { name: "Mira", initials: "M", color: "linear-gradient(135deg,#D6497E,#B32E63)", text: "kept things calm and clear the whole time." },
-  { name: "Kabir", initials: "K", color: "linear-gradient(135deg,#B37FE0,#8C4FC4)", text: "great company for a quiet evening out." },
-];
-
-const MEET_AGAIN = [
-  { name: "Aarav", initials: "A", color: "linear-gradient(135deg,#3FA796,#2C7A6B)", sessions: "2 sessions together" },
-  { name: "Mira", initials: "M", color: "linear-gradient(135deg,#D6497E,#B32E63)", sessions: "1 session" },
-  { name: "Zoya", initials: "Z", color: "linear-gradient(135deg,#E0864B,#C65D3B)", sessions: "1 session" },
-  { name: "Kabir", initials: "K", color: "linear-gradient(135deg,#B37FE0,#8C4FC4)", sessions: "3 sessions together" },
-];
+const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 export function ProfilePanel({
   profile,
   availability = [],
+  companions = [],
   preview,
   onStatus,
 }: {
   profile: WorkspaceProfile;
-  availability?: { id: string; day_of_week: number; start_time: string; end_time: string; label: string | null }[];
+  availability?: AvailabilityWindow[];
+  companions?: TrustedCompanion[];
   preview: boolean;
   onStatus: (message: string) => void;
 }) {
@@ -50,6 +41,8 @@ export function ProfilePanel({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const previewUrlRef = useRef("");
   const [isEditing, setIsEditing] = useState(false);
+  const [availabilityForm, setAvailabilityForm] = useState({ dayOfWeek: 1, startTime: "18:00", endTime: "20:00", label: "" });
+  const [isAvailabilityPending, startAvailabilityTransition] = useTransition();
 
   const displayName = form.displayName.trim() || profile.displayName;
   const activeAvatarUrl = avatarPreviewUrl || profile.avatarUrl;
@@ -60,7 +53,7 @@ export function ProfilePanel({
       ? "ID Verified"
       : profile.verificationTier === "phone"
         ? "Phone verified"
-        : "Email verified";
+        : "Email confirmed";
 
   useEffect(() => {
     return () => {
@@ -82,15 +75,7 @@ export function ProfilePanel({
     }
   }
 
-  const verifications = [
-    { label: "Email", status: "Verified · institutional", done: true },
-    {
-      label: "Phone",
-      status: profile.verificationTier === "phone" || profile.verificationTier === "id_verified" ? "Verified" : "Not verified",
-      done: profile.verificationTier === "phone" || profile.verificationTier === "id_verified",
-    },
-    { label: "Government ID", status: "Not verified — worth +20 trust", done: profile.verificationTier === "id_verified", action: profile.verificationTier !== "id_verified" },
-  ];
+  const verifications = [{ label: "Email", status: "Confirmed", done: true }];
 
   return (
     <div className="wl-profile" style={{ maxWidth: 960 }}>
@@ -256,27 +241,92 @@ export function ProfilePanel({
                   <strong>{v.label}</strong>
                   <small>{v.status}</small>
                 </div>
-                {v.action && (
-                  <button type="button" className="wl-verify-action">Verify</button>
-                )}
               </div>
             ))}
           </div>
         </div>
 
-        {/* Endorsements */}
+        {/* Availability */}
         <div className="wl-rail-card">
-          <h3 className="wl-rail-title">Endorsements</h3>
+          <h3 className="wl-rail-title">Availability</h3>
           <div className="wl-endorse-list">
-            {ENDORSEMENTS.map((e) => (
-              <div key={e.name} className="wl-endorse-item">
-                <div className="wl-endorse-avatar" style={{ background: e.color }}>{e.initials}</div>
+            {availability.length === 0 ? <p>No availability windows saved yet.</p> : null}
+            {availability.map((window) => (
+              <div key={window.id} className="wl-endorse-item">
+                <CalendarClock size={18} />
                 <div className="wl-endorse-text">
-                  <strong>{e.name}</strong> {e.text}
+                  <strong>{DAYS[window.dayOfWeek]}</strong> {window.startTime.slice(0, 5)}–{window.endTime.slice(0, 5)} {window.label}
                 </div>
+                <button
+                  type="button"
+                  className="wl-verify-action"
+                  aria-label={`Remove ${DAYS[window.dayOfWeek]} availability`}
+                  disabled={preview || isAvailabilityPending}
+                  onClick={() => startAvailabilityTransition(async () => {
+                    const formData = new FormData();
+                    formData.set("windowId", window.id);
+                    const result = await deleteAvailabilityWindowAction({ ok: false, message: "" }, formData);
+                    onStatus(result.message);
+                    if (result.ok) router.refresh();
+                  })}
+                >
+                  <Trash2 size={14} />
+                </button>
               </div>
             ))}
           </div>
+          <form
+            className="stack-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              startAvailabilityTransition(async () => {
+                const formData = new FormData();
+                formData.set("dayOfWeek", String(availabilityForm.dayOfWeek));
+                formData.set("startTime", availabilityForm.startTime);
+                formData.set("endTime", availabilityForm.endTime);
+                formData.set("label", availabilityForm.label);
+                const result = await setAvailabilityWindowAction({ ok: false, message: "" }, formData);
+                onStatus(result.message);
+                if (result.ok) router.refresh();
+              });
+            }}
+          >
+            <select
+              aria-label="Availability day"
+              value={availabilityForm.dayOfWeek}
+              disabled={preview || isAvailabilityPending}
+              onChange={(event) => setAvailabilityForm((current) => ({ ...current, dayOfWeek: Number(event.target.value) }))}
+            >
+              {DAYS.map((day, index) => <option key={day} value={index}>{day}</option>)}
+            </select>
+            <div className="grid-two">
+              <input
+                aria-label="Availability start time"
+                type="time"
+                value={availabilityForm.startTime}
+                disabled={preview || isAvailabilityPending}
+                onChange={(event) => setAvailabilityForm((current) => ({ ...current, startTime: event.target.value }))}
+              />
+              <input
+                aria-label="Availability end time"
+                type="time"
+                value={availabilityForm.endTime}
+                disabled={preview || isAvailabilityPending}
+                onChange={(event) => setAvailabilityForm((current) => ({ ...current, endTime: event.target.value }))}
+              />
+            </div>
+            <input
+              aria-label="Availability label"
+              placeholder="Optional label"
+              maxLength={80}
+              value={availabilityForm.label}
+              disabled={preview || isAvailabilityPending}
+              onChange={(event) => setAvailabilityForm((current) => ({ ...current, label: event.target.value }))}
+            />
+            <button className="wl-btn-teal" type="submit" disabled={preview || isAvailabilityPending}>
+              {preview ? "Preview mode only" : isAvailabilityPending ? "Saving..." : "Add availability"}
+            </button>
+          </form>
         </div>
       </div>
 
@@ -287,11 +337,12 @@ export function ProfilePanel({
           <span>People you&apos;d tag along with again</span>
         </div>
         <div className="wl-meet-scroll">
-          {MEET_AGAIN.map((m) => (
-            <div key={m.name} className="wl-meet-card">
-              <div className="wl-meet-avatar" style={{ background: m.color }}>{m.initials}</div>
-              <strong>{m.name}</strong>
-              <span>{m.sessions}</span>
+          {companions.length === 0 ? <p>No mutual meet-again connections yet.</p> : null}
+          {companions.map((companion) => (
+            <div key={companion.id} className="wl-meet-card">
+              <div className="wl-meet-avatar">{companion.companionName.slice(0, 1).toUpperCase()}</div>
+              <strong>{companion.companionName}</strong>
+              <span>Trust {companion.companionTrustScore}</span>
             </div>
           ))}
         </div>

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { hasSupabaseEnv } from "@/lib/env";
 import { logAppEvent } from "@/lib/logger";
-import { enforceRateLimit, verifyTurnstileToken } from "@/lib/security";
+import { enforceRateLimit, prepareAuthCaptcha } from "@/lib/security";
 import { createSupabaseRouteClient } from "@/lib/supabase/route";
 import { signInSchema } from "@/lib/validators";
 
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const captchaCheck = await verifyTurnstileToken(payload.data.captchaToken ?? null, meta.ip);
+  const captchaCheck = prepareAuthCaptcha(payload.data.captchaToken ?? null);
   if (!captchaCheck.ok) {
     return NextResponse.json({ error: captchaCheck.message }, { status: 400 });
   }
@@ -50,23 +50,27 @@ export async function POST(request: NextRequest) {
   const { error } = await supabase.auth.signInWithPassword({
     email: payload.data.email,
     password: payload.data.password,
+    options: { captchaToken: payload.data.captchaToken ?? undefined },
   });
 
   if (error) {
+    if (error.code === "captcha_failed") {
+      return NextResponse.json({ error: "Could not verify anti-bot challenge. Please try again." }, { status: 400 });
+    }
     await logAppEvent({
       level: "warn",
       category: "auth.sign-in",
       message: "Sign-in failed.",
-      context: { email: payload.data.email, error: error.message, userAgent: meta.userAgent },
+      context: { errorCode: error.code ?? "auth_error", userAgent: meta.userAgent },
     });
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ error: "Email or password is incorrect." }, { status: 400 });
   }
 
   await logAppEvent({
     level: "info",
     category: "auth.sign-in",
     message: "Sign-in successful.",
-    context: { email: payload.data.email },
+    context: {},
   });
 
   return NextResponse.json({ ok: true }, { status: 200, headers: response.headers });

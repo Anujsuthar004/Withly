@@ -1,17 +1,16 @@
 import Link from "next/link";
 
 import { SessionPageClient } from "@/components/app/session-page-client";
-import { getInboxPageState } from "@/lib/supabase/queries";
+import { getSessionPageState } from "@/lib/supabase/queries";
 
 export const dynamic = "force-dynamic";
 
 export default async function SessionRoute({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  let snapshot;
+  let state;
   try {
-    const state = await getInboxPageState();
-    snapshot = state.snapshot;
+    state = await getSessionPageState(id);
   } catch {
     return (
       <div className="workspace-page">
@@ -25,7 +24,7 @@ export default async function SessionRoute({ params }: { params: Promise<{ id: s
     );
   }
 
-  if (!snapshot.activeSession || snapshot.activeSession.requestId !== id) {
+  if (!state.session) {
     return (
       <div className="workspace-page">
         <section className="panel">
@@ -38,6 +37,5 @@ export default async function SessionRoute({ params }: { params: Promise<{ id: s
     );
   }
 
-  return <SessionPageClient session={snapshot.activeSession} currentUserId={snapshot.profile.id} />;
+  return <SessionPageClient session={state.session} currentUserId={state.currentUserId} />;
 }
-

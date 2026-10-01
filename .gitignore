@@ -12,3 +12,10 @@ yarn-error.log*
 supabase/.temp
 playwright-report/
 test-results/
+New age social media platform*
+
+# Local backup material and database credentials must never be committed.
+*.dump
+*.dump.enc
+*.key
+pgpass

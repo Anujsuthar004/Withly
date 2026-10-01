@@ -16,6 +16,10 @@ const contentSecurityPolicy = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  poweredByHeader: false,
+  async redirects() {
+    return [{ source: "/:path*", has: [{ type: "host", value: "www.withly.in" }], destination: "https://withly.in/:path*", permanent: true }];
+  },
   turbopack: {
     root: process.cwd(),
   },

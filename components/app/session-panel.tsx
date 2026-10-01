@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
-import { AlertTriangle, ShieldCheck } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 import { submitCheckInAction, triggerSosAction } from "@/app/workspace/actions";
 import { ChatRoom } from "@/components/chat-room";
 import type { WorkspaceSession } from "@/lib/supabase/types";
-import { SUPPORT_EMAIL } from "@/lib/env";
+import { SessionControls } from "@/components/app/session-controls";
 
 export function SessionPanel({
   session,
@@ -27,11 +26,11 @@ export function SessionPanel({
         <div className="wl-sos-banner">
           <AlertTriangle size={22} />
           <div className="wl-sos-body">
-            <strong>SOS sent to your emergency contact</strong>
-            <div>Your live location was shared. Stay on the line.</div>
+            <strong>In-app safety alert sent</strong>
+            <div>Your companion was notified. Withly has not contacted emergency services or shared live location.</div>
           </div>
           <button type="button" className="wl-sos-cancel" onClick={() => setSos(false)}>
-            Cancel
+            Dismiss
           </button>
         </div>
       )}
@@ -45,7 +44,6 @@ export function SessionPanel({
               <div className="wl-chat-avatar-circle" style={{ background: "linear-gradient(135deg,#3FA796,#2C7A6B)" }}>
                 {session.partnerDisplayName?.[0]?.toUpperCase() ?? "?"}
               </div>
-              <span className="wl-active-dot" />
             </div>
             <div className="wl-chat-partner-info">
               <strong>{session.partnerDisplayName}</strong>
@@ -66,6 +64,7 @@ export function SessionPanel({
           onStatus={onStatus}
         />
       </div>
+      <SessionControls requestId={session.requestId} partnerId={session.partnerId} status="matched" onStatus={onStatus} />
     </div>
   );
 }
@@ -82,8 +81,7 @@ function SessionSafetyActions({
   const [isPending, startTransition] = useTransition();
   const [activeCheck, setActiveCheck] = useState<string | null>(null);
 
-  function handleCheckIn(status: "ok" | "delayed" | "help") {
-    setActiveCheck(status);
+  function handleCheckIn(status: "ok" | "missed") {
     startTransition(async () => {
       const formData = new FormData();
       formData.set("requestId", session.requestId);
@@ -93,6 +91,7 @@ function SessionSafetyActions({
       try {
         const result = await submitCheckInAction({ ok: false, message: "" }, formData);
         onStatus(result.message);
+        if (result.ok) setActiveCheck(status);
       } catch {
         onStatus("Failed to submit check-in.");
       }
@@ -100,7 +99,7 @@ function SessionSafetyActions({
   }
 
   function handleSos() {
-    if (!confirm("Are you sure you want to trigger an SOS? This notifies your emergency contact.")) return;
+    if (!confirm("Send an in-app safety alert to your companion? If you are in immediate danger, contact local emergency services directly.")) return;
 
     startTransition(async () => {
       const formData = new FormData();
@@ -110,7 +109,7 @@ function SessionSafetyActions({
       try {
         const result = await triggerSosAction({ ok: false, message: "" }, formData);
         onStatus(result.message);
-        onSos();
+        if (result.ok) onSos();
       } catch {
         onStatus("Failed to trigger SOS.");
       }
@@ -119,8 +118,7 @@ function SessionSafetyActions({
 
   const checks = [
     { key: "ok", label: "I'm OK" },
-    { key: "delayed", label: "Running late" },
-    { key: "help", label: "Need help" },
+    { key: "missed", label: "Missed check-in" },
   ] as const;
 
   return (

@@ -3,16 +3,18 @@
 import { useState } from "react";
 
 import { ProfilePanel } from "@/components/app/profile-panel";
-import type { WorkspaceProfile } from "@/lib/supabase/types";
+import type { AvailabilityWindow, TrustedCompanion, WorkspaceProfile } from "@/lib/supabase/types";
 
 export function ProfilePage({
   profile,
   availability,
+  companions,
   preview,
   initialStatus,
 }: {
   profile: WorkspaceProfile;
-  availability: { id: string; day_of_week: number; start_time: string; end_time: string; label: string | null }[];
+  availability: AvailabilityWindow[];
+  companions: TrustedCompanion[];
   preview: boolean;
   initialStatus?: string;
 }) {
@@ -28,7 +30,7 @@ export function ProfilePage({
         </div>
       </section>
       {status ? <div className="withly-status-banner">{status}</div> : null}
-      <ProfilePanel profile={profile} availability={availability} preview={preview} onStatus={setStatus} />
+      <ProfilePanel profile={profile} availability={availability} companions={companions} preview={preview} onStatus={setStatus} />
     </div>
   );
 }

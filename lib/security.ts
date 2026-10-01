@@ -1,8 +1,9 @@
 import crypto from "node:crypto";
+import { authChallengePreflight, verifyChallenge } from "@/lib/turnstile";
 
 import { headers } from "next/headers";
 
-import { hasTurnstileEnv, TURNSTILE_SECRET_KEY } from "@/lib/env";
+import { hasTurnstileEnv, isProduction, TURNSTILE_SECRET_KEY, TURNSTILE_SITE_KEY } from "@/lib/env";
 import { logAppEvent } from "@/lib/logger";
 import { getSupabaseAdminClientOrNull } from "@/lib/supabase/admin";
 
@@ -43,35 +44,43 @@ export async function enforceRateLimit({
   const hashedIdentifier = hashIdentifier(identifier);
   const admin = getSupabaseAdminClientOrNull();
   const now = Date.now();
-  const oldestAllowedAt = new Date(now - windowMs).toISOString();
 
   if (admin) {
-    await admin.from("rate_limit_events").delete().lt("created_at", oldestAllowedAt);
+    const { data, error } = await admin.rpc("consume_rate_limit", {
+      action_input: action,
+      key_hash_input: hashedIdentifier,
+      limit_input: limit,
+      window_seconds_input: Math.ceil(windowMs / 1000),
+    });
 
-    const { count, error } = await admin
-      .from("rate_limit_events")
-      .select("id", { count: "exact", head: true })
-      .eq("action", action)
-      .eq("key_hash", hashedIdentifier)
-      .gte("created_at", oldestAllowedAt);
+    if (error) {
+      await logAppEvent({
+        level: "error",
+        category: "rate-limit",
+        message: "Persistent rate limiter failed.",
+        context: { action, error: error.message },
+      });
+      return isProduction
+        ? { ok: false, retryAfterSeconds: Math.ceil(windowMs / 1000) }
+        : { ok: true };
+    }
 
-    if (!error && typeof count === "number" && count >= limit) {
+    if (data !== true) {
       return {
         ok: false,
         retryAfterSeconds: Math.ceil(windowMs / 1000),
       };
     }
 
-    await admin.from("rate_limit_events").insert({
-      action,
-      key_hash: hashedIdentifier,
-      context: {},
-    });
-
     return { ok: true };
   }
 
-  console.error("[security] Supabase admin unavailable — rate limiting degraded to in-memory store. Restart will reset counts.");
+  if (isProduction) {
+    console.error("[security] Persistent rate limiting is unavailable in production.");
+    return { ok: false, retryAfterSeconds: Math.ceil(windowMs / 1000) };
+  }
+
+  console.warn("[security] Supabase admin unavailable — using the development-only in-memory rate limiter.");
 
   const key = `${action}:${hashedIdentifier}`;
   const store = fallbackRateLimitStore.__tagAlongRateLimitStore ?? new Map<string, number[]>();
@@ -91,40 +100,15 @@ export async function enforceRateLimit({
 }
 
 export async function verifyTurnstileToken(token: string | null, ipAddress: string) {
-  if (!hasTurnstileEnv) {
-    return { ok: true, bypassed: true };
-  }
-
-  if (!token) {
-    return { ok: false, bypassed: false, message: "Complete the anti-bot check first." };
-  }
-
-  const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      secret: TURNSTILE_SECRET_KEY,
-      response: token,
-      remoteip: ipAddress,
-    }),
+  return verifyChallenge({
+    siteKey: TURNSTILE_SITE_KEY,
+    secretKey: TURNSTILE_SECRET_KEY,
+    production: isProduction,
+    token,
+    ip: ipAddress,
   });
+}
 
-  if (!response.ok) {
-    await logAppEvent({
-      level: "warn",
-      category: "turnstile",
-      message: "Turnstile verification request failed.",
-      context: { status: response.status },
-    });
-    return { ok: false, bypassed: false, message: "Could not verify anti-bot challenge." };
-  }
-
-  const payload = (await response.json()) as { success?: boolean };
-  if (!payload.success) {
-    return { ok: false, bypassed: false, message: "Anti-bot verification failed." };
-  }
-
-  return { ok: true, bypassed: false };
+export function prepareAuthCaptcha(token: string | null) {
+  return authChallengePreflight({ siteKey: TURNSTILE_SITE_KEY, secretKey: TURNSTILE_SECRET_KEY, production: isProduction, token });
 }

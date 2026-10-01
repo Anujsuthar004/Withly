@@ -32,7 +32,7 @@ export default async function FeedPage() {
           {feedError}
         </section>
       ) : (
-        <FeedList feed={feed} preview={preview} ownerRequestIds={ownerRequestIds} />
+        <FeedList feed={feed} preview={preview} ownerRequestIds={ownerRequestIds} viewerProfile={snapshot.profile} />
       )}
     </div>
   );

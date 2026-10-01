@@ -1,46 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, MessageCircle, ShieldCheck, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { reviewJoinRequestAction } from "@/app/workspace/actions";
 import type { WorkspaceJoinReview } from "@/lib/supabase/types";
 import { formatRelativeTime } from "@/lib/utils";
-
-/* Static notification data for the redesign */
-const NOTIFICATIONS = [
-  { icon: "chat", text: "Aarav sent a message in Passport office morning run", time: "3m", unread: true },
-  { icon: "bell", text: "Mira requested to join Gallery opening with a short dinner after", time: "11m", unread: true },
-  { icon: "star", text: "Your trust score rose to 68 after a completed session", time: "2h", unread: false },
-  { icon: "shield", text: "Phone verification approved — you can now post verified-only requests", time: "1d", unread: false },
-];
-
-function NotifIcon({ type }: { type: string }) {
-  switch (type) {
-    case "chat":
-      return <MessageCircle size={17} />;
-    case "star":
-      return <Star size={17} />;
-    case "shield":
-      return <ShieldCheck size={17} />;
-    default:
-      return <Bell size={17} />;
-  }
-}
-
-function getNotifStyle(type: string) {
-  switch (type) {
-    case "chat":
-      return { color: "var(--accent2)", bg: "var(--accent-soft)" };
-    case "star":
-      return { color: "var(--gold)", bg: "rgba(224,154,79,0.14)" };
-    case "shield":
-      return { color: "var(--teal)", bg: "var(--teal-soft)" };
-    default:
-      return { color: "var(--teal)", bg: "var(--teal-soft)" };
-  }
-}
 
 function getInitials(name: string) {
   return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
@@ -127,7 +92,6 @@ export function JoinReviewPanel({
                   <div className="wl-join-info">
                     <div className="wl-join-name-row">
                       <strong>{entry.joinerDisplayName}</strong>
-                      <span className="wl-trust-pill">Trust 72</span>
                     </div>
                     <div className="wl-join-meta">
                       wants to join · {entry.requestTitle} · {formatRelativeTime(entry.createdAt)}
@@ -167,28 +131,6 @@ export function JoinReviewPanel({
         </div>
       </section>
 
-      {/* Notifications */}
-      <section>
-        <h3 className="wl-section-title">Notifications</h3>
-        <div className="wl-notif-card">
-          {NOTIFICATIONS.map((n, i) => {
-            const style = getNotifStyle(n.icon);
-            return (
-              <div key={i} className={`wl-notif-row ${n.unread ? "wl-notif-unread" : ""}`}>
-                <span
-                  className="wl-notif-icon"
-                  style={{ color: style.color, background: style.bg }}
-                >
-                  <NotifIcon type={n.icon} />
-                </span>
-                <div className="wl-notif-text">{n.text}</div>
-                <span className="wl-notif-time">{n.time}</span>
-                {n.unread && <span className="wl-notif-dot" />}
-              </div>
-            );
-          })}
-        </div>
-      </section>
     </div>
   );
 }
