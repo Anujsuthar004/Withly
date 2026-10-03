@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { parseEnv } from "node:util";
 import { createClient } from "@supabase/supabase-js";
+import { connectChatRealtime } from "../lib/chat-realtime.ts";
 
 // Legacy filename retained. THREE-account backend test, NOT browser E2E.
 if (process.env.WITHLY_ALLOW_LIVE_TEST !== "yes") throw new Error("Creates temporary hosted fixtures. Set WITHLY_ALLOW_LIVE_TEST=yes explicitly.");
@@ -61,26 +62,24 @@ const say = (client, id, body) => ok(client.rpc("send_request_message", { reques
 async function realtimeExchange(host, peer, id) {
   // Real hosted WebSocket delivery, separate from the browser UI acceptance gate.
   for (const [sender, receiver] of [[host, peer], [peer, host]]) {
-    const session = await ok(receiver.client.auth.getSession(), "Realtime member session");
-    assert.equal(session.session?.user.id, receiver.id);
-    await receiver.client.realtime.setAuth(session.session.access_token);
     const body = `Realtime acceptance ${randomUUID()}`;
     let delivered;
     let subscriptionTimer, deliveryTimer;
     const message = new Promise((resolve) => { delivered = resolve; });
-    const channel = receiver.client.channel(`release-${randomUUID()}`).on("postgres_changes", {
-      event: "INSERT", schema: "public", table: "request_messages", filter: `request_id=eq.${id}`,
-    }, ({ new: row }) => {
-      if (row.body === body && row.sender_id === sender.id) delivered(row.id);
-    }).on("system", {}, (event) => {
-      console.log(`Realtime system: ${event.status ?? "unknown"} ${event.message ?? ""}`);
-    });
+    let live;
     try {
       await new Promise((resolve, reject) => {
         subscriptionTimer = setTimeout(() => reject(new Error("Realtime subscription timed out")), 20_000);
-        channel.subscribe((state) => {
-          if (state === "SUBSCRIBED") resolve();
-          else if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(state)) reject(new Error(`Realtime ${state}`));
+        live = connectChatRealtime(receiver.client, id, receiver.id, {
+          onMessage(row) {
+            // Only the actual INSERT callback satisfies live delivery, never catch-up.
+            if (row.body === body && row.senderId === sender.id) delivered(row.id);
+          },
+          onSnapshot(rows) { assert(Array.isArray(rows)); },
+          onState(state) {
+            if (state === "live") resolve();
+            else if (state === "paused") reject(new Error("Realtime controller paused"));
+          },
         });
       });
       clearTimeout(subscriptionTimer);
@@ -93,7 +92,7 @@ async function realtimeExchange(host, peer, id) {
     } finally {
       clearTimeout(subscriptionTimer);
       clearTimeout(deliveryTimer);
-      await receiver.client.removeChannel(channel);
+      await live?.dispose();
     }
   }
   console.log("PASS: hosted WebSocket message delivery in both participant directions (not browser UI).");
@@ -161,4 +160,4 @@ try {
   if (failures.length) throw new AggregateError(failures.map(message => new Error(message)), `Cleanup incomplete: ${failures.join("; ")}`);
   console.log("PASS: this run's request, profile, report and Auth fixture absence verified.");
 }
-console.log("HOSTED BACKEND CHECKS PASSED. Browser signup, email, CAPTCHA, realtime and account-delete UI need separate acceptance tests.");
+console.log("HOSTED BACKEND CHECKS PASSED. Browser signup, email, CAPTCHA, two-browser realtime UI and account-delete UI need separate acceptance tests.");

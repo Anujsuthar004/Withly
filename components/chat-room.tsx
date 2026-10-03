@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useEffectEvent, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useEffectEvent, useRef, useState, useTransition } from "react";
 import { Send, WifiOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -9,6 +9,7 @@ import { hasSupabaseEnv } from "@/lib/env";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { SessionMessage } from "@/lib/supabase/types";
 import { formatRelativeTime } from "@/lib/utils";
+import { connectChatRealtime, mergeChatMessages, type ChatConnectionState } from "@/lib/chat-realtime";
 
 interface ChatRoomProps {
   requestId: string;
@@ -23,15 +24,11 @@ export function ChatRoom({ requestId, currentUserId, initialMessages, onStatus }
   const [messages, setMessages] = useState(initialMessages);
   const [body, setBody] = useState("");
   const [isPending, startTransition] = useTransition();
-  const [isDisconnected, setIsDisconnected] = useState(false);
+  const [connection, setConnection] = useState<ChatConnectionState>("connecting");
+  const [connectionAttempt, setConnectionAttempt] = useState(0);
 
   const appendMessage = useEffectEvent((message: SessionMessage) => {
-    setMessages((current) => {
-      if (current.some((entry) => entry.id === message.id)) {
-        return current;
-      }
-      return [...current, message];
-    });
+    setMessages((current) => mergeChatMessages(current, [message]));
   });
 
   useEffect(() => {
@@ -51,63 +48,34 @@ export function ChatRoom({ requestId, currentUserId, initialMessages, onStatus }
     }
 
     const supabase = createSupabaseBrowserClient();
-    const channel = supabase
-      .channel(`request-messages:${requestId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "request_messages",
-          filter: `request_id=eq.${requestId}`,
-        },
-        (payload: {
-          new: {
-            id: number;
-            request_id: string;
-            sender_type: "user" | "system";
-            sender_id: string | null;
-            sender_name: string;
-            body: string;
-            created_at: string;
-          };
-        }) => {
-          const raw = payload.new as {
-            id: number;
-            request_id: string;
-            sender_type: "user" | "system";
-            sender_id: string | null;
-            sender_name: string;
-            body: string;
-            created_at: string;
-          };
-
-          appendMessage({
-            id: raw.id,
-            requestId: raw.request_id,
-            senderType: raw.sender_type,
-            senderId: raw.sender_id,
-            senderName: raw.sender_name,
-            body: raw.body,
-            createdAt: raw.created_at,
-          });
-        }
-      )
-      .subscribe((status: string) => {
-        setIsDisconnected(status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED");
-      });
+    const live = connectChatRealtime(supabase, requestId, currentUserId, {
+      onMessage: appendMessage,
+      onSnapshot: setMessages,
+      onState: setConnection,
+    });
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void live.catchUp();
+    };
+    const onOnline = () => setConnectionAttempt((attempt) => attempt + 1);
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", onOnline);
 
     return () => {
-      void supabase.removeChannel(channel);
+      void live.dispose();
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", onOnline);
     };
-  }, [requestId]);
+  }, [requestId, currentUserId, connectionAttempt]);
 
   return (
     <>
-      {isDisconnected ? (
+      {hasSupabaseEnv ? (
         <div className="wl-chat-banner" role="status" aria-live="polite">
-          <WifiOff size={14} />
-          Live updates paused. Reload the page to reconnect.
+          {connection === "paused" ? <WifiOff size={14} /> : null}
+          {connection === "live" ? "Live chat connected" : connection === "connecting" ? "Connecting live chat…" : "Live updates paused."}
+          {connection === "paused" ? (
+            <button type="button" onClick={() => setConnectionAttempt((attempt) => attempt + 1)}>Reconnect chat</button>
+          ) : null}
         </div>
       ) : null}
 
@@ -164,11 +132,13 @@ export function ChatRoom({ requestId, currentUserId, initialMessages, onStatus }
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder="Message…"
+          aria-label="Message"
           maxLength={700}
           disabled={isPending}
         />
         <button
           type="submit"
+          aria-label="Send message"
           className="wl-send-btn"
           disabled={isPending || body.trim().length === 0}
         >
