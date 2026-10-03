@@ -54,7 +54,7 @@ TLS certificate verification is enabled by default. Do not disable it for produc
 
 ## Storage and cadence
 
-On October 1, 2026, the owner selected Google Drive. A folder named **Withly Encrypted Backups** was created in the owner's My Drive; its sharing dialog shows **Restricted**, with only the owner listed. It is currently empty. The encryption key must not be stored in that folder. Folder creation alone does not configure uploads, scheduling, or a production recovery point.
+On October 1, 2026, the owner selected Google Drive. A folder named **Withly Encrypted Backups** was created in the owner's My Drive; its sharing dialog showed **Restricted**, with only the owner listed. On October 3, the two encrypted production archives listed above were uploaded successfully. The encryption key must not be stored in that folder.
 
 After each successful run, copy the `.dump.enc` file to an owner-approved off-device destination (for example a private cloud folder or external drive). Keep a daily backup and one before migrations/releases; retain at least seven daily and four weekly recovery points. No destination, scheduled task, paid plan, retention deletion or cloud upload is automatically configured by this script.
 
