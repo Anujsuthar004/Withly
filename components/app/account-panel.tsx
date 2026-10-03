@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Download, ShieldAlert, ShieldCheck, Trash2, UserMinus, Users } from "lucide-react";
+import { Download, ShieldAlert, Trash2, UserMinus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { 
   deleteAccountAction, 
   setEmergencyContactAction,
-  upgradeVerificationAction,
   joinCommunityAction,
   createCommunityAction
 } from "@/app/workspace/actions";
@@ -25,12 +24,10 @@ export function AccountPanel({ preview, onStatus }: { preview: boolean; onStatus
   const [ecEmail, setEcEmail] = useState("");
   const [isEcPending, startEcTransition] = useTransition();
 
-  const [joinCode, setJoinCode] = useState("");
+  const [communityId, setCommunityId] = useState("");
   const [commName, setCommName] = useState("");
   const [commDesc, setCommDesc] = useState("");
-  const [commDomain, setCommDomain] = useState("");
   const [isCommPending, startCommTransition] = useTransition();
-  const [isVerPending, startVerTransition] = useTransition();
 
   return (
     <section className="panel account-panel">
@@ -57,28 +54,26 @@ export function AccountPanel({ preview, onStatus }: { preview: boolean; onStatus
             Download a snapshot of your account history as JSON so you can keep your own record before deleting your account.
           </div>
 
-          <button
+          <a
             className="ghost-button"
-            type="button"
-            disabled={preview}
-            onClick={() => {
+            href={preview ? undefined : "/api/account/export"}
+            aria-disabled={preview}
+            onClick={(event) => {
               if (preview) {
+                event.preventDefault();
                 onStatus("This action is only available after sign-in.");
-                return;
               }
-
-              window.location.href = "/api/account/export";
             }}
           >
             <Download size={16} />
             {preview ? "Preview mode only" : "Download account export"}
-          </button>
+          </a>
         </section>
 
         <section className="panel-section">
           <div className="form-section-head">
             <h4>Emergency Contact</h4>
-            <p>We&apos;ll notify this person if you trigger an SOS alert during an active session.</p>
+            <p>Store a trusted contact for your own safety planning. Withly does not currently send SMS, email, or contact emergency services.</p>
           </div>
 
           <form
@@ -153,51 +148,8 @@ export function AccountPanel({ preview, onStatus }: { preview: boolean; onStatus
 
         <section className="panel-section">
           <div className="form-section-head">
-            <h4>Verify Identity</h4>
-            <p>Higher verification tiers increase your trust score and let you join more strict requests.</p>
-          </div>
-          <div className="button-row">
-            <button
-              className="secondary-button compact"
-              type="button"
-              disabled={preview || isVerPending}
-              onClick={() => {
-                startVerTransition(async () => {
-                  const formData = new FormData();
-                  formData.set("tier", "phone");
-                  formData.set("id_reference", "stub_phone_123");
-                  const result = await upgradeVerificationAction({ ok: false, message: "" }, formData);
-                  onStatus(result.message);
-                  if (result.ok) router.refresh();
-                });
-              }}
-            >
-              <ShieldCheck size={16} /> Verify Phone
-            </button>
-            <button
-              className="primary-button compact"
-              type="button"
-              disabled={preview || isVerPending}
-              onClick={() => {
-                startVerTransition(async () => {
-                  const formData = new FormData();
-                  formData.set("tier", "id_verified");
-                  formData.set("id_reference", "stub_id_123");
-                  const result = await upgradeVerificationAction({ ok: false, message: "" }, formData);
-                  onStatus(result.message);
-                  if (result.ok) router.refresh();
-                });
-              }}
-            >
-              <ShieldCheck size={16} /> Verify Government ID
-            </button>
-          </div>
-        </section>
-
-        <section className="panel-section">
-          <div className="form-section-head">
             <h4>Trust Communities</h4>
-            <p>Join or create a private network so members can filter requests to just your community.</p>
+            <p>Create a public community or join one using its community ID. Private invitations are not available yet.</p>
           </div>
           
           <div className="grid-two">
@@ -205,19 +157,19 @@ export function AccountPanel({ preview, onStatus }: { preview: boolean; onStatus
               e.preventDefault();
               startCommTransition(async () => {
                 const formData = new FormData();
-                formData.set("communityId_or_joinCode", joinCode);
+                formData.set("communityId", communityId);
                 const result = await joinCommunityAction({ ok: false, message: "" }, formData);
                 onStatus(result.message);
-                if (result.ok) setJoinCode("");
+                if (result.ok) setCommunityId("");
               });
             }}>
               <label>
-                Join with a Code
+                Join with a Community ID
                 <input 
                   type="text" 
-                  placeholder="e.g. CAMPUS-2026" 
-                  value={joinCode} 
-                  onChange={(e) => setJoinCode(e.target.value)}
+                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                  value={communityId}
+                  onChange={(e) => setCommunityId(e.target.value)}
                   disabled={preview || isCommPending}
                   required
                 />
@@ -233,13 +185,12 @@ export function AccountPanel({ preview, onStatus }: { preview: boolean; onStatus
                 const formData = new FormData();
                 formData.set("name", commName);
                 formData.set("description", commDesc);
-                if (commDomain) formData.set("domain_requirement", commDomain);
+                formData.set("isPrivate", "false");
                 const result = await createCommunityAction({ ok: false, message: "" }, formData);
                 onStatus(result.message);
                 if (result.ok) {
                   setCommName("");
                   setCommDesc("");
-                  setCommDomain("");
                 }
               });
             }}>
@@ -252,16 +203,6 @@ export function AccountPanel({ preview, onStatus }: { preview: boolean; onStatus
                   onChange={(e) => setCommName(e.target.value)}
                   disabled={preview || isCommPending}
                   required
-                />
-              </label>
-              <label>
-                Email Domain (Optional)
-                <input 
-                  type="text" 
-                  placeholder="e.g. university.edu" 
-                  value={commDomain} 
-                  onChange={(e) => setCommDomain(e.target.value)}
-                  disabled={preview || isCommPending}
                 />
               </label>
               <button className="secondary-button compact" type="submit" disabled={preview || isCommPending}>

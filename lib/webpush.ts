@@ -1,10 +1,11 @@
 import webpush from "web-push";
 
-import { VAPID_PRIVATE_KEY, VAPID_PUBLIC_KEY, hasVapidEnv } from "@/lib/env";
+import { SUPPORT_EMAIL, VAPID_PRIVATE_KEY, VAPID_PUBLIC_KEY, hasVapidEnv } from "@/lib/env";
+import { pushSubscriptionSchema } from "@/lib/validators";
 
 if (hasVapidEnv) {
   webpush.setVapidDetails(
-    "mailto:support@withly.app",
+    `mailto:${SUPPORT_EMAIL}`,
     VAPID_PUBLIC_KEY,
     VAPID_PRIVATE_KEY
   );
@@ -19,10 +20,10 @@ export async function sendPushNotification(
   subscription: PushSubscriptionJSON,
   payload: { title: string; body: string; url: string; tag?: string }
 ): Promise<{ ok: boolean; gone?: boolean }> {
-  if (!hasVapidEnv) return { ok: false };
+  if (!hasVapidEnv || !pushSubscriptionSchema.safeParse(subscription).success) return { ok: false };
 
   try {
-    await webpush.sendNotification(subscription as webpush.PushSubscription, JSON.stringify(payload));
+    await webpush.sendNotification(subscription as webpush.PushSubscription, JSON.stringify(payload), { timeout: 8_000 });
     return { ok: true };
   } catch (err) {
     const error = err as { statusCode?: number };

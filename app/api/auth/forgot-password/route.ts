@@ -1,9 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { hasSupabaseEnv, SITE_URL } from "@/lib/env";
-import { enforceRateLimit, verifyTurnstileToken } from "@/lib/security";
+import { enforceRateLimit, prepareAuthCaptcha } from "@/lib/security";
 import { createSupabaseRouteClient } from "@/lib/supabase/route";
 import { forgotPasswordSchema } from "@/lib/validators";
+import { authEmailRedirect } from "@/lib/auth-redirect";
 
 function requestMeta(request: NextRequest) {
   const forwardedFor = request.headers.get("x-forwarded-for") ?? "";
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const captchaCheck = await verifyTurnstileToken(payload.data.captchaToken ?? null, meta.ip);
+  const captchaCheck = prepareAuthCaptcha(payload.data.captchaToken ?? null);
   if (!captchaCheck.ok) {
     return NextResponse.json({ error: captchaCheck.message }, { status: 400 });
   }
@@ -45,11 +46,16 @@ export async function POST(request: NextRequest) {
   const response = NextResponse.json({ ok: true });
   const supabase = createSupabaseRouteClient(request, response);
   const { error } = await supabase.auth.resetPasswordForEmail(payload.data.email, {
-    redirectTo: `${SITE_URL || request.nextUrl.origin}/auth/reset-password`,
+    captchaToken: payload.data.captchaToken ?? undefined,
+    redirectTo: authEmailRedirect(SITE_URL, request.nextUrl.origin, "/auth/reset-password"),
   });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    if (error.code === "captcha_failed") {
+      return NextResponse.json({ error: "Could not verify anti-bot challenge. Please try again." }, { status: 400 });
+    }
+    // Do not reveal whether an account exists for this email address.
+    console.warn(JSON.stringify({ category: "auth.password-reset", message: "Password reset request failed.", errorCode: error.code ?? "auth_error" }));
   }
 
   return NextResponse.json(

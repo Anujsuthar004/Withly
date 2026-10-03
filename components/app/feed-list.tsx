@@ -2,38 +2,15 @@
 
 import { useDeferredValue, useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
-import { Clock, Heart, Search, Share, ShieldCheck, Star, Trash2, Users } from "lucide-react";
+import { Clock, Search, ShieldCheck, Star, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { deleteRequestAction, submitJoinRequestAction } from "@/app/workspace/actions";
 import { StatusBadge } from "@/components/app/status-badge";
-import type { FeedRequestCard, RequestLane } from "@/lib/supabase/types";
+import type { FeedRequestCard, RequestLane, WorkspaceProfile } from "@/lib/supabase/types";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils";
 
-/* ────── Stories data (ephemeral/live presence) ────── */
-const STORIES = [
-  { name: "Zoya", initials: "Z", color: "linear-gradient(135deg,#E0864B,#C65D3B)", ring: "linear-gradient(135deg, var(--accent), var(--gold))", live: true },
-  { name: "Aarav", initials: "A", color: "linear-gradient(135deg,#3FA796,#2C7A6B)", ring: "linear-gradient(135deg, var(--teal), #4FC4A8)", live: true },
-  { name: "Kabir", initials: "K", color: "linear-gradient(135deg,#B37FE0,#8C4FC4)", ring: "linear-gradient(135deg, var(--accent), var(--gold))", live: false },
-  { name: "Mira", initials: "M", color: "linear-gradient(135deg,#D6497E,#B32E63)", ring: "linear-gradient(135deg, var(--accent), var(--gold))", live: true },
-  { name: "Ishaan", initials: "I", color: "linear-gradient(135deg,#5B6CE0,#3F4FC4)", ring: "linear-gradient(135deg, var(--teal), #4FC4A8)", live: false },
-  { name: "Priya", initials: "P", color: "linear-gradient(135deg,#E0A84B,#C68A2A)", ring: "linear-gradient(135deg, var(--accent), var(--gold))", live: false },
-];
-
-const LIVE_NOW = [
-  { name: "Zoya", initials: "Z", color: "linear-gradient(135deg,#E0864B,#C65D3B)", status: "Planning a museum afternoon" },
-  { name: "Aarav", initials: "A", color: "linear-gradient(135deg,#3FA796,#2C7A6B)", status: "Matched with you · BKC" },
-  { name: "Mira", initials: "M", color: "linear-gradient(135deg,#D6497E,#B32E63)", status: "Looking for a plus-one" },
-  { name: "Priya", initials: "P", color: "linear-gradient(135deg,#E0A84B,#C68A2A)", status: "Your emergency contact" },
-];
-
-const COMMUNITIES = [
-  { name: "NYU · @nyu.edu", members: "2,340 members", badge: "N", color: "linear-gradient(135deg,#5B6CE0,#3F4FC4)" },
-  { name: "Lower Parel locals", members: "860 members", badge: "L", color: "linear-gradient(135deg,#0B7A66,#4FC4A8)" },
-  { name: "Weekend museum club", members: "412 members", badge: "M", color: "linear-gradient(135deg,#C65D3B,#E09A4F)" },
-];
-
-type FeedTab = "foryou" | "nearby" | "following";
+type FeedTab = "foryou" | "expiring";
 
 function getInitials(name: string) {
   return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
@@ -57,11 +34,13 @@ export function FeedList({
   feed,
   preview = false,
   ownerRequestIds = [],
+  viewerProfile,
   onStatus,
 }: {
   feed: FeedRequestCard[];
   preview?: boolean;
   ownerRequestIds?: string[];
+  viewerProfile: WorkspaceProfile;
   onStatus?: (message: string) => void;
 }) {
   const router = useRouter();
@@ -84,9 +63,7 @@ export function FeedList({
     const query = deferredSearch.trim().toLowerCase();
 
     return feed.filter((entry) => {
-      // Feed tab filtering
-      if (feedTab === "nearby" && !entry.expiresAt) return true; // nearby shows ephemeral/online
-      if (feedTab === "following") return true; // would filter by followed hosts in production
+      if (feedTab === "expiring" && !entry.expiresAt) return false;
 
       if (laneFilter !== "all" && entry.lane !== laneFilter) return false;
       if (showVerifiedOnly && !entry.verifiedOnly) return false;
@@ -106,6 +83,7 @@ export function FeedList({
     () => filteredFeed.filter((entry) => !dismissedRequestIds.includes(entry.id)),
     [dismissedRequestIds, filteredFeed]
   );
+  const expiringRequests = useMemo(() => feed.filter((entry) => entry.expiresAt).slice(0, 6), [feed]);
 
   async function handleDelete(requestId: string) {
     if (preview) {
@@ -152,14 +130,14 @@ export function FeedList({
       <div className="wl-feed-col">
         {/* Feed source tabs */}
         <div className="wl-feed-tabs">
-          {(["foryou", "nearby", "following"] as FeedTab[]).map((tab) => (
+          {(["foryou", "expiring"] as FeedTab[]).map((tab) => (
             <button
               key={tab}
               type="button"
               className={`wl-feed-tab ${feedTab === tab ? "active" : ""}`}
               onClick={() => setFeedTab(tab)}
             >
-              {tab === "foryou" ? "For you" : tab === "nearby" ? "Nearby" : "Following"}
+              {tab === "foryou" ? "For you" : "Expiring soon"}
             </button>
           ))}
         </div>
@@ -179,17 +157,20 @@ export function FeedList({
               </div>
               <span>Post</span>
             </Link>
-            {STORIES.map((s) => (
-              <button key={s.name} type="button" className="wl-story">
-                <div className="wl-story-ring" style={{ background: s.ring }}>
-                  <div className="wl-story-avatar" style={{ background: s.color }}>
-                    {s.initials}
-                    {s.live && <span className="wl-live-indicator" />}
+            {expiringRequests.length === 0 ? <span>No expiring requests right now.</span> : null}
+            {expiringRequests.map((request) => {
+              const name = request.hostDisplayName ?? "Member";
+              return (
+              <button key={request.id} type="button" className="wl-story" onClick={() => router.push(`/requests/${request.id}`)}>
+                <div className="wl-story-ring">
+                  <div className="wl-story-avatar" style={{ background: getAvatarGradient(name) }}>
+                    {getInitials(name)}
                   </div>
                 </div>
-                <span className="wl-story-name">{s.name}</span>
+                <span className="wl-story-name">{request.title}</span>
               </button>
-            ))}
+              );
+            })}
           </div>
         </section>
 
@@ -203,7 +184,7 @@ export function FeedList({
                 className={`wl-chip ${laneFilter === lane ? "active" : ""}`}
                 onClick={() => setLaneFilter(lane)}
               >
-                {lane === "all" ? "All" : lane === "social" ? "Social" : "Errands"}
+                {lane === "all" ? "All" : lane === "social" ? "Coworking & Focus" : "Coffee Walk"}
               </button>
             ))}
             <button
@@ -212,7 +193,7 @@ export function FeedList({
               onClick={() => setShowVerifiedOnly((c) => !c)}
             >
               <ShieldCheck size={14} />
-              Verified only
+              Email-confirmed only
             </button>
           </div>
           <span className="wl-filter-count">{visibleFeed.length} live requests</span>
@@ -252,10 +233,10 @@ export function FeedList({
 
             const tierLabel =
               request.hostVerificationTier === "id_verified"
-                ? "ID Verified"
+                ? "ID verified"
                 : request.hostVerificationTier === "phone"
-                  ? "Phone"
-                  : "Email";
+                  ? "Phone verified"
+                  : "Email confirmed";
 
             return (
               <article key={request.id} className="wl-card">
@@ -269,7 +250,6 @@ export function FeedList({
                           {initials}
                         </div>
                       </div>
-                      <span className="wl-card-online-dot" />
                     </div>
                     <div className="wl-card-header-info">
                       <div className="wl-card-name-row">
@@ -280,7 +260,7 @@ export function FeedList({
                         </span>
                       </div>
                       <div className="wl-card-meta-line">
-                        <span>{isSocial ? "Social plus-one" : "Errand companion"}</span>
+                        <span>{isSocial ? "Coworking & Focus" : "Coffee Walk"}</span>
                         <span className="wl-meta-dot" />
                         <span>{formatRelativeTime(request.createdAt)}</span>
                         {request.expiresAt && (
@@ -359,12 +339,6 @@ export function FeedList({
                       >
                         {preview ? "Sign in to join" : isJoined ? "Request sent ✓" : isExpanded ? "Cancel" : "Request to join"}
                       </button>
-                      <button type="button" className="wl-icon-btn">
-                        <Heart size={19} />
-                      </button>
-                      <button type="button" className="wl-icon-btn">
-                        <Share size={19} />
-                      </button>
                     </div>
                   )}
 
@@ -426,53 +400,21 @@ export function FeedList({
           <div className="wl-trust-deco" />
           <span className="wl-trust-label">Your trust</span>
           <div className="wl-trust-score">
-            <strong>68</strong>
+            <strong>{viewerProfile.trustScore}</strong>
             <span>/100</span>
           </div>
-          <p>Verify your ID to unlock verified-only requests and raise your match rate.</p>
-          <Link href="/profile" className="wl-trust-btn">Verify identity</Link>
+          <p>Your score reflects completed sessions, mutual meet-again choices, issues, and reviewed reports.</p>
+          <Link href="/profile" className="wl-trust-btn">View profile</Link>
         </div>
 
-        {/* Active now */}
+        {/* Safety note */}
         <div className="wl-rail-card">
           <div className="wl-rail-head">
-            <span className="wl-live-dot-wrap">
-              <span className="wl-live-dot-pulse" />
-              <span className="wl-live-dot" />
-            </span>
-            <h3>Active now</h3>
+            <ShieldCheck size={18} />
+            <h3>Meet safely</h3>
           </div>
-          <div className="wl-active-list">
-            {LIVE_NOW.map((p) => (
-              <div key={p.name} className="wl-active-person">
-                <div className="wl-active-avatar-wrap">
-                  <div className="wl-active-avatar" style={{ background: p.color }}>{p.initials}</div>
-                  <span className="wl-active-dot" />
-                </div>
-                <div className="wl-active-info">
-                  <strong>{p.name}</strong>
-                  <small>{p.status}</small>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Communities */}
-        <div className="wl-rail-card">
-          <h3 className="wl-rail-title">Your communities</h3>
-          <div className="wl-community-list">
-            {COMMUNITIES.map((c) => (
-              <div key={c.name} className="wl-community-item">
-                <div className="wl-community-badge" style={{ background: c.color }}>{c.badge}</div>
-                <div className="wl-community-info">
-                  <strong>{c.name}</strong>
-                  <small>{c.members}</small>
-                </div>
-              </div>
-            ))}
-          </div>
-          <button type="button" className="wl-community-add">+ Find communities</button>
+          <p>Keep first meetings public, agree on timing in chat, and contact local emergency services directly if you are in danger.</p>
+          <Link href="/safety/reporting" className="wl-trust-btn">Safety guidance</Link>
         </div>
       </aside>
     </div>

@@ -1,14 +1,17 @@
 "use client";
 
-import { useEffect, useEffectEvent, useState, useTransition } from "react";
+import { useEffect, useEffectEvent, useState, useSyncExternalStore, useTransition } from "react";
 import { ArrowRight, LockKeyhole, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { TurnstileWidget } from "@/components/turnstile-widget";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { TURNSTILE_SITE_KEY, hasSupabaseEnv, hasTurnstileEnv } from "@/lib/env";
+import { TURNSTILE_SITE_KEY, hasSupabaseEnv, hasTurnstileSiteKey } from "@/lib/env";
 
 type Mode = "signin" | "signup";
+
+const subscribeToHydration = () => () => {};
 
 interface AuthPanelProps {
   nextPath?: string;
@@ -21,11 +24,14 @@ export function AuthPanel({ nextPath = "/feed" }: AuthPanelProps) {
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
   const [turnstileKey, setTurnstileKey] = useState(0);
   const [status, setStatus] = useState("Private profiles, clear plans, and one calm place to manage them.");
   const [statusTone, setStatusTone] = useState<"neutral" | "success" | "error">("neutral");
   const [isPending, startTransition] = useTransition();
+  const isHydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false);
+  const isBusy = !isHydrated || isPending;
 
   const handleAuthRefresh = useEffectEvent(() => {
     router.refresh();
@@ -68,6 +74,7 @@ export function AuthPanel({ nextPath = "/feed" }: AuthPanelProps) {
           email,
           password,
           displayName,
+          acceptedTerms,
           captchaToken,
         }),
       });
@@ -140,29 +147,6 @@ export function AuthPanel({ nextPath = "/feed" }: AuthPanelProps) {
     });
   }
 
-  async function handleGoogleSignIn() {
-    if (!hasSupabaseEnv) {
-      setStatus("Google sign-in is temporarily unavailable right now.");
-      setStatusTone("error");
-      return;
-    }
-
-    startTransition(async () => {
-      const supabase = createSupabaseBrowserClient();
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
-        },
-      });
-
-      if (error) {
-        setStatus(error.message);
-        setStatusTone("error");
-      }
-    });
-  }
-
   function switchMode(nextMode: Mode) {
     setMode(nextMode);
     setPassword("");
@@ -173,6 +157,7 @@ export function AuthPanel({ nextPath = "/feed" }: AuthPanelProps) {
     setStatus("Private profiles, clear plans, and one calm place to manage them.");
     if (nextMode === "signin") {
       setDisplayName("");
+      setAcceptedTerms(false);
     }
   }
 
@@ -181,7 +166,7 @@ export function AuthPanel({ nextPath = "/feed" }: AuthPanelProps) {
       <div className="eyebrow-row">
         <span className="eyebrow-pill">
           <ShieldCheck size={16} />
-          Verified members
+          Email-confirmed members
         </span>
         <span className="eyebrow-pill muted">
           <LockKeyhole size={16} />
@@ -199,7 +184,7 @@ export function AuthPanel({ nextPath = "/feed" }: AuthPanelProps) {
           <ShieldCheck size={16} />
           <div>
             <strong>Accountable profiles</strong>
-            <span>Verified identities and email confirmation keep the baseline trustworthy.</span>
+            <span>Email confirmation and reporting provide a basic accountability layer.</span>
           </div>
         </article>
         <article>
@@ -217,7 +202,7 @@ export function AuthPanel({ nextPath = "/feed" }: AuthPanelProps) {
           className={mode === "signin" ? "active" : ""}
           onClick={() => switchMode("signin")}
           aria-pressed={mode === "signin"}
-          disabled={isPending}
+          disabled={isBusy}
         >
           Sign In
         </button>
@@ -226,7 +211,7 @@ export function AuthPanel({ nextPath = "/feed" }: AuthPanelProps) {
           className={mode === "signup" ? "active" : ""}
           onClick={() => switchMode("signup")}
           aria-pressed={mode === "signup"}
-          disabled={isPending}
+          disabled={isBusy}
         >
           Create Account
         </button>
@@ -245,7 +230,7 @@ export function AuthPanel({ nextPath = "/feed" }: AuthPanelProps) {
               minLength={2}
               maxLength={60}
               required
-              disabled={isPending}
+              disabled={isBusy}
             />
           </label>
         ) : null}
@@ -261,9 +246,26 @@ export function AuthPanel({ nextPath = "/feed" }: AuthPanelProps) {
             autoCapitalize="none"
             spellCheck={false}
             required
-            disabled={isPending}
+            disabled={isBusy}
           />
         </label>
+
+        {mode === "signup" ? (
+          <label className="auth-consent">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(event) => setAcceptedTerms(event.target.checked)}
+              required
+              disabled={isBusy}
+            />
+            <span>
+              I am at least 18 and agree to the <Link href="/legal/terms">Terms</Link>,{" "}
+              <Link href="/legal/privacy">Privacy Policy</Link>, and{" "}
+              <Link href="/legal/community">Community Guidelines</Link>.
+            </span>
+          </label>
+        ) : null}
 
         <label>
           Password
@@ -276,21 +278,21 @@ export function AuthPanel({ nextPath = "/feed" }: AuthPanelProps) {
               autoComplete={mode === "signin" ? "current-password" : "new-password"}
               minLength={8}
               required
-              disabled={isPending}
+              disabled={isBusy}
             />
             <button
               type="button"
               className="ghost-button compact"
               onClick={() => setIsPasswordVisible((current) => !current)}
               aria-label={isPasswordVisible ? "Hide password" : "Show password"}
-              disabled={isPending || password.length === 0}
+              disabled={isBusy || password.length === 0}
             >
               {isPasswordVisible ? "Hide" : "Show"}
             </button>
           </span>
         </label>
 
-        {hasTurnstileEnv ? (
+        {hasTurnstileSiteKey ? (
           <TurnstileWidget
             key={turnstileKey}
             siteKey={TURNSTILE_SITE_KEY}
@@ -299,21 +301,17 @@ export function AuthPanel({ nextPath = "/feed" }: AuthPanelProps) {
           />
         ) : null}
 
-        <button className="primary-button" type="submit" disabled={isPending}>
+        <button className="primary-button" type="submit" disabled={isBusy}>
           {isPending ? "Working..." : mode === "signin" ? "Sign In" : "Create Account"}
           <ArrowRight size={18} />
         </button>
       </form>
 
       {mode === "signin" ? (
-        <button className="ghost-button auth-link" type="button" onClick={handleForgotPassword} disabled={isPending}>
+        <button className="ghost-button auth-link" type="button" onClick={handleForgotPassword} disabled={isBusy}>
           Send password reset link
         </button>
       ) : null}
-
-      <button className="secondary-button auth-google" type="button" onClick={handleGoogleSignIn} disabled={isPending}>
-        Continue with Google
-      </button>
 
       <p className="auth-status" role="status" aria-live="polite" aria-atomic="true" data-tone={statusTone}>
         {status}

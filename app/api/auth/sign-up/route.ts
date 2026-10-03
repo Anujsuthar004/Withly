@@ -2,9 +2,10 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { hasSupabaseEnv, SITE_URL } from "@/lib/env";
 import { logAppEvent } from "@/lib/logger";
-import { enforceRateLimit, verifyTurnstileToken } from "@/lib/security";
+import { enforceRateLimit, prepareAuthCaptcha } from "@/lib/security";
 import { createSupabaseRouteClient } from "@/lib/supabase/route";
 import { signUpSchema } from "@/lib/validators";
+import { authEmailRedirect } from "@/lib/auth-redirect";
 
 function requestMeta(request: NextRequest) {
   const forwardedFor = request.headers.get("x-forwarded-for") ?? "";
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const captchaCheck = await verifyTurnstileToken(payload.data.captchaToken ?? null, meta.ip);
+  const captchaCheck = prepareAuthCaptcha(payload.data.captchaToken ?? null);
   if (!captchaCheck.ok) {
     return NextResponse.json({ error: captchaCheck.message }, { status: 400 });
   }
@@ -51,28 +52,37 @@ export async function POST(request: NextRequest) {
     email: payload.data.email,
     password: payload.data.password,
     options: {
+      captchaToken: payload.data.captchaToken ?? undefined,
       data: {
         display_name: payload.data.displayName,
+        terms_accepted_at: new Date().toISOString(),
+        terms_version: "2026-09-24",
       },
-      emailRedirectTo: `${SITE_URL || request.nextUrl.origin}/auth/callback?next=${encodeURIComponent("/profile")}`,
+      emailRedirectTo: authEmailRedirect(SITE_URL, request.nextUrl.origin, "/profile"),
     },
   });
 
   if (error) {
+    if (error.code === "captcha_failed") {
+      return NextResponse.json({ error: "Could not verify anti-bot challenge. Please try again." }, { status: 400 });
+    }
     await logAppEvent({
       level: "warn",
       category: "auth.sign-up",
       message: "Sign-up failed.",
-      context: { email: payload.data.email, error: error.message, userAgent: meta.userAgent },
+      context: { errorCode: error.code ?? "auth_error", userAgent: meta.userAgent },
     });
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json(
+      { error: "Account creation could not be completed. Try signing in or resetting your password." },
+      { status: 400 }
+    );
   }
 
   await logAppEvent({
     level: "info",
     category: "auth.sign-up",
     message: "Sign-up created.",
-    context: { email: payload.data.email, needsVerification: !data.session },
+    context: { needsVerification: !data.session },
   });
 
   return NextResponse.json(

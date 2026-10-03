@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 
 declare global {
@@ -30,9 +30,10 @@ interface TurnstileWidgetProps {
 export function TurnstileWidget({ siteKey, onToken, theme = "light" }: TurnstileWidgetProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<string | null>(null);
+  const [scriptReady, setScriptReady] = useState(false);
 
   useEffect(() => {
-    if (!siteKey || !containerRef.current || !window.turnstile || widgetIdRef.current) {
+    if (!scriptReady || !siteKey || !containerRef.current || !window.turnstile || widgetIdRef.current) {
       return;
     }
 
@@ -50,7 +51,7 @@ export function TurnstileWidget({ siteKey, onToken, theme = "light" }: Turnstile
         widgetIdRef.current = null;
       }
     };
-  }, [onToken, siteKey, theme]);
+  }, [onToken, scriptReady, siteKey, theme]);
 
   if (!siteKey) {
     return null;
@@ -58,7 +59,11 @@ export function TurnstileWidget({ siteKey, onToken, theme = "light" }: Turnstile
 
   return (
     <>
-      <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" strategy="afterInteractive" />
+      <Script
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+        strategy="afterInteractive"
+        onReady={() => setScriptReady(true)}
+      />
       <div className="turnstile-shell">
         <div ref={containerRef} />
       </div>

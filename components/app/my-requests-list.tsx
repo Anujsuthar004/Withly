@@ -96,7 +96,7 @@ export function MyRequestsList({ requests }: { requests: WorkspaceRequest[] }) {
           <article key={request.id} className="summary-card">
             <div className="summary-head">
               <div>
-                <span className="request-lane">{request.lane === "social" ? "Social" : "Errand"}</span>
+                <span className="request-lane">{request.lane === "social" ? "Coworking & Focus" : "Coffee Walk"}</span>
                 <h4>
                   <Link href={`/requests/${request.id}`}>{request.title}</Link>
                 </h4>

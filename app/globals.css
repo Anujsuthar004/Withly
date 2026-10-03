@@ -1004,6 +1004,29 @@ main {
   color: rgba(84, 78, 71, 0.7);
 }
 
+.auth-form .auth-consent {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  color: var(--text-soft);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.auth-form .auth-consent input {
+  width: 18px;
+  min-height: 18px;
+  margin-top: 2px;
+  padding: 0;
+  accent-color: var(--teal);
+}
+
+.auth-consent a {
+  color: var(--teal);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .stack-form textarea,
 .join-box textarea {
   min-height: 108px;
@@ -6516,4 +6539,41 @@ body {
   .wl-card-header { flex-wrap: wrap; }
   .wl-card-actions { flex-wrap: wrap; }
   .wl-join-actions { flex-direction: column; }
+}
+
+/* Keep responsive shell rules after the desktop redesign overrides. */
+.app-mobile-signout { display: none; }
+@media (max-width: 1180px) {
+  .app-sidebar { display: none; }
+  .app-main { width: 100%; min-width: 0; }
+  .app-content { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
+  .app-mobile-signout { display: inline-flex; }
+  .app-bottom-nav {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    z-index: 50;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    padding: 10px;
+    border-radius: 22px;
+    background: var(--glass-surface-strong);
+    border: 1px solid var(--glass-edge);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+  }
+  .app-bottom-link {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    padding: 10px 8px;
+    border-radius: 16px;
+    text-decoration: none;
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 0.74rem;
+  }
 }

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { hasSupabaseEnv } from "@/lib/env";
+import { hasSupabaseAdminEnv, hasSupabaseEnv } from "@/lib/env";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseRouteClient } from "@/lib/supabase/route";
-import type { PushSubscriptionJSON } from "@/lib/webpush";
+import { pushSubscriptionSchema } from "@/lib/validators";
 
 export async function POST(request: NextRequest) {
-  if (!hasSupabaseEnv) {
+  if (!hasSupabaseEnv || !hasSupabaseAdminEnv) {
     return NextResponse.json({ error: "Service unavailable." }, { status: 503 });
   }
 
@@ -20,20 +21,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   }
 
-  let subscription: PushSubscriptionJSON;
-  try {
-    subscription = await request.json();
-  } catch {
+  const rawSubscription = await request.json().catch(() => null);
+  const parsed = pushSubscriptionSchema.safeParse(rawSubscription);
+  if (!parsed.success) {
     return NextResponse.json({ error: "Invalid subscription payload." }, { status: 400 });
   }
 
-  if (!subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) {
-    return NextResponse.json({ error: "Malformed push subscription." }, { status: 400 });
-  }
-
-  const { error } = await supabase
+  const { error } = await createSupabaseAdminClient()
     .from("profiles")
-    .update({ push_subscription: subscription })
+    .update({ push_subscription: parsed.data })
     .eq("id", user.id);
 
   if (error) {
@@ -44,7 +40,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  if (!hasSupabaseEnv) {
+  if (!hasSupabaseEnv || !hasSupabaseAdminEnv) {
     return NextResponse.json({ error: "Service unavailable." }, { status: 503 });
   }
 
@@ -59,7 +55,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   }
 
-  const { error } = await supabase
+  const { error } = await createSupabaseAdminClient()
     .from("profiles")
     .update({ push_subscription: null })
     .eq("id", user.id);

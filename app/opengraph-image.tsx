@@ -1,7 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
-export const alt = "Withly — Companionship for plans, errands, and everyday moments.";
+export const alt = "Withly — Focus, coworking & coffee.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -79,7 +78,7 @@ export default function OgImage() {
             maxWidth: 900,
           }}
         >
-          Find your companion for any plan.
+          Find your focus companion.
         </div>
 
         {/* Subline */}
@@ -92,7 +91,7 @@ export default function OgImage() {
             lineHeight: 1.4,
           }}
         >
-          Private. Intentional. Real connections for errands, outings, and everyday moments.
+          Shared tables. Study sessions. Coffee breaks. Meet in public, coordinate privately.
         </div>
 
         {/* Bottom CTA pill */}

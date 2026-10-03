@@ -63,7 +63,7 @@ export function getFeedVariant(index: number) {
 }
 
 export function getLaneLabel(lane: RequestLane) {
-  return lane === "social" ? "Social Plus-One" : "Errand Companion";
+  return lane === "social" ? "Coworking & Focus" : "Coffee Walk";
 }
 
 export function getLaneAccent(lane: RequestLane) {

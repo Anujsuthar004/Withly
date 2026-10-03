@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { deleteRequestAction, hideThreadAction, submitJoinRequestAction } from "@/app/workspace/actions";
 import { JoinReviewPanel } from "@/components/app/join-review-panel";
 import { StatusBadge } from "@/components/app/status-badge";
+import { SessionControls } from "@/components/app/session-controls";
 import type { WorkspaceJoinReview, WorkspaceRequest } from "@/lib/supabase/types";
 import { formatDateTime } from "@/lib/utils";
 
@@ -43,7 +44,7 @@ export function RequestDetailPage({
 
   const titleMeta = useMemo(() => {
     const chips = [];
-    if (detail.verifiedOnly) chips.push("Verified only");
+    if (detail.verifiedOnly) chips.push("Email-confirmed only");
     return chips;
   }, [detail.verifiedOnly]);
 
@@ -73,7 +74,7 @@ export function RequestDetailPage({
       <section className="panel">
         <div className="panel-heading">
           <div>
-            <p className="kicker">{detail.lane === "social" ? "Social" : "Errand"}</p>
+            <p className="kicker">{detail.lane === "social" ? "Coworking & Focus" : "Coffee Walk"}</p>
             <h3>{detail.title}</h3>
             <p>{detailMeta.length > 0 ? detailMeta.join(" · ") : "Exact meetup details are shared privately once both people decide to move forward."}</p>
           </div>
@@ -182,6 +183,9 @@ export function RequestDetailPage({
       </section>
 
       {canReviewJoinRequests ? <JoinReviewPanel entries={joinReviews} preview={preview} onStatus={setStatus} /> : null}
+      {myRequest && myRequest.status !== "open" ? (
+        <SessionControls requestId={detail.id} partnerId={myRequest.partnerId} status={myRequest.status} disabled={preview} onStatus={setStatus} />
+      ) : null}
     </div>
   );
 }

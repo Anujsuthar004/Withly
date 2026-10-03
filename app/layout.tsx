@@ -15,7 +15,7 @@ const manrope = Manrope({
   variable: "--font-manrope",
 });
 
-const description = "A private companionship platform for plans, errands, and everyday moments.";
+const description = "Find a coworking companion, study partner, or coffee buddy for a public-space session.";
 
 export const metadata: Metadata = {
   title: {
@@ -37,23 +37,23 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Withly",
-    title: "Withly — Companionship for plans, errands, and everyday moments.",
+    title: "Withly — Focus, coworking & coffee.",
     description,
     url: SITE_URL || "https://withly.in",
     images: [
       {
-        url: "/og-image.png",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Withly — Find a companion for your plans",
+        alt: "Withly — Find your focus companion",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Withly — Companionship for plans, errands, and everyday moments.",
+    title: "Withly — Focus, coworking & coffee.",
     description,
-    images: ["/og-image.png"],
+    images: ["/opengraph-image"],
   },
 };
 
