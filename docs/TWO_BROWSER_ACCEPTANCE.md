@@ -1,5 +1,11 @@
 # Two-browser chat acceptance — October 3, 2026
 
+## Follow-up: offline state and avatar deletion
+
+The offline-network experiment remains **inconclusive**, not passed. Chrome DevTools showed Offline and failed HTTP requests, but a chat marker still appeared, so a forced WebSocket disconnect was not established. Native control/observation was unreliable. Commit `8daa846` adds immediate paused status and listener disposal on the browser offline event; build, unit tests and CI pass, but this new behavior has not been verified through a clean live disconnect/reconnect cycle.
+
+The owner explicitly approved permanent deletion of the new temporary account and avatar. Chrome Guest's account page identified **Release QA final checks**, accepted the confirmation phrase, processed deletion, and returned to the public sign-in page. Independent database queries found zero fixture Auth users, profiles and avatar objects, with the owner's account still present. The avatar was uploaded as API fixture setup; profile-upload UI acceptance is not claimed. Remaining fixture conversation/messages/notifications were removed and absence checked. The Guest window was closed, removing the temporary tab-level Offline override, and the owner's inbox was reopened.
+
 ## Latest outcome — deployed fix, October 3 at 06:34–06:39 UTC
 
 **Two-browser send/receive flow observed without receiver reload.** This is a qualified functional pass, not an isolated browser-WebSocket latency or forced-disconnect/reconnect pass. Chrome's native accessibility/screenshot observations were stale until window interaction; the app also catches up when made visible. Those mechanisms prevent attributing every observed incoming message exclusively to a WebSocket event.
@@ -36,4 +42,4 @@ Cleanup was verified after the run: the temporary account, profile, conversation
 
 The follow-up above addresses the two-browser functional exchange and separately verifies actual hosted WebSocket events. Strict foreground/background timing and forced network-reconnect browser acceptance remain outstanding. No CAPTCHA, RLS, TLS, or browser security controls were disabled.
 
-Production-backup setup remains parked at the owner's request.
+Production-backup work was subsequently resumed and completed through encrypted off-site snapshots and a database/Storage restore drill; see [backup recovery](BACKUP_RECOVERY.md) for the remaining key-custody and unattended-run checks.

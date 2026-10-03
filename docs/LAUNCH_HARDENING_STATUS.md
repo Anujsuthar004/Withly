@@ -1,14 +1,16 @@
 # Launch hardening status — October 3, 2026
 
 The security and responsive-layout fixes are deployed to **https://withly.in**.
-Current runtime: chat-fix commit `8233ee0`, deployed with explicit owner approval
-(`https://withly-g60bq0qq9-a1-04.vercel.app`, aliased to `https://withly.in`).
+Current runtime: commit `8daa846`, including immediate offline chat status,
+(`https://withly-lk4n9x9ir-a1-04.vercel.app`, aliased to `https://withly.in`).
 
 **Public launch is not signed off yet. SMTP is configured, recovery delivery is verified, and the owner reports completing recovery; the remaining acceptance and operational checks are listed below.**
 Do not describe the application as “100% verified end-to-end.”
 
 ## Completed
 
+- PR #2 was merged after the owner requested completion of all remaining items. Merge commit: `34604f7`. Follow-up PR #3 contains offline-state handling and a secure production backup runner; its runtime change is deployed and CI checks pass.
+- Created and uploaded encrypted production database and Storage snapshots on October 3. Restored the database into a network-isolated local Supabase PostgreSQL container, retaining ACLs; both security/session-safety SQL suites passed. Storage archive extraction and hashes passed. Daily 09:00 backup task created; separate owner key custody and first unattended run remain outstanding. See [backup evidence](BACKUP_RECOVERY.md).
 - Deployed authenticated realtime initialization, Postgres-listener readiness, authorized catch-up with event-race handling, and visible connection/reconnect controls. No database migration or security-setting change was required. The two-browser functional exchange was observed without receiver reload, with native Chrome observation/focus caveats documented in [the acceptance record](TWO_BROWSER_ACCEPTANCE.md).
 - Corrected the callback test's hard-coded loopback hostname; compare the full expected origin.
 - Separated isolated preview tests from live public-surface checks. `BASE_URL` cannot silently send the preview suite to production.
@@ -21,11 +23,11 @@ Do not describe the application as “100% verified end-to-end.”
 - Added deployment exclusions for local credentials, generated files, and local Supabase configuration.
 - Verified `withly.in` in Resend via GoDaddy sending-only DNS records. Configured Supabase SMTP through Resend's native integration, using a send-only key and `Withly <noreply@withly.in>` (`smtp.resend.com:465`, SMTP user `resend`). The management API confirms the saved settings and continued CAPTCHA enforcement. Supabase's configured email rate limit is now 25/hour; Resend's observed free-plan daily cap is 100.
 - The owner confirmed daily responsibility for the support inbox and moderation queue.
-- Account export and permanent deletion were exercised through the live UI with explicit owner approval, using only the temporary release account. The JSON export was parsed successfully; Auth/profile/storage queries confirmed zero remaining rows for that test account. Its export remains in Downloads. This fixture had no avatar, so deletion of a real uploaded avatar remains separately unverified in the UI.
+- Account export and permanent deletion were exercised through the live UI with explicit owner approval, using only temporary release accounts. The JSON export was parsed successfully and remains in Downloads. An October 3 follow-up deleted an account with an uploaded avatar through Chrome Guest's account UI; the browser returned to sign-in and independent queries confirmed zero Auth users, profiles, and avatar objects for that fixture, while the main owner remained present. The avatar was API-seeded, so this proves deletion with an avatar, not the profile-upload UI.
 - The owner moderation UI moved a clearly labelled fixture from open to reviewing to resolved; the database recorded the note and correct resolving admin. Only that fixture was removed afterward. An old extra admin profile was inspected: its Auth account was already soft-deleted in March, not an active additional administrator.
 - Vercel confirms the daily expiry schedule is enabled on the current production deployment. An authorized manual execution returned HTTP 200, `expiredCount: 0`. Historical scheduler execution was not proved by the available log query.
 - Created a clean source-recovery clone outside iCloud at `/Users/anujsuthar/Developer/withly-release-recovery.RJlwTT`, branch `codex/launch-recovery-sep30`, preserving the original damaged checkout and excluding secrets/build outputs. Git connectivity passes in the recovery clone.
-- Added encrypted PostgreSQL backup tooling and a recovery guide. Created the owner's selected Google Drive folder, **Withly Encrypted Backups**, and verified Restricted access with only the owner listed. It is empty: production credentials, uploads and scheduling are not configured; no production recovery point is claimed.
+- Added encrypted PostgreSQL backup tooling and a recovery guide. The owner's selected Google Drive folder, **Withly Encrypted Backups**, has Restricted access with only the owner listed. It now contains the verified October 3 encrypted database and Storage snapshots described above.
 
 The previous launch hardening remains in place: profile privilege restrictions, forced RLS on sensitive tables, RPC authorization/rate limits, safe redirects, block-triggered session cancellation, avatar cleanup/hard account deletion, and deleted-member message redaction.
 
@@ -53,11 +55,11 @@ The hosted backend script deliberately uses admin-provisioned fixtures and norma
 ## Remaining release gates
 
 1. **New-member email acceptance:** SMTP setup is complete, the sending domain is **Verified**, and Resend confirmed recovery-email delivery. Still test a fresh signup to an unrelated non-team inbox. Public DNS resolves the exact Resend DKIM TXT at `resend._domainkey`, `send` CNAME to `send.forge.rmta.net`, and `rsend` CNAME to `rsend-apne1.forge.rmta.net`. The website health check passes; root MX remains absent as before. The sending domain does not provide a monitored inbound mailbox; public support remains the owner's Gmail address.
-2. **User-facing acceptance:** After the approved chat fix, messages were observed in both real browsers without receiver reload. This is a qualified functional pass: native Chrome observations stayed stale until interaction and visibility catch-up may contribute; strict background delivery timing and forced network-reconnect browser acceptance are not proved. See [the acceptance record](TWO_BROWSER_ACCEPTANCE.md), which preserves the earlier failed run. Finish account deletion with an uploaded avatar. Moderation and export/deletion without an avatar passed. Hosted WebSocket/RLS tests are not a substitute for remaining UI checks.
-3. **Production recovery:** Supabase lists no available backups and PITR is disabled. The owner selected free encrypted backups in a newly created private Google Drive folder. Tooling and the local restore drill pass, but CLI production-connection attempts timed out. Configure a reliable database connection, back up Storage file bytes, upload encrypted backups with separate key custody, schedule backups, and complete a production-snapshot restore drill. Optional push delivery must be verified before advertising it.
-4. **Source control:** The recovered source and chat fix are published on `codex/launch-recovery-sep30` in [PR #2](https://github.com/Anujsuthar004/Withly/pull/2), with runtime commit `8233ee0`. GitHub verification and database jobs passed. The PR is intentionally unmerged and `main` is unchanged. Production was separately updated with explicit owner approval; Vercel also built the branch preview.
+2. **User-facing acceptance:** After the approved chat fix, messages were observed in both real browsers without receiver reload. This is a qualified functional pass: native Chrome observations stayed stale until interaction and visibility catch-up may contribute; strict background delivery timing and forced network-reconnect browser acceptance are not proved. See [the acceptance record](TWO_BROWSER_ACCEPTANCE.md), which preserves the earlier failed run. Account deletion with an uploaded avatar, moderation, and export/deletion without an avatar passed. Hosted WebSocket/RLS tests are not a substitute for remaining UI checks.
+3. **Production recovery:** Encrypted production database and Storage snapshots are now off-site, the production-snapshot database restore/security tests and Storage byte/hash drill passed, and a daily task is configured. Owner must keep a separate secure recovery key copy; the first unattended backup run and a complete restored hosted-service/browser cutover remain unverified. The local task depends on the Mac/app and valid service sign-ins. Optional push currently has server plumbing but no browser opt-in flow; do not advertise push delivery.
+4. **Source control:** Recovered source and the initial chat fix are merged into `main` through [PR #2](https://github.com/Anujsuthar004/Withly/pull/2). Follow-up work is tracked in [PR #3](https://github.com/Anujsuthar004/Withly/pull/3). GitHub verification/database jobs passed and the offline-state runtime is deployed.
 
-The owner explicitly parked production-backup setup on October 1. This is deferred work, not a completed recovery requirement.
+The owner resumed the previously parked backup work on October 3. Independent-inbox signup remains unverified because the owner has no available unrelated tester. A fresh October 3 Vercel historical-log query returned no expiry execution records; keep automatic scheduler execution unverified rather than treating the earlier manual run as proof.
 
 ## Reproduce checks
 
