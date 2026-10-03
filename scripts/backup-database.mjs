@@ -37,7 +37,9 @@ if (mode === "init-key") {
     await requireExternalDirectory(directory);
     archive = path.join(directory, `withly-${new Date().toISOString().replaceAll(":", "-")}-${randomBytes(4).toString("hex")}.dump.enc`);
     // Preserve ACLs: RLS alone is insufficient if schema/table grants are lost.
-    const dump = spawn(process.env.PG_DUMP_BIN || "pg_dump", ["--format=custom", "--no-owner", "--no-password"], {
+    const dumpArgs = ["--format=custom", "--no-owner", "--no-password"];
+    if (process.env.PG_ROLE) dumpArgs.push(`--role=${process.env.PG_ROLE}`);
+    const dump = spawn(process.env.PG_DUMP_BIN || "pg_dump", dumpArgs, {
       env: { ...process.env, PGSSLMODE: process.env.PGSSLMODE || "verify-full", PGSSLROOTCERT: process.env.PGSSLROOTCERT || "system" },
       stdio: ["ignore", "pipe", "pipe"],
     });

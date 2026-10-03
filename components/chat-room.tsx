@@ -57,13 +57,22 @@ export function ChatRoom({ requestId, currentUserId, initialMessages, onStatus }
       if (document.visibilityState === "visible") void live.catchUp();
     };
     const onOnline = () => setConnectionAttempt((attempt) => attempt + 1);
+    const onOffline = () => {
+      setConnection("paused");
+      // A socket can take a heartbeat timeout to notice transport loss.
+      // Stop it immediately; the online handler creates a fresh listener.
+      void live.dispose();
+    };
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
+    if (!navigator.onLine) onOffline();
 
     return () => {
       void live.dispose();
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
     };
   }, [requestId, currentUserId, connectionAttempt]);
 
