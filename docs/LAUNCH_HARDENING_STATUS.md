@@ -1,4 +1,4 @@
-# Launch hardening status — October 1, 2026
+# Launch hardening status — October 3, 2026
 
 The security and responsive-layout fixes are deployed to **https://withly.in**.
 Current deployment: `dpl_CaY91oxzM85QijyEC5nyUk9Hju4o`
@@ -51,9 +51,11 @@ The hosted backend script deliberately uses admin-provisioned fixtures and norma
 ## Remaining release gates
 
 1. **New-member email acceptance:** SMTP setup is complete, the sending domain is **Verified**, and Resend confirmed recovery-email delivery. Still test a fresh signup to an unrelated non-team inbox. Public DNS resolves the exact Resend DKIM TXT at `resend._domainkey`, `send` CNAME to `send.forge.rmta.net`, and `rsend` CNAME to `rsend-apne1.forge.rmta.net`. The website health check passes; root MX remains absent as before. The sending domain does not provide a monitored inbound mailbox; public support remains the owner's Gmail address.
-2. **User-facing acceptance:** Finish a two-browser realtime chat exchange and account deletion with an uploaded avatar. Moderation and export/deletion without an avatar passed. Hosted WebSocket/RLS tests are not a substitute for the remaining UI checks.
+2. **User-facing acceptance:** The October 3 two-browser chat acceptance run **did not pass**: both participants could persist messages, but live receipt was not observed in either recipient browser. A subsequent in-app-browser reload timed out, so an application-code cause versus browser/network transport has not been isolated. See [the acceptance record](TWO_BROWSER_ACCEPTANCE.md). Resolve and rerun this check, and finish account deletion with an uploaded avatar. Moderation and export/deletion without an avatar passed. Hosted WebSocket/RLS tests are not a substitute for the remaining UI checks.
 3. **Production recovery:** Supabase lists no available backups and PITR is disabled. The owner selected free encrypted backups in a newly created private Google Drive folder. Tooling and the local restore drill pass, but CLI production-connection attempts timed out. Configure a reliable database connection, back up Storage file bytes, upload encrypted backups with separate key custody, schedule backups, and complete a production-snapshot restore drill. Optional push delivery must be verified before advertising it.
-4. **Source control:** A clean recovery branch now exists locally, but GitHub `main` still lacks the current source. Publishing a review branch/PR is awaiting owner direction; do not merge, force-push or rewrite history automatically.
+4. **Source control:** The recovered source is published on `codex/launch-recovery-sep30` in [PR #2](https://github.com/Anujsuthar004/Withly/pull/2), initially at `0c21e00`. GitHub verification and database jobs passed. The PR is intentionally unmerged; `main` and production have not been changed by this publication. Vercel automatically built a preview for the branch.
+
+The owner explicitly parked production-backup setup on October 1. This is deferred work, not a completed recovery requirement.
 
 ## Reproduce checks
 
