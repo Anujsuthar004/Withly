@@ -1,14 +1,15 @@
 # Launch hardening status — October 3, 2026
 
 The security and responsive-layout fixes are deployed to **https://withly.in**.
-Current deployment: `dpl_CaY91oxzM85QijyEC5nyUk9Hju4o`
-(`https://withly-jjjhi4rks-a1-04.vercel.app`).
+Current runtime: chat-fix commit `8233ee0`, deployed with explicit owner approval
+(`https://withly-g60bq0qq9-a1-04.vercel.app`, aliased to `https://withly.in`).
 
 **Public launch is not signed off yet. SMTP is configured, recovery delivery is verified, and the owner reports completing recovery; the remaining acceptance and operational checks are listed below.**
 Do not describe the application as “100% verified end-to-end.”
 
 ## Completed
 
+- Deployed authenticated realtime initialization, Postgres-listener readiness, authorized catch-up with event-race handling, and visible connection/reconnect controls. No database migration or security-setting change was required. The two-browser functional exchange was observed without receiver reload, with native Chrome observation/focus caveats documented in [the acceptance record](TWO_BROWSER_ACCEPTANCE.md).
 - Corrected the callback test's hard-coded loopback hostname; compare the full expected origin.
 - Separated isolated preview tests from live public-surface checks. `BASE_URL` cannot silently send the preview suite to production.
 - Replaced the overclaiming two-account script with explicit three-account hosted backend checks. Blocking is tested during matched sessions, before completion; unrelated sessions must survive. Outsider/anonymous chat reads and outsider writes are denied. Cleanup checks every operation and verifies fixture absence.
@@ -31,12 +32,13 @@ The previous launch hardening remains in place: profile privilege restrictions, 
 ## Verification completed
 
 - Node 24 production build, TypeScript and lint: passed.
-- Unit regression tests: **15 passed**, including encrypted-backup round-trip, tamper rejection and wrong-key rejection without publishing plaintext.
+- Unit regression tests: **23 passed**, including eight realtime-controller regressions and encrypted-backup round-trip, tamper rejection and wrong-key rejection without publishing plaintext.
 - Isolated Chromium browser tests: **36 passed**, including phone/tablet navigation at 390, 768 and 1024 pixels.
 - All **12 migrations** applied successfully to a fresh disposable PostgreSQL database; authorization and session-safety SQL assertions passed.
 - All 12 migrations are recorded in hosted Supabase; the safety/deletion triggers and inspected RLS settings are enabled.
 - Hosted three-account backend checks passed, including active block/report-and-block, completion, unauthorized access, and verified cleanup.
 - Extended the hosted checks with real WebSocket delivery in both participant directions: passed. The first harness attempt missed delivery before explicitly attaching its member JWT; after waiting for authentication, both directions and the full safety suite passed. This did not demonstrate a production UI defect, and is not a two-browser UI test.
+- October 3 rerun uses the production chat controller itself and counts only actual INSERT callbacks as delivery; both directions and all hosted safety checks passed with verified cleanup. Production health returned 200 after the approved deployment. GitHub verification and database jobs passed for `8233ee0`.
 - Local encrypted backup/restore drill passed on October 1: applied all 12 migrations to an empty isolated PostgreSQL database, encrypted/dumped it, authenticated/decrypted it, restored into another empty database, and reran security/session-safety SQL assertions. The first drill exposed discarded grants; the backup now preserves ACLs and the corrected restore passes. This is a local test database, not a production snapshot or Storage-object recovery test.
 - Dependency audit: **0 vulnerabilities** reported, including development dependencies.
 - Real browser signup with a fresh production Turnstile token succeeded. The owner confirmed email receipt/confirmation, and the test account signed in.
@@ -51,9 +53,9 @@ The hosted backend script deliberately uses admin-provisioned fixtures and norma
 ## Remaining release gates
 
 1. **New-member email acceptance:** SMTP setup is complete, the sending domain is **Verified**, and Resend confirmed recovery-email delivery. Still test a fresh signup to an unrelated non-team inbox. Public DNS resolves the exact Resend DKIM TXT at `resend._domainkey`, `send` CNAME to `send.forge.rmta.net`, and `rsend` CNAME to `rsend-apne1.forge.rmta.net`. The website health check passes; root MX remains absent as before. The sending domain does not provide a monitored inbound mailbox; public support remains the owner's Gmail address.
-2. **User-facing acceptance:** The October 3 two-browser chat acceptance run **did not pass**: both participants could persist messages, but live receipt was not observed in either recipient browser. A subsequent in-app-browser reload timed out, so an application-code cause versus browser/network transport has not been isolated. See [the acceptance record](TWO_BROWSER_ACCEPTANCE.md). Resolve and rerun this check, and finish account deletion with an uploaded avatar. Moderation and export/deletion without an avatar passed. Hosted WebSocket/RLS tests are not a substitute for the remaining UI checks.
+2. **User-facing acceptance:** After the approved chat fix, messages were observed in both real browsers without receiver reload. This is a qualified functional pass: native Chrome observations stayed stale until interaction and visibility catch-up may contribute; strict background delivery timing and forced network-reconnect browser acceptance are not proved. See [the acceptance record](TWO_BROWSER_ACCEPTANCE.md), which preserves the earlier failed run. Finish account deletion with an uploaded avatar. Moderation and export/deletion without an avatar passed. Hosted WebSocket/RLS tests are not a substitute for remaining UI checks.
 3. **Production recovery:** Supabase lists no available backups and PITR is disabled. The owner selected free encrypted backups in a newly created private Google Drive folder. Tooling and the local restore drill pass, but CLI production-connection attempts timed out. Configure a reliable database connection, back up Storage file bytes, upload encrypted backups with separate key custody, schedule backups, and complete a production-snapshot restore drill. Optional push delivery must be verified before advertising it.
-4. **Source control:** The recovered source is published on `codex/launch-recovery-sep30` in [PR #2](https://github.com/Anujsuthar004/Withly/pull/2), initially at `0c21e00`. GitHub verification and database jobs passed. The PR is intentionally unmerged; `main` and production have not been changed by this publication. Vercel automatically built a preview for the branch.
+4. **Source control:** The recovered source and chat fix are published on `codex/launch-recovery-sep30` in [PR #2](https://github.com/Anujsuthar004/Withly/pull/2), with runtime commit `8233ee0`. GitHub verification and database jobs passed. The PR is intentionally unmerged and `main` is unchanged. Production was separately updated with explicit owner approval; Vercel also built the branch preview.
 
 The owner explicitly parked production-backup setup on October 1. This is deferred work, not a completed recovery requirement.
 
