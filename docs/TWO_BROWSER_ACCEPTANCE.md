@@ -1,5 +1,7 @@
 # Two-browser chat acceptance — October 3, 2026
 
+Latest update: [October 4 release check results](RELEASE_CHECK_RESULTS_2026-10-04.md) records observed browser offline-to-online recovery, a separate successful hosted reconnect/INSERT test, and verified fixture cleanup. Historical limitations below are preserved rather than rewritten as passes.
+
 ## Follow-up: offline state and avatar deletion
 
 The offline-network experiment remains **inconclusive**, not passed. Chrome DevTools showed Offline and failed HTTP requests, but a chat marker still appeared, so a forced WebSocket disconnect was not established. Native control/observation was unreliable. Commit `8daa846` adds immediate paused status and listener disposal on the browser offline event; build, unit tests and CI pass, but this new behavior has not been verified through a clean live disconnect/reconnect cycle.

@@ -1,5 +1,7 @@
 # Launch hardening status — October 3, 2026
 
+Latest update: [October 4 release check results](RELEASE_CHECK_RESULTS_2026-10-04.md) supersede the reconnect, scheduled-backup and source-control status below. Remaining owner actions and timed expiry verification are listed there.
+
 The security and responsive-layout fixes are deployed to **https://withly.in**.
 Current runtime: commit `8daa846`, including immediate offline chat status,
 (`https://withly-lk4n9x9ir-a1-04.vercel.app`, aliased to `https://withly.in`).

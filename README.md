@@ -2,6 +2,10 @@
 
 Withly helps adults find one coworking companion, study partner, or coffee buddy for a clear, low-stakes session in a public space.
 
+## Latest release status
+
+The latest verification record is [October 4 release check results](docs/RELEASE_CHECK_RESULTS_2026-10-04.md). It covers chat recovery, test-data cleanup, encrypted off-site backups, and remaining launch checks. Independent-inbox signup, separate recovery-key custody, and observed automatic request expiry are still outstanding; this is not a claim of complete public-launch sign-off.
+
 ## What is implemented
 
 - Supabase email authentication and email-confirmation gating
@@ -12,7 +16,7 @@ Withly helps adults find one coworking companion, study partner, or coffee buddy
 - Admin review queues, account export, and deletion-request workflows
 - Row Level Security plus explicitly granted RPC access in Postgres
 - Cloudflare Turnstile on public auth flows and server-side rate limiting
-- Optional browser push notifications through VAPID and a signed database webhook
+- Server-side push support through VAPID and a signed database webhook; browser opt-in and end-to-end push delivery are not implemented/verified
 
 Withly does **not** contact emergency services, send an SOS to an external emergency contact, perform criminal background checks, or currently verify government identity. Users should call their local emergency number when they are in danger.
 
@@ -37,6 +41,7 @@ Never expose `SUPABASE_SERVICE_ROLE_KEY`, `TURNSTILE_SECRET_KEY`, `VAPID_PRIVATE
 ```bash
 npm run typecheck
 npm run lint
+npm run test:unit
 npm run build
 npm run test:e2e
 npm audit --omit=dev --audit-level=high
