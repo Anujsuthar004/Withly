@@ -2,6 +2,10 @@
 
 ## Current launch requirement
 
+### October 4 scheduled backup update
+
+The first scheduled backup workflow completed: both encrypted database and Storage archives passed verification and were uploaded to the existing owner-private Drive folder. The UI confirmed both uploads complete. A transient connection failure recovered on retry without credential changes. Execution occurred around 14:25 IST, so this is not proof of exact 09:00 timing. See [the October 4 evidence](RELEASE_CHECK_RESULTS_2026-10-04.md) for filenames and the temporary read-only expiry-observation schedule. Separate recovery-key custody remains unconfirmed. The October 3 notes below describe the earlier restore drill and setup state.
+
 ### October 3 production recovery evidence
 
 The owner resumed backup work. A fresh **production** database archive and Storage archive were created with temporary CLI database credentials and `PGSSLMODE=verify-full`, using the official Supabase CA certificate. No database password was reset. Both encrypted files were uploaded to the existing private Google Drive destination; the UI confirmed two completed uploads. The encryption key was not uploaded.
@@ -12,7 +16,7 @@ The owner resumed backup work. A fresh **production** database archive and Stora
 - Restored counts: 11 Auth users, 11 profiles, 3 requests, 9 messages, 1 Storage object, and all 12 migrations. Counts include the active release-test fixture at snapshot time.
 - Both `tests/database/security.sql` and `tests/database/session-safety.sql` passed against this restored production snapshot, with their test writes rolled back.
 - Storage archive extraction and every object size/SHA-256 check passed. This proves recovery of file bytes, not yet a complete hosted Storage/Auth service cutover or restored-project browser sign-in.
-- A daily 09:00 local-time task named **Withly daily encrypted backups** was created. It requests fresh temporary credentials, verifies archives, uploads encrypted outputs to the approved Drive folder, and reports failures. It requires the Mac/app running and valid service sign-ins. No first unattended scheduled run has occurred yet. Old backups are retained; retention deletion is not automated.
+- A daily 09:00 local-time task named **Withly daily encrypted backups** was created. It requests fresh temporary credentials, verifies archives, uploads encrypted outputs to the approved Drive folder, and reports failures. It requires the Mac/app running and valid service sign-ins. Its first completed scheduled run is recorded in the October 4 update above. Old backups are retained; retention deletion is not automated.
 - Owner action still needed: keep an independent secure recovery copy of the encryption key (password manager or offline medium, never beside the archives). A key existing only on this Mac is not sufficient disaster recovery.
 
 ### Production runner
