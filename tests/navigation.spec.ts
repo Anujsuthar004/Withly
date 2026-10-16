@@ -4,7 +4,7 @@ test.describe("navigation and page accessibility", () => {
   test("failed email callbacks explain how to recover", async ({ page }) => {
     await page.goto("/auth/callback?error=access_denied");
     await expect(page).toHaveURL(/\/auth\/error$/);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("This email link could not be completed.");
+    await expect(page.getByRole("heading", { name: "This email link could not be completed." })).toBeVisible();
     await expect(page.getByRole("link", { name: "Return to sign in" })).toBeVisible();
   });
   for (const unsafe of ["//evil.example", "/\\evil.example", "/\n/evil.example", "/%5cevil.example", "/%255cevil.example", "https://evil.example"]) {

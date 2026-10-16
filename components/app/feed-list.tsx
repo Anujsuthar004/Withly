@@ -2,7 +2,8 @@
 
 import { useDeferredValue, useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
-import { Clock, Search, ShieldCheck, Star, Trash2, Users } from "lucide-react";
+import { Clock, Coffee, Headphones, MapPin, Search, ShieldCheck, Star, Trash2, Users } from "lucide-react";
+import styles from "@/app/feed-design.module.css";
 import { useRouter } from "next/navigation";
 
 import { deleteRequestAction, submitJoinRequestAction } from "@/app/workspace/actions";
@@ -135,6 +136,7 @@ export function FeedList({
               key={tab}
               type="button"
               className={`wl-feed-tab ${feedTab === tab ? "active" : ""}`}
+              aria-pressed={feedTab === tab}
               onClick={() => setFeedTab(tab)}
             >
               {tab === "foryou" ? "For you" : "Expiring soon"}
@@ -142,37 +144,10 @@ export function FeedList({
           ))}
         </div>
 
-        {/* Stories rail */}
-        <section className="wl-stories-section">
-          <div className="wl-stories-head">
-            <h3>Ephemeral &amp; live</h3>
-            <span>Expire fast — reply now</span>
-          </div>
-          <div className="wl-stories-rail">
-            <Link href="/requests/new" className="wl-story-post">
-              <div className="wl-story-post-circle">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round">
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-              </div>
-              <span>Post</span>
-            </Link>
-            {expiringRequests.length === 0 ? <span>No expiring requests right now.</span> : null}
-            {expiringRequests.map((request) => {
-              const name = request.hostDisplayName ?? "Member";
-              return (
-              <button key={request.id} type="button" className="wl-story" onClick={() => router.push(`/requests/${request.id}`)}>
-                <div className="wl-story-ring">
-                  <div className="wl-story-avatar" style={{ background: getAvatarGradient(name) }}>
-                    {getInitials(name)}
-                  </div>
-                </div>
-                <span className="wl-story-name">{request.title}</span>
-              </button>
-              );
-            })}
-          </div>
-        </section>
+        <label className={styles.search}>
+          <Search size={19} aria-hidden="true" />
+          <input type="search" aria-label="Search requests" placeholder="Find your kind of company…" value={search} onChange={(event) => setSearch(event.target.value)} />
+        </label>
 
         {/* Filter chips */}
         <div className="wl-filter-row">
@@ -182,21 +157,24 @@ export function FeedList({
                 key={lane}
                 type="button"
                 className={`wl-chip ${laneFilter === lane ? "active" : ""}`}
+                aria-pressed={laneFilter === lane}
                 onClick={() => setLaneFilter(lane)}
               >
+                {lane === "social" ? <Headphones size={15} aria-hidden="true" /> : lane === "errand" ? <Coffee size={15} aria-hidden="true" /> : null}
                 {lane === "all" ? "All" : lane === "social" ? "Coworking & Focus" : "Coffee Walk"}
               </button>
             ))}
             <button
               type="button"
               className={`wl-chip wl-chip-verified ${showVerifiedOnly ? "active" : ""}`}
+              aria-pressed={showVerifiedOnly}
               onClick={() => setShowVerifiedOnly((c) => !c)}
             >
               <ShieldCheck size={14} />
               Email-confirmed only
             </button>
           </div>
-          <span className="wl-filter-count">{visibleFeed.length} live requests</span>
+          <span className="wl-filter-count" role="status">{visibleFeed.length} {preview ? "example" : "open"} requests</span>
         </div>
 
         {feedback ? <StatusBadge message={feedback} /> : null}
@@ -218,12 +196,9 @@ export function FeedList({
 
           {visibleFeed.map((request) => {
             const isSocial = request.lane === "social";
-            const accentBar = isSocial
-              ? "linear-gradient(90deg, var(--accent), var(--gold))"
-              : "linear-gradient(90deg, var(--teal), #4FC4A8)";
             const ring = isSocial
-              ? "linear-gradient(135deg, var(--accent), var(--gold))"
-              : "linear-gradient(135deg, var(--teal), #4FC4A8)";
+              ? "linear-gradient(135deg, #c9b7f6, #d9f881)"
+              : "linear-gradient(135deg, #b7d4f6, #d9f881)";
             const hostName = request.hostDisplayName ?? "Host";
             const initials = getInitials(hostName);
             const avatarGrad = getAvatarGradient(hostName);
@@ -239,7 +214,11 @@ export function FeedList({
                   : "Email confirmed";
 
             return (
-              <article key={request.id} className="wl-card">
+              <article key={request.id} className="wl-card" data-lane={request.lane}>
+                <div className={styles.cardActivity}>
+                  <span>{isSocial ? <Headphones size={16} aria-hidden="true" /> : <Coffee size={16} aria-hidden="true" />}{isSocial ? "MAKE SPACE TO FOCUS" : "TAKE A LITTLE BREAK"}</span>
+                  {preview ? <small>EXAMPLE</small> : <span className={styles.pairMark} aria-hidden="true" />}
+                </div>
 
                 <div className="wl-card-body">
                   {/* Header row */}
@@ -268,7 +247,7 @@ export function FeedList({
                             <span className="wl-meta-dot" />
                             <span className="wl-ephemeral-tag">
                               <Clock size={11} />
-                              expires {formatRelativeTime(request.expiresAt)}
+                              Closes {formatDateTime(request.expiresAt)}
                             </span>
                           </>
                         )}
@@ -289,9 +268,13 @@ export function FeedList({
 
                   {/* Title + description */}
                   <div>
-                    <h4 className="wl-card-title">{request.title}</h4>
+                    <h3 className="wl-card-title">{request.title}</h3>
                     <p className="wl-card-desc">{request.description}</p>
                   </div>
+                  {request.areaLabel || request.meetupAt ? <div className={styles.planMeta}>
+                    {request.areaLabel ? <span><MapPin size={14} aria-hidden="true" />{request.areaLabel}</span> : null}
+                    {request.meetupAt ? <span><Clock size={14} aria-hidden="true" />{formatDateTime(request.meetupAt)}</span> : null}
+                  </div> : null}
 
                   {/* Meta chips */}
                   <div className="wl-card-chips">
@@ -346,6 +329,7 @@ export function FeedList({
                   {isExpanded && !isOwner && (
                     <div className="wl-join-draft">
                       <textarea
+                        aria-label={`Introduction for ${request.title}`}
                         rows={2}
                         value={joinDrafts[request.id] ?? ""}
                         onChange={(e) =>
@@ -367,6 +351,7 @@ export function FeedList({
                                 requestId: request.id,
                                 introMessage: joinDrafts[request.id] ?? "",
                               });
+                              setFeedback(result.message);
                               onStatus?.(result.message);
                               if (result.ok) {
                                 setJoinDrafts((c) => ({ ...c, [request.id]: "" }));
@@ -375,6 +360,7 @@ export function FeedList({
                                 router.refresh();
                               }
                             } catch {
+                              setFeedback("Something went wrong. Please try again.");
                               onStatus?.("Something went wrong. Please try again.");
                             } finally {
                               setJoinBusyId(null);
@@ -395,10 +381,21 @@ export function FeedList({
 
       {/* ========= RIGHT RAIL ========= */}
       <aside className="wl-feed-rail">
+        <section className="wl-stories-section">
+          <div className="wl-stories-head"><h3>Closing soon</h3><Clock size={15} aria-hidden="true" /></div>
+          {preview ? <p className={styles.closingNote}>Example time-limited plans</p> : null}
+          {expiringRequests.length === 0 ? <p className={styles.closingNote}>No expiring requests right now.</p> : null}
+          {expiringRequests.map((request) => (
+            <Link className={styles.closingLink} key={request.id} href={`/requests/${request.id}`}>
+              <span className={styles.pairMark} aria-hidden="true" /><span>{request.title}</span><span aria-hidden="true">↗</span>
+            </Link>
+          ))}
+          <Link href="/requests/new" className={styles.closingPost}>+ Post your own plan</Link>
+        </section>
         {/* Trust card */}
         <div className="wl-trust-card">
           <div className="wl-trust-deco" />
-          <span className="wl-trust-label">Your trust</span>
+          <span className="wl-trust-label">{preview ? "Example trust score" : "Your trust"}</span>
           <div className="wl-trust-score">
             <strong>{viewerProfile.trustScore}</strong>
             <span>/100</span>

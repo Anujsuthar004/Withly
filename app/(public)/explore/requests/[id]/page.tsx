@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { SiteFooter } from "@/components/site-footer";
+import { PublicPageShell } from "@/components/public-page-shell";
+import styles from "@/app/public-design.module.css";
 import { getPublicRequestDetail } from "@/lib/supabase/queries";
 
 export const dynamic = "force-dynamic";
@@ -16,23 +17,23 @@ export default async function ExploreRequestPage({ params }: { params: Promise<{
 
   if (!request) {
     return (
-      <main className="marketing-page">
+      <PublicPageShell><div className={styles.page}>
         <section className="setup-banner" role="status" aria-live="polite">
           <p className="kicker">Request</p>
-          <h2>Request details are temporarily unavailable.</h2>
+          <h1>Request details are temporarily unavailable.</h1>
           <p>{requestError}</p>
         </section>
 
-        <SiteFooter />
-      </main>
+        <Link className="ghost-button" href="/explore">Back to explore</Link>
+      </div></PublicPageShell>
     );
   }
 
   return (
-    <main className="marketing-page">
+    <PublicPageShell><div className={styles.page}>
       <section className="section-title">
         <p className="kicker">Request</p>
-        <h2>{request.title}</h2>
+        <h1>{request.title}</h1>
         <p>Exact meetup details stay private until both people decide to continue.</p>
       </section>
 
@@ -40,7 +41,7 @@ export default async function ExploreRequestPage({ params }: { params: Promise<{
         <div className="panel-heading">
           <div>
             <p className="kicker">Public preview</p>
-            <h3>What’s shared before sign-in</h3>
+            <h2>What’s shared before sign-in</h2>
           </div>
         </div>
 
@@ -54,7 +55,7 @@ export default async function ExploreRequestPage({ params }: { params: Promise<{
         </div>
 
         <div className="button-row request-detail-actions">
-          <Link className="primary-button" href={`/?next=${encodeURIComponent(`/requests/${request.id}`)}`}>
+          <Link className="primary-button" href={`/?next=${encodeURIComponent(`/requests/${request.id}`)}#join`}>
             Sign in to request to join
           </Link>
           <Link className="ghost-button" href="/explore">
@@ -63,7 +64,6 @@ export default async function ExploreRequestPage({ params }: { params: Promise<{
         </div>
       </section>
 
-      <SiteFooter />
-    </main>
+      </div></PublicPageShell>
   );
 }

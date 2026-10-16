@@ -1,0 +1,30 @@
+<svg width="1200" height="820" viewBox="0 0 1200 820" xmlns="http://www.w3.org/2000/svg">
+  <defs><path id="seat" d="M10 17v17c0 7.2 4.8 13 11 13s11-5.8 11-13v-8m0 8c0 7.2 4.8 13 11 13s11-5.8 11-13V17" fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></defs>
+  <rect width="1200" height="820" fill="#f8f9ff"/>
+  <g font-family="Arial, Helvetica, sans-serif" fill="#25213c">
+    <text x="64" y="65" font-size="12" letter-spacing="3" font-weight="700" fill="#75618e">WITHLY / A NEW MARK</text>
+    <text x="64" y="123" font-size="46" font-weight="700" letter-spacing="-2">The Shared Seat.</text>
+    <text x="64" y="157" font-size="17" fill="#696279">A little room for your +1. One continuous W. No overlapping circles.</text>
+    <rect x="64" y="198" width="1072" height="300" rx="30" fill="white" stroke="#e3deef"/>
+    <rect x="154" y="266" width="164" height="164" rx="46" fill="#6742e9"/>
+    <use href="#seat" transform="translate(174 286) scale(1.94)" stroke="white"/>
+    <text x="366" y="382" font-size="115" font-weight="700" letter-spacing="-7">withly<tspan fill="#6742e9">.</tspan></text>
+    <text x="371" y="422" font-size="18" fill="#696279" letter-spacing=".5">Make room for good company.</text>
+    <rect x="64" y="522" width="340" height="190" rx="24" fill="#eee9ff"/>
+    <text x="88" y="556" font-size="10" font-weight="700" letter-spacing="1.5" fill="#69548b">ONE COLOUR. STILL WITHLY.</text>
+    <use href="#seat" transform="translate(112 578) scale(1.5)" stroke="#25213c"/>
+    <rect x="243" y="577" width="93" height="93" rx="25" fill="#25213c"/>
+    <use href="#seat" transform="translate(254 588) scale(1.1)" stroke="white"/>
+    <rect x="426" y="522" width="340" height="190" rx="24" fill="#eaf1ff"/>
+    <text x="450" y="556" font-size="10" font-weight="700" letter-spacing="1.5" fill="#5c6481">SMALL ENOUGH TO GO EVERYWHERE</text>
+    <g fill="#6742e9"><rect x="468" y="599" width="64" height="64" rx="17"/><rect x="562" y="615" width="40" height="40" rx="11"/><rect x="633" y="623" width="24" height="24" rx="6"/><rect x="686" y="627" width="16" height="16" rx="4"/></g>
+    <g stroke="white"><use href="#seat" transform="translate(476 607) scale(.75)"/><use href="#seat" transform="translate(567 620) scale(.46875)"/><use href="#seat" transform="translate(636 626) scale(.28125)"/><use href="#seat" transform="translate(688 629) scale(.1875)"/></g>
+    <rect x="788" y="522" width="348" height="190" rx="24" fill="#f0f6e8"/>
+    <text x="812" y="556" font-size="10" font-weight="700" letter-spacing="1.5" fill="#526246">THE IDEA INSIDE THE LETTER</text>
+    <text x="812" y="600" font-size="20" font-weight="700" fill="#405632">Two open seats.</text>
+    <text x="812" y="632" font-size="20" font-weight="700" fill="#405632">One shared middle.</text>
+    <text x="812" y="673" font-size="14" fill="#526246">Focus, coffee, or a little company.</text>
+    <text x="64" y="760" font-size="13" fill="#696279">Soft, welcoming, and built from the first letter of Withly — not a pair of intersecting shapes.</text>
+    <text x="64" y="788" font-size="11" fill="#81778d">Design exploration · Not a trademark clearance</text>
+  </g>
+</svg>

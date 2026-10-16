@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Download, ShieldAlert, Trash2, UserMinus } from "lucide-react";
+import { Download, ShieldAlert, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { 
@@ -30,23 +30,11 @@ export function AccountPanel({ preview, onStatus }: { preview: boolean; onStatus
   const [isCommPending, startCommTransition] = useTransition();
 
   return (
-    <section className="panel account-panel">
-      <div className="panel-heading">
-        <div>
-          <p className="kicker">Account</p>
-          <h3>Account data and deletion.</h3>
-        </div>
-        <span className="status-dot">
-          <UserMinus size={16} />
-          Data rights
-        </span>
-      </div>
-      <p className="panel-intro">Use this page for one-time account actions: keep a copy of your data, or close the account cleanly when you need to.</p>
-
+    <section className="panel account-panel" aria-label="Account controls">
       <div className="action-stack">
-        <section className="panel-section">
+        <section className="panel-section" id="account-export" aria-labelledby="export-heading">
           <div className="form-section-head">
-            <h4>Download your data</h4>
+            <h2 id="export-heading">Download your data</h2>
             <p>Keep a copy of your profile, requests, messages, reports, and block records before making bigger changes.</p>
           </div>
 
@@ -70,9 +58,9 @@ export function AccountPanel({ preview, onStatus }: { preview: boolean; onStatus
           </a>
         </section>
 
-        <section className="panel-section">
+        <section className="panel-section" id="emergency-contact" aria-labelledby="contact-heading">
           <div className="form-section-head">
-            <h4>Emergency Contact</h4>
+            <h2 id="contact-heading">Emergency Contact</h2>
             <p>Store a trusted contact for your own safety planning. Withly does not currently send SMS, email, or contact emergency services.</p>
           </div>
 
@@ -146,15 +134,16 @@ export function AccountPanel({ preview, onStatus }: { preview: boolean; onStatus
           </form>
         </section>
 
-        <section className="panel-section">
+        <section className="panel-section" id="trust-communities" aria-labelledby="community-heading">
           <div className="form-section-head">
-            <h4>Trust Communities</h4>
+            <h2 id="community-heading">Trust Communities</h2>
             <p>Create a public community or join one using its community ID. Private invitations are not available yet.</p>
           </div>
           
           <div className="grid-two">
             <form className="stack-form" onSubmit={(e) => {
               e.preventDefault();
+              if (preview || isCommPending) return;
               startCommTransition(async () => {
                 const formData = new FormData();
                 formData.set("communityId", communityId);
@@ -181,6 +170,7 @@ export function AccountPanel({ preview, onStatus }: { preview: boolean; onStatus
 
             <form className="stack-form" onSubmit={(e) => {
               e.preventDefault();
+              if (preview || isCommPending) return;
               startCommTransition(async () => {
                 const formData = new FormData();
                 formData.set("name", commName);
@@ -212,9 +202,9 @@ export function AccountPanel({ preview, onStatus }: { preview: boolean; onStatus
           </div>
         </section>
 
-        <section className="panel-section danger-panel">
+        <section className="panel-section danger-panel" id="account-deletion" aria-labelledby="deletion-heading">
           <div className="form-section-head">
-            <h4>Delete your account</h4>
+            <h2 id="deletion-heading">Delete your account</h2>
             <p>This permanently removes the account. Take the export first if you might want your records later.</p>
           </div>
 

@@ -2,101 +2,88 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, MessageCircleMore, ShieldAlert } from "lucide-react";
-
+import { ArrowDown, ArrowUpRight, MessageCircleMore, ShieldCheck, UsersRound } from "lucide-react";
 import { JoinReviewPanel } from "@/components/app/join-review-panel";
 import { SessionPanel } from "@/components/app/session-panel";
 import type { WorkspaceSnapshot } from "@/lib/supabase/types";
+import styles from "@/app/inbox-design.module.css";
 
-export function InboxPage({
-  snapshot,
-  preview,
-  initialStatus,
-}: {
+export function InboxPage({ snapshot, preview, initialStatus }: {
   snapshot: WorkspaceSnapshot;
   preview: boolean;
   initialStatus?: string;
 }) {
-  const [status, setStatus] = useState(initialStatus ?? (preview ? "Preview mode is active. Sign in to review replies and chat." : ""));
+  const [status, setStatus] = useState(initialStatus ?? "");
   const hasSession = Boolean(snapshot.activeSession);
   const pendingCount = snapshot.incomingJoinRequests.length;
 
   return (
-    <div className="sanctuary-page sanctuary-inbox-page">
-      <section className="sanctuary-page-intro">
+    <div className={styles.page}>
+      <section className={styles.hero} aria-labelledby="inbox-title">
         <div>
-          <p className="sanctuary-kicker">Inbox</p>
-          <h1>Keep replies moving with calm clarity.</h1>
-          <p>Review introductions, confirm the right fit, and keep matched plans coordinated in one shared thread.</p>
+          <p className={styles.kicker}>GOOD COMPANY STARTS WITH HELLO.</p>
+          <h1 id="inbox-title">A little hello.<br /><span>A possible +1.</span></h1>
+          <p className={styles.intro}>Meet the people behind the replies. Find your fit, then make a plan together.</p>
         </div>
-        <span className="sanctuary-chip">{pendingCount + (hasSession ? 1 : 0)} active threads</span>
+        <div className={styles.helloArt} aria-hidden="true">
+          <span className={styles.youBubble}>Hey, you.</span>
+          <span className={styles.plusBubble}>Hey, +1!</span>
+          <span className={styles.artCaption}>Two people. One little plan.</span>
+        </div>
       </section>
-      {status ? <div className="withly-status-banner">{status}</div> : null}
-
-      <div className="workspace-content inbox-layout">
-        <aside className="workspace-left">
-          <section className="panel inbox-command-panel sanctuary-panel">
-            <div className="form-section-head">
-              <h4>Action queue</h4>
-              <p>Start with anything waiting on you, then move into the thread that needs the most clarity.</p>
-            </div>
-
-            <div className="inbox-queue-list">
-              <Link className={`inbox-queue-card ${hasSession ? "active" : ""}`} href="#active-session">
-                <div>
-                  <span className="kicker">Session</span>
-                  <strong>{hasSession ? snapshot.activeSession?.requestTitle : "No active chat yet"}</strong>
-                </div>
-                <span className="mini-chip">
-                  <MessageCircleMore size={14} />
-                  {hasSession ? "Live" : "Waiting"}
-                </span>
-              </Link>
-
-              <Link className={`inbox-queue-card ${pendingCount > 0 ? "active" : ""}`} href="#join-review">
-                <div>
-                  <span className="kicker">Join review</span>
-                  <strong>{pendingCount > 0 ? `${pendingCount} introductions waiting` : "No pending introductions"}</strong>
-                </div>
-                <span className="mini-chip">
-                  <ShieldAlert size={14} />
-                  {pendingCount}
-                </span>
-              </Link>
-
-              <div className="summary-callout summary-callout-teal">
-                <p>Reply quickly, keep expectations explicit, and move only the clearest fit toward confirmation.</p>
-              </div>
-            </div>
-          </section>
-        </aside>
-
-        <div className="workspace-main">
-          <section id="active-session">
-            {snapshot.activeSession ? (
-              <SessionPanel session={snapshot.activeSession} currentUserId={snapshot.profile.id} onStatus={setStatus} />
-            ) : (
-              <section className="panel sanctuary-panel">
-                <div className="panel-heading">
-                  <div>
-                    <p className="kicker">Sessions</p>
-                    <h3>Chat for confirmed plans.</h3>
-                  </div>
-                  <span className="status-dot">
-                    <CheckCircle2 size={16} />
-                    Nothing live
-                  </span>
-                </div>
-                <p className="panel-intro">As soon as a request turns into a confirmed plan, the conversation will appear here.</p>
-                <div className="empty-card">Your next confirmed plan will appear here with chat access.</div>
-              </section>
-            )}
-          </section>
-
-          <section id="join-review">
+      {preview ? <p className={styles.previewNote}>Preview inbox · These are example introductions and a sample chat. Replies and session actions are disabled.</p> : null}
+      {!preview && status ? <div className={styles.notice} role="status">{status}</div> : null}
+      <nav className={styles.shortcuts} aria-label="Inbox sections">
+        <Link href="#join-review" className={styles.shortcut}>
+          <span className={styles.shortcutIcon}><UsersRound size={21} /></span>
+          <span><strong>{pendingCount} {pendingCount === 1 ? "introduction" : "introductions"}</strong><small>{pendingCount ? "Waiting for your review" : "All caught up for now"}</small></span>
+          <ArrowDown size={18} aria-hidden="true" />
+        </Link>
+        <Link href="#active-session" className={`${styles.shortcut} ${styles.chatShortcut}`}>
+          <span className={styles.shortcutIcon}><MessageCircleMore size={21} /></span>
+          <span><strong>{hasSession ? "Your current chat" : "Your next conversation"}</strong><small>{hasSession ? `With ${snapshot.activeSession?.partnerDisplayName || "your companion"}` : "Opens after a match"}</small></span>
+          <ArrowDown size={18} aria-hidden="true" />
+        </Link>
+      </nav>
+      <div className={styles.layout}>
+        <div className={styles.main}>
+          <section id="join-review" className={styles.section} aria-label="Introductions">
             <JoinReviewPanel entries={snapshot.incomingJoinRequests} preview={preview} onStatus={setStatus} />
           </section>
+          <section id="active-session" className={styles.section} aria-labelledby="conversation-title">
+            <div className={styles.sectionHeading}><h2 id="conversation-title">Your conversation</h2><span>{preview ? "SAMPLE CHAT" : hasSession ? "CONFIRMED PLAN" : "ROOM FOR A +1"}</span></div>
+            {snapshot.activeSession ? (
+              <fieldset className={styles.session} disabled={preview} aria-label={preview ? "Sample session (read only)" : "Current session"}>
+                <SessionPanel session={snapshot.activeSession} currentUserId={snapshot.profile.id} onStatus={setStatus} />
+              </fieldset>
+            ) : (
+              <div className={styles.empty}>
+                <span className={styles.emptyIcon}><MessageCircleMore size={28} /></span>
+                <h3>A shared plan. A shared chat.</h3>
+                <p>Once a join request is accepted, your private conversation will appear here. Agree on a public meeting point and a time that works for both of you.</p>
+                <Link href="/feed">Find a plan <ArrowUpRight size={16} /></Link>
+              </div>
+            )}
+          </section>
         </div>
+        <aside className={styles.rail} aria-label="Making a plan together">
+          <section className={styles.guide}>
+            <span className={styles.pair} aria-hidden="true"><i /><i /></span>
+            <h2>From hello to<br />“see you there.”</h2>
+            <ol>
+              <li><span>01</span><div><strong>Find your fit</strong><p>Read their introduction. There’s no pressure to accept.</p></div></li>
+              <li><span>02</span><div><strong>Make it a plan</strong><p>Accept a reply to open your private session chat.</p></div></li>
+              <li><span>03</span><div><strong>Sort the little details</strong><p>Agree on the time, public meeting point, and check-ins.</p></div></li>
+            </ol>
+          </section>
+          <section className={styles.safety}>
+            <ShieldCheck size={23} aria-hidden="true" />
+            <h2>Your comfort comes first.</h2>
+            <p>Keep personal contact details private. You can report a concern or block a companion whenever you need to.</p>
+            <Link href="/safety/reporting">Safety & reporting <ArrowUpRight size={15} /></Link>
+          </section>
+          <Link className={styles.newPlan} href="/requests/new">Another idea in mind? <strong>Post a plan <ArrowUpRight size={15} /></strong></Link>
+        </aside>
       </div>
     </div>
   );

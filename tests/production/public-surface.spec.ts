@@ -37,7 +37,11 @@ test("signup rejects missing and invalid CAPTCHA without creating an account", a
 });
 
 test("signup shows consent, support and the production challenge container", async ({ page }) => {
-  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/", { waitUntil: "load" });
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Your everyday.With a +1.");
+  await expect.poll(() => page.locator('header img[src="/withly-logo.svg"]').evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
+  await page.screenshot({ path: "test-results/production-redesign-landing.png", fullPage: true, animations: "disabled" });
   await page.getByRole("button", { name: "Create Account", exact: true }).click();
   await expect(page.getByRole("checkbox", { name: /at least 18/ })).toBeVisible();
   await expect(page.locator(".turnstile-shell")).toBeAttached();

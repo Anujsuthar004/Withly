@@ -14,6 +14,7 @@ declare global {
           "expired-callback": () => void;
           "error-callback": () => void;
           theme?: "light" | "dark" | "auto";
+          size?: "normal" | "compact" | "flexible";
         }
       ) => string;
       remove: (widgetId: string) => void;
@@ -25,9 +26,10 @@ interface TurnstileWidgetProps {
   siteKey: string;
   onToken: (token: string) => void;
   theme?: "light" | "dark" | "auto";
+  size?: "normal" | "compact" | "flexible";
 }
 
-export function TurnstileWidget({ siteKey, onToken, theme = "light" }: TurnstileWidgetProps) {
+export function TurnstileWidget({ siteKey, onToken, theme = "light", size = "normal" }: TurnstileWidgetProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<string | null>(null);
   const [scriptReady, setScriptReady] = useState(false);
@@ -43,6 +45,7 @@ export function TurnstileWidget({ siteKey, onToken, theme = "light" }: Turnstile
       "expired-callback": () => onToken(""),
       "error-callback": () => onToken(""),
       theme,
+      size,
     });
 
     return () => {
@@ -51,7 +54,7 @@ export function TurnstileWidget({ siteKey, onToken, theme = "light" }: Turnstile
         widgetIdRef.current = null;
       }
     };
-  }, [onToken, scriptReady, siteKey, theme]);
+  }, [onToken, scriptReady, siteKey, theme, size]);
 
   if (!siteKey) {
     return null;

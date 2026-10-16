@@ -1,166 +1,103 @@
-import { ArrowRight, ShieldCheck, Sparkles, Waves } from "lucide-react";
+import { ArrowDown, ArrowRight, BookOpen, Check, Coffee, Headphones, MapPin, MessageCircle, ShieldCheck } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AuthPanel } from "@/components/auth-panel";
 import { SiteFooter } from "@/components/site-footer";
+import { WithlyWorld } from "@/components/withly-world";
 import { normalizeNextPath } from "@/lib/navigation";
 import { getLandingPageState } from "@/lib/supabase/queries";
 import { formatDateTime } from "@/lib/utils";
+import styles from "./landing.module.css";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage({ searchParams }: { searchParams: Promise<Record<string, string | string[]>> }) {
   const params = await searchParams;
-  const { user, feed, feedError, hasSupabaseEnv, isSampleFeed } = await getLandingPageState();
+  const { user, feed, feedError, isSampleFeed } = await getLandingPageState();
   const nextPath = normalizeNextPath(params.next);
-  // Use live counts for stats — show 0 when only sample data is available
-  const liveCount = isSampleFeed ? 0 : feed.length;
-  const verifiedPreviewCount = isSampleFeed ? 0 : feed.filter((request) => request.verifiedOnly).length;
-
-  if (user) {
-    redirect(nextPath);
-  }
+  if (user) redirect(nextPath);
 
   return (
-    <main className="marketing-page">
-      <section className="hero-shell">
-        <div className="hero-copy">
-          <div className="eyebrow-row">
-            <span className="eyebrow-pill">
-              <ShieldCheck size={16} />
-              Public spaces & cafes
-            </span>
-            <span className="eyebrow-pill muted">
-              <Waves size={16} />
-              Zero-dating pressure
-            </span>
+    <main id="main-content" tabIndex={-1} className={styles.page}>
+      <div className={styles.container}>
+        <header className={styles.header}>
+          <Link href="/" className={styles.brand} aria-label="Withly home">
+            <span><Image src="/withly-logo.svg" alt="" width={30} height={30} /></span>
+            withly<span className={styles.brandDot}>.</span>
+          </Link>
+          <nav className={styles.nav} aria-label="Main navigation">
+            <a href="#how-it-works">How it works</a>
+            <Link href="/safety/reporting">Stay safe</Link>
+          </nav>
+          <a href="#join" className={styles.navButton}>Let’s go <ArrowRight size={17} /></a>
+        </header>
+
+        <section className={styles.hero} aria-labelledby="hero-title">
+          <div className={styles.heroCopy}>
+            <span className={styles.eyebrow}><span className={styles.pairMark} aria-hidden="true" /> LESS SOLO. MORE WITHLY.</span>
+            <h1 id="hero-title">Your everyday.<br />With a <span className={styles.headlinePlus}>+1.</span></h1>
+            <p>Your next focus sprint, study session, or coffee break doesn’t have to be a solo mission. Find someone nearby and make a plan.</p>
+            <div className={styles.actions}>
+              <a className={styles.primary} href="#open-requests">Find your next session <ArrowRight size={19} /></a>
+              <a className={styles.textLink} href="#how-it-works">How does it work? <ArrowDown size={16} /></a>
+            </div>
+            <div className={styles.heroNotes}><span><Check size={16} /> Real-world meetups</span><span><Check size={16} /> Zero dating pressure</span></div>
           </div>
 
-          <h1>Never work or study from a cafe alone again.</h1>
-          <p>
-            Find focus partners, coworking companions, and coffee buddies in your area.
-            Low-stakes accountability sprints in public spaces — headphones on for work, friendly conversation over coffee.
-          </p>
+          <WithlyWorld />
+        </section>
 
-          <div className="hero-action-row">
-            <a className="primary-button compact" href="#open-requests">
-              Browse open sessions
-            </a>
-            <Link className="ghost-button compact" href="/safety/reporting">
-              How safety works
-            </Link>
-          </div>
-
-          <div className="hero-intro-grid" aria-label="Platform highlights">
-            <article className="hero-signal-card">
-              <span>Live window</span>
-              <strong>{liveCount}</strong>
-              <p>Sessions visible right now before sign-in.</p>
-            </article>
-            <article className="hero-signal-card tone-teal">
-              <span>Protected replies</span>
-              <strong>{verifiedPreviewCount}</strong>
-              <p>Current previews limited to email-confirmed replies.</p>
-            </article>
-            <article className="hero-signal-card tone-sand">
-              <span>Private handoff</span>
-              <strong>1 tap</strong>
-              <p>Move from public preview into a private thread as soon as both people align.</p>
-            </article>
-          </div>
-
-          <div className="bullet-grid">
-            <article>
-              <Sparkles size={18} />
-              <strong>Body-Doubling Boost</strong>
-              <span>Share a table and set a focus goal together. Work independently with company nearby.</span>
-            </article>
-            <article>
-              <ShieldCheck size={18} />
-              <strong>Public-space plans, email-confirmed accounts</strong>
-              <span>Plan to meet in cafes, libraries, or coworking spaces. Email confirmation is not identity or venue verification.</span>
-            </article>
-            <article>
-              <ArrowRight size={18} />
-              <strong>Low-Pressure Coordination</strong>
-              <span>Confirm session timing, coordinate your table, and check in securely.</span>
-            </article>
-          </div>
+        <div className={styles.activityStrip} aria-label="Ways to meet">
+          <span><Headphones size={20} /> Find your focus</span><span className={styles.pairMark} aria-hidden="true" />
+          <span><BookOpen size={20} /> Study together</span><span className={styles.pairMark} aria-hidden="true" />
+          <span><Coffee size={20} /> Make time for coffee</span><span className={styles.pairMark} aria-hidden="true" />
+          <span><MessageCircle size={20} /> Meet someone new</span>
         </div>
 
-        <AuthPanel nextPath={nextPath} />
-      </section>
-
-      {feedError ? (
-        <section className="setup-banner" role="status" aria-live="polite">
-          <p className="kicker">Open Requests</p>
-          <h2>Open requests are temporarily unavailable.</h2>
-          <p>{feedError}</p>
-        </section>
-      ) : null}
-
-      <section className="preview-section" id="open-requests">
-          <div className="section-title preview-section-head">
-            <div>
-              <p className="kicker">Open Requests</p>
-              {isSampleFeed ? (
-                <>
-                  <h2>Here is what an active feed looks like.</h2>
-                  <p>No active requests right now — these are samples. Be among the first to post.</p>
-                </>
-              ) : (
-                <>
-                  <h2>A small public window into what is active right now.</h2>
-                  <p>
-                    {hasSupabaseEnv
-                      ? "Only the basic request details are shown before sign-in."
-                      : "A sample preview is showing right now while account services are offline."}
-                  </p>
-                </>
-              )}
-            </div>
-            {!isSampleFeed ? (
-              <div className="preview-section-head-note" aria-label="Feed summary">
-                <span className="mini-chip">{feed.length} active now</span>
-                <span className="mini-chip">{verifiedPreviewCount} email-confirmed only</span>
-              </div>
-            ) : null}
+        <section className={styles.sessions} id="open-requests" aria-labelledby="sessions-title">
+          <div className={styles.sectionHead}>
+            <div><p className={styles.kicker}>PICK YOUR NEXT PLAN</p><h2 id="sessions-title">Small plans. <span>Good possibilities.</span></h2></div>
+            <span className={styles.count}>{isSampleFeed ? "Example sessions" : `${feed.length} open ${feed.length === 1 ? "session" : "sessions"}`}</span>
           </div>
-
-          <div className="preview-grid">
+          <p className={styles.sectionDescription}>{isSampleFeed ? "A peek at the kind of plans you can make. These are examples, not live sessions." : "Explore public session previews. Sign in to request to join and coordinate privately."}</p>
+          {feedError ? <p className={styles.notice} role="status">Open requests are temporarily unavailable. {feedError}</p> : null}
+          {!feedError && !isSampleFeed && feed.length === 0 ? <p className={styles.notice}>No open sessions right now. Sign in and be the first to make a plan.</p> : null}
+          <div className={styles.sessionGrid}>
             {feed.map((request) => (
-              <article key={request.id} className={`request-card lane-${request.lane}`}>
-                <div className="request-card-top">
-                  <div>
-                    <span className="request-lane">{request.lane === "social" ? "Coworking & Focus" : "Coffee Walk"}</span>
-                    <h3>{request.title}</h3>
-                  </div>
-                  {request.verifiedOnly ? <span className="mini-chip">Email-confirmed only</span> : null}
-                </div>
-                <p className="request-description">{request.description}</p>
-                {request.areaLabel || request.meetupAt || request.hostDisplayName ? (
-                  <div className="request-meta">
-                    {request.areaLabel ? <span>{request.areaLabel}</span> : null}
-                    {request.meetupAt ? <span>{formatDateTime(request.meetupAt)}</span> : null}
-                    {request.hostDisplayName ? <span>{request.hostDisplayName}</span> : null}
-                  </div>
-                ) : (
-                  <p className="request-privacy-note">Exact meetup details are shared privately after both people are aligned.</p>
-                )}
-                <div className="tag-row">
-                  {request.tags.map((tag) => (
-                    <span key={tag} className="tag-chip">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
+              <article key={request.id} className={`${styles.sessionCard} ${request.lane === "social" ? "" : styles.coffeeSession}`}>
+                <div className={styles.sessionTop}><span className={styles.sessionIcon}>{request.lane === "social" ? <Headphones size={23} /> : <Coffee size={23} />}</span><span>{request.lane === "social" ? "Coworking & Focus" : "Coffee Walk"}</span>{isSampleFeed ? <small>EXAMPLE</small> : null}</div>
+                <h3>{request.title}</h3><p>{request.description}</p>
+                <div className={styles.tags}>{request.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
+                {request.areaLabel || request.meetupAt || request.hostDisplayName ? <div className={styles.meta}>
+                  {request.areaLabel ? <span><MapPin size={14} /> {request.areaLabel}</span> : null}
+                  {request.meetupAt ? <span>{formatDateTime(request.meetupAt)}</span> : null}
+                  {request.hostDisplayName ? <span>{request.hostDisplayName}</span> : null}
+                </div> : <p className={styles.privacyNote}>Exact meetup details are shared privately after both people agree.</p>}
+                {request.verifiedOnly ? <span className={styles.verified}><ShieldCheck size={14} /> Email-confirmed replies only</span> : null}
               </article>
             ))}
           </div>
         </section>
 
-      <SiteFooter />
+        <section className={styles.how} id="how-it-works" aria-labelledby="how-title">
+          <div className={styles.sectionHead}><div><p className={styles.kicker}>NO GRAND PLANS REQUIRED</p><h2 id="how-title">From “maybe” to <span>“see you there.”</span></h2></div></div>
+          <ol className={styles.steps}>
+            <li><span className={styles.stepNumber}>01</span><h3>Find your kind of plan.</h3><p>Browse a focus session or coffee walk. Nothing nearby? Post your own.</p></li>
+            <li><span className={styles.stepNumber}>02</span><h3>Say hey. Get aligned.</h3><p>Request to join. Once the host approves, work out the details in a private chat.</p></li>
+            <li><span className={styles.stepNumber}>03</span><h3>Show up. Do your thing.</h3><p>Meet in a public space, check in, and enjoy a little company along the way.</p></li>
+          </ol>
+        </section>
+
+        <section className={styles.join} id="join" aria-label="Join Withly">
+          <div className={styles.joinCopy}><span className={styles.joinIcon}><span className={styles.pairMark} aria-hidden="true" /></span><p className={styles.kicker}>YOUR NEXT CHAPTER STARTS SMALL</p><h2>Same to-do list.<br /><span>New +1.</span></h2><p>Make room for a little company. Your first plan starts here.</p>
+            <div className={styles.safetyNote}><ShieldCheck size={23} /><div><h3>Fun plans. Thoughtful boundaries.</h3><p>Meet in public. Keep personal details private. Block or report when you need to. Email confirmation isn’t identity or venue verification.</p><Link href="/safety/reporting">How safety works <ArrowRight size={15} /></Link></div></div>
+          </div>
+          <AuthPanel nextPath={nextPath} />
+        </section>
+        <SiteFooter />
+      </div>
     </main>
   );
 }

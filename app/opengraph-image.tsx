@@ -14,13 +14,13 @@ export default function OgImage() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
-          background: "#fff9ee",
+          background: "#f8f9ff",
           padding: "80px 96px",
           position: "relative",
           fontFamily: "sans-serif",
         }}
       >
-        {/* Teal accent bar */}
+        {/* Brand accent bar */}
         <div
           style={{
             position: "absolute",
@@ -28,7 +28,7 @@ export default function OgImage() {
             left: 0,
             width: 8,
             height: "100%",
-            background: "#006855",
+            background: "#6742e9",
             borderRadius: "0 4px 4px 0",
           }}
         />
@@ -44,7 +44,7 @@ export default function OgImage() {
         >
           <div
             style={{
-              background: "#006855",
+              background: "#6742e9",
               borderRadius: 10,
               width: 40,
               height: 40,
@@ -53,13 +53,13 @@ export default function OgImage() {
               justifyContent: "center",
             }}
           >
-            <div style={{ width: 20, height: 20, background: "#fff9ee", borderRadius: "50%", display: "flex" }} />
+            <svg width="30" height="30" viewBox="0 0 64 64" fill="none"><path d="M10 17v17c0 7.2 4.8 13 11 13s11-5.8 11-13v-8m0 8c0 7.2 4.8 13 11 13s11-5.8 11-13V17" stroke="#fff" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </div>
           <span
             style={{
               fontSize: 22,
               fontWeight: 700,
-              color: "#006855",
+              color: "#6742e9",
               letterSpacing: "-0.02em",
             }}
           >
@@ -72,7 +72,7 @@ export default function OgImage() {
           style={{
             fontSize: 72,
             fontWeight: 900,
-            color: "#1e1b15",
+            color: "#25213c",
             lineHeight: 1,
             letterSpacing: "-0.05em",
             maxWidth: 900,
@@ -86,7 +86,7 @@ export default function OgImage() {
           style={{
             marginTop: 28,
             fontSize: 28,
-            color: "#4d534d",
+            color: "#696279",
             maxWidth: 680,
             lineHeight: 1.4,
           }}
@@ -100,8 +100,8 @@ export default function OgImage() {
             position: "absolute",
             bottom: 60,
             right: 96,
-            background: "#006855",
-            color: "#fff9ee",
+            background: "#6742e9",
+            color: "#fff",
             fontSize: 22,
             fontWeight: 700,
             padding: "14px 32px",

@@ -4,15 +4,15 @@
   "description": "Find a coworking companion, study partner, or coffee buddy.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f5f2ee",
-  "theme_color": "#0f6b61",
+  "background_color": "#f8f9ff",
+  "theme_color": "#6742e9",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/withly-logo.svg",
+      "src": "/withly-app-icon.svg?v=3",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }

@@ -1,0 +1,54 @@
+.page { width: 100%; max-width: none; margin: 0; padding: 0; min-height: 100vh; background: #f8f9ff; color: #25213c; }
+.container { max-width: 1180px; margin: 0 auto; padding: 0 32px; }
+.header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 26px 0; border-bottom: 1px solid #e3deef; }
+.brand { display: inline-flex; align-items: center; gap: 11px; color: #25213c; text-decoration: none; font-size: 27px; font-weight: 850; letter-spacing: -1px; }
+.header nav { display: flex; gap: 24px; }
+.header nav a { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; text-decoration: none; color: #69548b; font-size: 12px; font-weight: 650; }
+.hero { display: flex; align-items: center; justify-content: space-between; gap: 40px; padding: 42px; margin: 32px 0; background: #eee9ff; border: 1px solid #ded5f1; border-radius: 28px; }
+.kicker { margin: 0 0 17px; font-size: 10px; text-transform: uppercase; font-weight: 800; letter-spacing: 1.5px; color: #69548b; }
+.heroCopy { min-width: 0; }
+.hero h1 { max-width: 20ch; margin: 0 0 21px; font-size: clamp(34px, 4vw, 48px); letter-spacing: -1.8px; line-height: 1.13; }
+.intro { max-width: 66ch; color: #625775; font-size: 14px; line-height: 1.85; margin: 0; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 25px; }
+.primary, .secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 18px; min-height: 43px; border-radius: 999px; font-size: 12px; font-weight: 750; text-decoration: none; }
+.primary { background: #6742e9; color: #fff; }
+.primary:hover { background: #5734d3; }
+.secondary { background: #fff; color: #69548b; border: 1px solid #ded5eb; }
+.heroArt { display: grid; justify-items: center; gap: 24px; flex: 0 0 180px; }
+.heroArt > svg { width: 128px; height: 128px; padding: 28px; border-radius: 37px; background: #d9f881; color: #6742e9; transform: rotate(7deg); box-shadow: 6px 6px 0 #d9cef0; }
+.heroArt span { font-size: 9px; font-weight: 800; letter-spacing: 1px; color: #69548b; text-align: center; }
+.safetyHero { background: #eaf1ff; border-color: #dce5f5; }
+.safetyHero .heroArt > svg { background: #d9ccff; box-shadow: 6px 6px 0 #cfdef7; transform: rotate(-7deg); }
+.layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 28px; align-items: start; }
+.rail { position: sticky; top: 24px; min-width: 0; display: grid; gap: 20px; }
+.contents { border: 1px solid #e3deef; background: #fff; border-radius: 22px; padding: 23px 18px 13px; }
+.contents .kicker { padding: 0 7px; }
+.contents a { display: flex; align-items: flex-start; gap: 9px; padding: 13px 7px; min-height: 44px; border-radius: 12px; color: #625775; font-size: 12px; font-weight: 650; line-height: 1.65; text-decoration: none; }
+.contents a:hover { background: #f3efff; color: #6742e9; }
+.contents a > span { color: #69548b; font-size: 10px; padding-top: 2px; font-variant-numeric: tabular-nums; }
+.contents a > svg { margin-left: auto; margin-top: 3px; flex-shrink: 0; }
+.help { padding: 23px; border: 1px solid #dce7cf; border-radius: 22px; background: #f0f6e8; color: #405632; }
+.mark { display: block; width: 40px; height: 36px; background: #6742e9; mask: url('/withly-mark.svg') center / contain no-repeat; }
+.help h2 { font-size: 21px; letter-spacing: -.6px; margin: 17px 0 12px; line-height: 1.25; }
+.help p { font-size: 12px; line-height: 1.8; color: #526246; }
+.help a { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; overflow-wrap: anywhere; color: #405632; font-size: 11px; font-weight: 750; line-height: 1.7; text-decoration: none; }
+.help svg { flex-shrink: 0; }
+.sections { min-width: 0; display: grid; gap: 20px; }
+.card { padding: 30px; border: 1px solid #e3deef; border-radius: 24px; background: #fff; scroll-margin-top: 24px; }
+.cardHeading { display: flex; align-items: center; gap: 13px; margin-bottom: 22px; }
+.cardHeading > span { display: grid; place-items: center; flex: 0 0 34px; height: 34px; background: #eee9ff; color: #6742e9; border-radius: 12px; font-size: 10px; font-weight: 800; }
+.card h2 { font-size: 23px; line-height: 1.3; letter-spacing: -.6px; margin: 0; }
+.card p { font-size: 14px; line-height: 1.9; color: #625775; margin: 0 0 17px; overflow-wrap: anywhere; }
+.card p:last-child { margin-bottom: 0; }
+.immediate { border-color: #e9cdd7; background: #fffafb; }
+.immediate .cardHeading > span { background: #f9e5ec; color: #8d435a; }
+.immediate h2 { color: #8d435a; }
+.backToTop { justify-self: end; color: #6742e9; font-size: 12px; font-weight: 700; padding: 12px 0; text-decoration: none; }
+.page a:focus-visible { outline: 3px solid #6742e9; outline-offset: 4px; }
+.page :global(.site-footer) { background: transparent; border: 0; border-top: 1px solid #dedbe9; border-radius: 0; box-shadow: none; padding: 32px 0 40px; margin-top: 45px; }
+.page :global(.site-footer h2) { font-size: 18px; max-width: 42ch; color: #25213c; }
+.page :global(.site-footer p) { color: #696279; font-size: 12px; }
+.page :global(.footer-link-button) { background: #fff; border: 1px solid #dedbe9; color: #594b6b; border-radius: 999px; box-shadow: none; font-size: 12px; }
+@media (max-width: 900px) { .hero { padding: 30px; gap: 24px; } .heroArt { flex-basis: 140px; } .layout { grid-template-columns: 220px minmax(0, 1fr); gap: 20px; } .card { padding: 25px; } }
+@media (max-width: 700px) { .layout { grid-template-columns: minmax(0, 1fr); } .rail { position: static; } .help { display: none; } .heroArt { display: none; } .contents { padding: 21px 18px 15px; } .card h2 { font-size: 22px; } }
+@media (max-width: 450px) { .container { padding: 0 20px; } .header { padding: 18px 0; gap: 12px; } .header nav { gap: 16px; } .brand { font-size: 23px; gap: 8px; } .brand img { width: 33px; height: 33px; } .hero { padding: 25px; margin: 24px 0; } .hero h1 { font-size: 34px; letter-spacing: -1.3px; } .intro { font-size: 13px; } .kicker { font-size: 9px; letter-spacing: 1px; } .actions { gap: 9px; } .primary, .secondary { font-size: 11px; padding: 12px 15px; } .card { padding: 22px; } .cardHeading { gap: 10px; align-items: flex-start; } .card h2 { font-size: 21px; } .card p { font-size: 13px; line-height: 1.9; } }

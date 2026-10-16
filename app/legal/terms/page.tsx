@@ -4,7 +4,7 @@ import { StaticPageShell } from "@/components/static-page-shell";
 import { SUPPORT_EMAIL } from "@/lib/env";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | Withly",
+  title: "Terms of Service",
 };
 
 export default function TermsPage() {

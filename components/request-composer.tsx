@@ -1,7 +1,9 @@
 "use client";
 
-import { type ReactNode, useMemo, useState, useTransition } from "react";
-import { CalendarClock, Check, CheckCircle2, MapPin, Send, ShoppingBag, MessageCircleMore, Users, Star, Clock } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import { ArrowUpRight, BookOpen, Check, Clock, Coffee, Headphones, Laptop, MapPin, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import styles from "@/app/compose-design.module.css";
 import { useRouter } from "next/navigation";
 
 import { createRequestAction } from "@/app/workspace/actions";
@@ -23,7 +25,7 @@ const defaultTags: Record<RequestLane, string[]> = {
 
 const quickPresets = [
   {
-    icon: "☕",
+    icon: Headphones,
     label: "Deep Work Sprint",
     lane: "social" as const,
     title: "2-hour deep work & coffee sprint",
@@ -31,7 +33,7 @@ const quickPresets = [
     tags: "deep-work, coffee-shop, laptop-friendly, quiet-focus",
   },
   {
-    icon: "💻",
+    icon: Laptop,
     label: "Side Project Coworking",
     lane: "social" as const,
     title: "Cafe coworking & side projects",
@@ -39,7 +41,7 @@ const quickPresets = [
     tags: "side-projects, coworking, coffee-shop, casual",
   },
   {
-    icon: "📚",
+    icon: BookOpen,
     label: "Library Study Session",
     lane: "social" as const,
     title: "Quiet library study & reading block",
@@ -47,7 +49,7 @@ const quickPresets = [
     tags: "study-session, quiet-focus, library, reading",
   },
   {
-    icon: "🚶",
+    icon: Coffee,
     label: "Coffee Walk & Stroll",
     lane: "errand" as const,
     title: "Afternoon coffee run & stroll",
@@ -63,10 +65,10 @@ export function RequestComposer({ preview, onStatus, statusMessage }: RequestCom
   const [description, setDescription] = useState("");
   const [areaLabel, setAreaLabel] = useState("");
   const [meetupAt, setMeetupAt] = useState("");
-  const [radiusKm, setRadiusKm] = useState(5);
+  const radiusKm = 5;
   const [tags, setTags] = useState(defaultTags.social.join(", "));
   const [verifiedOnly, setVerifiedOnly] = useState(true);
-  const [checkInEnabled, setCheckInEnabled] = useState(true);
+  const checkInEnabled = true;
   const [ephemeral, setEphemeral] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
   const [turnstileKey, setTurnstileKey] = useState(0);
@@ -94,39 +96,26 @@ export function RequestComposer({ preview, onStatus, statusMessage }: RequestCom
   ];
 
   return (
-    <div className="wl-compose-grid">
+    <div className={styles.layout}>
       {/* ─── Left column: Form ─── */}
-      <div className="wl-compose-col">
-        <div className="wl-compose-card">
-          <div>
-            <span className="wl-compose-step">Step 1 of 3 — Compose</span>
-            <h2 className="wl-compose-title">Post a request</h2>
+      <div className={styles.formColumn}>
+        <div className={styles.formCard}>
+          <div className={styles.sectionHeading}>
+            <span className={styles.stepNumber} aria-hidden="true">01</span>
+            <div><h2>Pick your kind of plan</h2><p>Start with an idea, then make it yours.</p></div>
           </div>
 
           {/* Quick Presets */}
-          <div style={{ marginTop: 14, marginBottom: 16 }}>
-            <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 8 }}>
-              ⚡ Quick Focus Presets (1-tap fill)
-            </span>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <div className={styles.presets}>
+            <p className={styles.presetHint}>A little inspiration · tap to fill</p>
+            <div className={styles.presetGrid}>
               {quickPresets.map((preset) => (
                 <button
                   key={preset.label}
                   type="button"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: "6px 12px",
-                    borderRadius: "9999px",
-                    fontSize: "0.82rem",
-                    fontWeight: 500,
-                    background: "rgba(255, 255, 255, 0.08)",
-                    border: "1px solid rgba(255, 255, 255, 0.16)",
-                    color: "var(--foreground)",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                  }}
+                  className={styles.preset}
+                  aria-pressed={lane === preset.lane && title === preset.title && description === preset.description && tags === preset.tags}
+                  disabled={isPending}
                   onClick={() => {
                     setLane(preset.lane);
                     setTitle(preset.title);
@@ -134,7 +123,7 @@ export function RequestComposer({ preview, onStatus, statusMessage }: RequestCom
                     setTags(preset.tags);
                   }}
                 >
-                  <span>{preset.icon}</span>
+                  <span className={styles.presetIcon}><preset.icon size={20} strokeWidth={1.7} aria-hidden="true" /></span>
                   <span>{preset.label}</span>
                 </button>
               ))}
@@ -144,6 +133,7 @@ export function RequestComposer({ preview, onStatus, statusMessage }: RequestCom
           <form
             onSubmit={(event) => {
               event.preventDefault();
+              if (preview || isPending || !canSubmit) return;
 
               startTransition(async () => {
                 const result = await createRequestAction({
@@ -172,25 +162,31 @@ export function RequestComposer({ preview, onStatus, statusMessage }: RequestCom
             }}
           >
             {/* Lane switch */}
-            <div className="wl-lane-switch">
+            <div className={styles.laneSwitch} role="group" aria-label="Request activity">
               <button
                 type="button"
-                className={`wl-lane-btn ${lane === "social" ? "active" : ""}`}
+                aria-pressed={lane === "social"}
+                disabled={isPending}
                 onClick={() => { setLane("social"); setTags(defaultTags.social.join(", ")); }}
               >
-                ☕ Coworking & Focus
+                <Headphones size={16} aria-hidden="true" /> Coworking &amp; Focus
               </button>
               <button
                 type="button"
-                className={`wl-lane-btn ${lane === "errand" ? "active" : ""}`}
+                aria-pressed={lane === "errand"}
+                disabled={isPending}
                 onClick={() => { setLane("errand"); setTags(defaultTags.errand.join(", ")); }}
               >
-                🚶 Coffee Walk
+                <Coffee size={16} aria-hidden="true" /> Coffee Walk
               </button>
             </div>
 
             {/* Fields */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 20 }}>
+            <div className={`${styles.sectionHeading} ${styles.dividedHeading}`}>
+              <span className={styles.stepNumber} aria-hidden="true">02</span>
+              <div><h2>Make the plan clear</h2><p>The what, where and when. Keep private details out.</p></div>
+            </div>
+            <div className={styles.fields}>
               <label className="wl-compose-field">
                 Title
                 <input
@@ -201,7 +197,7 @@ export function RequestComposer({ preview, onStatus, statusMessage }: RequestCom
                   minLength={6}
                   maxLength={120}
                   required
-                  disabled={preview || isPending}
+                  disabled={isPending}
                 />
               </label>
 
@@ -215,7 +211,7 @@ export function RequestComposer({ preview, onStatus, statusMessage }: RequestCom
                   maxLength={600}
                   rows={4}
                   required
-                  disabled={preview || isPending}
+                  disabled={isPending}
                 />
               </label>
 
@@ -230,7 +226,7 @@ export function RequestComposer({ preview, onStatus, statusMessage }: RequestCom
                     minLength={3}
                     maxLength={120}
                     required
-                    disabled={preview || isPending}
+                    disabled={isPending}
                   />
                 </label>
                 <label className="wl-compose-field">
@@ -240,46 +236,41 @@ export function RequestComposer({ preview, onStatus, statusMessage }: RequestCom
                     value={tags}
                     onChange={(e) => setTags(e.target.value)}
                     placeholder="comma, separated, tags"
-                    disabled={preview || isPending}
+                    disabled={isPending}
                   />
                 </label>
               </div>
 
               <div className="wl-compose-two">
                 <label className="wl-compose-field">
-                  When
+                  When (optional)
                   <input
                     type="datetime-local"
                     value={meetupAt}
                     onChange={(e) => setMeetupAt(e.target.value)}
-                    disabled={preview || isPending}
+                    disabled={isPending}
                   />
                 </label>
               </div>
+              <p className={styles.fieldHint}>Choose a public place. Leave the time blank if you’d rather agree in chat.</p>
             </div>
 
             {/* Toggles */}
-            <div className="wl-toggle-panel" style={{ marginTop: 20 }}>
-              <div className="wl-toggle-row" onClick={() => setVerifiedOnly((c) => !c)}>
-                <div className="wl-toggle-copy">
-                  <strong>Email-confirmed members only</strong>
-                  <small>Only members with a confirmed email can respond</small>
-                </div>
-                <div className={`wl-toggle-track ${verifiedOnly ? "on" : "off"}`}>
-                  <span className="wl-toggle-knob" />
-                </div>
-              </div>
-              <div className="wl-toggle-divider" />
-              <div className="wl-toggle-row" onClick={() => setEphemeral((c) => !c)}>
-                <div className="wl-toggle-copy">
-                  <strong>Ephemeral</strong>
-                  <small>Automatically expires six hours after posting</small>
-                </div>
-                <div className={`wl-toggle-track ${ephemeral ? "on" : "off"}`}>
-                  <span className="wl-toggle-knob" />
-                </div>
-              </div>
+            <div className={`${styles.sectionHeading} ${styles.dividedHeading}`}>
+              <span className={styles.stepNumber} aria-hidden="true">03</span>
+              <div><h2>A few thoughtful boundaries</h2><p>Your preferences, before you put the invitation out.</p></div>
             </div>
+            <div className={styles.preferences}>
+              <label className={styles.preference}>
+                <span><strong>Email-confirmed members only</strong><small>Only members with a confirmed email can respond.</small></span>
+                <input type="checkbox" role="switch" aria-label="Email-confirmed members only" checked={verifiedOnly} disabled={isPending} onChange={(event) => setVerifiedOnly(event.target.checked)} />
+              </label>
+              <label className={styles.preference}>
+                <span><strong>Close after six hours</strong><small>Automatically expires six hours after posting.</small></span>
+                <input type="checkbox" role="switch" aria-label="Close after six hours" checked={ephemeral} disabled={isPending} onChange={(event) => setEphemeral(event.target.checked)} />
+              </label>
+            </div>
+            <p className={styles.safetyHint}><ShieldCheck size={16} aria-hidden="true" /> Email confirmation isn’t an identity or safety guarantee. Meet in public and agree on the details in chat.</p>
 
             {hasTurnstileSiteKey ? (
               <div style={{ marginTop: 16 }}>
@@ -287,14 +278,15 @@ export function RequestComposer({ preview, onStatus, statusMessage }: RequestCom
               </div>
             ) : null}
 
-            {statusMessage && <p style={{ marginTop: 8, color: "var(--accent2)", fontWeight: 600, fontSize: 14 }}>{statusMessage}</p>}
+            {preview ? <p className={styles.previewNotice}>Try the form here. This is a preview—nothing will be published.</p> : null}
+            {statusMessage && !preview ? <p className={styles.status} role="status">{statusMessage}</p> : null}
 
-            <div className="wl-compose-actions" style={{ marginTop: 20 }}>
-              <button type="button" className="wl-btn-ghost" onClick={() => router.push("/feed")}>
+            <div className={styles.actions}>
+              <button type="button" className={styles.cancel} onClick={() => router.push("/feed")}>
                 Cancel
               </button>
-              <button className="wl-btn-gradient" type="submit" disabled={preview || isPending || !canSubmit} style={{ flex: 1 }}>
-                {preview ? "Preview mode only" : isPending ? "Posting..." : "Publish request"}
+              <button className={styles.publish} type="submit" disabled={preview || isPending || !canSubmit}>
+                {preview ? "Preview mode only" : isPending ? "Posting..." : "Publish request"}<ArrowUpRight size={17} aria-hidden="true" />
               </button>
             </div>
           </form>
@@ -302,44 +294,48 @@ export function RequestComposer({ preview, onStatus, statusMessage }: RequestCom
       </div>
 
       {/* ─── Right rail: Preview + Checklist ─── */}
-      <aside className="wl-compose-rail">
-        <span className="wl-preview-label">Live preview</span>
+      <aside className={styles.previewRail} aria-label="Your request preview">
+        <div className={styles.previewHeading}><span className={styles.pairMark} aria-hidden="true" /><h2>Your invitation</h2><span>PREVIEW</span></div>
 
         {/* Preview card mimicking the real card */}
-        <div className="wl-card">
-          <div className="wl-card-body">
-            <div className="wl-card-meta-line">
-              <span>{lane === "social" ? "Coworking & Focus" : "Coffee Walk"}</span>
-              <span className="wl-meta-dot" />
-              <span>just now</span>
+        <div className={styles.previewCard} data-lane={lane}>
+          <div className={styles.previewActivity}>{lane === "social" ? <Headphones size={17} aria-hidden="true" /> : <Coffee size={17} aria-hidden="true" />}<span>{lane === "social" ? "Coworking & Focus" : "Coffee Walk"}</span></div>
+          <div className={styles.previewBody}>
+            <div className={styles.previewHost}>
+              <span className={styles.youAvatar}>You</span>
+              <div><strong>Your next little plan</strong><small>Waiting for a +1</small></div>
             </div>
-            <h4 className="wl-card-title">{title.trim() || "Your request title"}</h4>
-            <p className="wl-card-desc">{description.trim() || "Add a description to preview how it'll appear in the feed."}</p>
-            <div className="wl-card-chips">
+            <h3>{title.trim() || "Something good starts with a plan."}</h3>
+            <p>{description.trim() || "Your words go here. Tell someone what you have in mind, and what kind of company you’d like."}</p>
+            <div className={styles.previewMeta}>
               {areaLabel.trim() && (
-                <span className="wl-meta-chip">
+                <span>
                   <MapPin size={12} />
                   {areaLabel}
                 </span>
               )}
-              {parsedTags.slice(0, 3).map((tag) => (
-                <span key={tag} className="wl-tag-chip">#{tag}</span>
-              ))}
+              <span><Clock size={12} aria-hidden="true" />{meetupAt ? formatDateTime(meetupAt) : "Time is flexible"}</span>
             </div>
+            <div className={styles.previewTags}>{parsedTags.slice(0, 3).map((tag, index) => <span key={`${tag}-${index}`}>#{tag}</span>)}</div>
+            <div className={styles.previewPreferences}>{verifiedOnly ? <span><ShieldCheck size={13} aria-hidden="true" /> Email-confirmed replies</span> : null}{ephemeral ? <span><Clock size={13} aria-hidden="true" /> Closes 6h after posting</span> : null}</div>
           </div>
         </div>
 
         {/* Checklist */}
-        <div className="wl-checklist">
+        <div className={styles.checklist}>
+          <div className={styles.checklistHeading}><h3>A little detail goes a long way</h3><span>{checklist.filter((item) => item.done).length}/{checklist.length}</span></div>
+          <div className={styles.progressTrack} role="progressbar" aria-label="Request details completed" aria-valuemin={0} aria-valuemax={checklist.length} aria-valuenow={checklist.filter((item) => item.done).length}><span style={{ width: `${checklist.filter((item) => item.done).length / checklist.length * 100}%` }} /></div>
           {checklist.map((item) => (
-            <div key={item.label} className={`wl-checklist-item ${item.done ? "done" : "pending"}`}>
-              <span className="wl-checklist-dot">
-                <Check size={11} />
+            <div key={item.label} className={styles.checklistItem} data-done={item.done}>
+              <span className={styles.checkDot}>
+                {item.done ? <Check size={11} aria-hidden="true" /> : null}
               </span>
-              {item.label}
+              <span>{item.label}</span><span className={styles.srOnly}>{item.done ? ": complete" : ": not yet complete"}</span>
             </div>
           ))}
+          <p>A helpful guide, not a score. Tags are optional.</p>
         </div>
+        <div className={styles.afterPosting}><ShieldCheck size={19} aria-hidden="true" /><h3>You choose who joins.</h3><p>Review replies, approve a companion, then coordinate in your private session chat.</p><Link href="/safety/reporting">A quick safety refresher ↗</Link></div>
       </aside>
     </div>
   );

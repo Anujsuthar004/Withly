@@ -4,6 +4,6 @@ import { getAlertsPageState } from "@/lib/supabase/queries";
 export const dynamic = "force-dynamic";
 
 export default async function AlertsRoute() {
-  const { notifications } = await getAlertsPageState();
-  return <AlertsPage notifications={notifications} />;
+  const { notifications, preview, error } = await getAlertsPageState();
+  return <AlertsPage notifications={notifications} preview={preview} error={error} />;
 }

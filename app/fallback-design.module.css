@@ -1,0 +1,16 @@
+.card { max-width: 700px; margin: 48px auto; padding: 42px; background: #fff; border: 1px solid #ded5ef; border-radius: 28px; color: #25213c; text-align: center; }
+.mark { display: block; width: 58px; height: 52px; margin: 0 auto 25px; background: #6742e9; mask: url('/withly-mark.svg') center / contain no-repeat; }
+.kicker { color: #69548b; font-size: 10px; font-weight: 800; letter-spacing: 1.4px; }
+.card h1 { font-size: clamp(30px, 4vw, 44px); letter-spacing: -1.4px; margin: 18px 0; line-height: 1.15; }
+.card > p:not(.kicker) { color: #696279; font-size: 14px; line-height: 1.8; }
+.card .reference { font-size: 11px; overflow-wrap: anywhere; }
+.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 26px; }
+.primary, .secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 12px 20px; border-radius: 999px; font-size: 12px; font-weight: 750; text-decoration: none; cursor: pointer; }
+.primary { background: #6742e9; border: 1px solid #6742e9; color: #fff; }
+.secondary { background: #fff; border: 1px solid #ded5eb; color: #69548b; }
+.card :is(a, button):focus-visible { outline: 3px solid #6742e9; outline-offset: 4px; }
+.loading { display: grid; gap: 20px; width: 100%; max-width: 1160px; margin: auto; }
+.loadingTitle, .loadingCard { display: block; background: #eee9ff; border: 1px solid #e3deef; border-radius: 22px; }
+.loadingTitle { height: 50px; width: 60%; }
+.loadingCard { height: 150px; }
+@media (max-width: 550px) { .card { margin: 28px auto; padding: 28px 22px; } }

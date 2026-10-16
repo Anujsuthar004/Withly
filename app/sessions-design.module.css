@@ -1,0 +1,95 @@
+.page { width: 100%; max-width: 1160px; margin: 0 auto; color: #25213c; }
+.hero { display: flex; justify-content: space-between; align-items: center; gap: 30px; padding: 30px 34px; border-radius: 28px; background: #eaf1ff; border: 1px solid #dce4f5; }
+.kicker { margin: 0 0 15px; font-size: 9px; font-weight: 800; letter-spacing: 1.5px; color: #5c6481; }
+.hero h1 { margin: 0; font-size: clamp(34px, 3.5vw, 48px); line-height: 1.12; letter-spacing: -1.9px; }
+.hero h1 span { color: #6742e9; }
+.intro { max-width: 46ch; margin: 15px 0 0; font-size: 14px; line-height: 1.75; color: #5c647b; }
+.planArt { flex: 0 0 270px; height: 180px; position: relative; }
+.planArt > span { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; width: 125px; height: 140px; border-radius: 30px; background: #cdbbf6; color: #50338a; transform: rotate(-8deg); top: 0; left: 0; }
+.planArt > span + span { background: #d9f881; color: #465d25; left: auto; right: 0; top: 28px; transform: rotate(8deg); border: 5px solid #eaf1ff; font-size: 44px; font-weight: 800; letter-spacing: -2px; gap: 2px; }
+.planArt small { font-size: 8px; letter-spacing: 1px; font-weight: 800; }
+.previewNote { margin: 18px 0 0; font-size: 12px; color: #696279; line-height: 1.7; }
+.notice { background: #eee9ff; border: 1px solid #ded5f1; border-radius: 16px; padding: 16px 20px; font-size: 14px; margin: 20px 0; }
+.heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 32px 0 18px; }
+.heading h2 { display: flex; align-items: center; gap: 12px; margin: 0; font-size: 22px; letter-spacing: -.6px; }
+.heading h2 span { display: grid; place-items: center; border-radius: 999px; min-width: 28px; height: 28px; padding: 0 8px; background: #eee9ff; color: #6742e9; font-size: 12px; letter-spacing: 0; }
+.heading > a { display: inline-flex; align-items: center; gap: 6px; color: #695b7d; font-size: 12px; text-decoration: none; }
+.layout, .sessionLayout { display: grid; grid-template-columns: minmax(0, 1fr) 285px; gap: 26px; align-items: start; }
+.cards, .rail { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.card { border: 1px solid #e3deef; background: #fff; border-radius: 25px; overflow: hidden; box-shadow: 0 3px 0 #efebf8; }
+.cardTop { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 26px; background: #f0f6e8; border-bottom: 1px solid #e0e9d7; color: #4e653d; }
+.cardTop > span { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 750; }
+.cardTop i { width: 8px; height: 8px; border-radius: 50%; background: #729650; }
+.cardTop small { font-size: 8px; letter-spacing: 1px; }
+.cardBody { padding: 26px; }
+.companion { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+.avatar { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: #eee9ff; color: #6742e9; font-size: 18px; font-weight: 800; }
+.companion small { display: block; font-size: 8px; letter-spacing: 1px; color: #756681; margin-bottom: 4px; }
+.companion strong { font-size: 15px; overflow-wrap: anywhere; }
+.card h3 { margin: 0 0 20px; font-size: 26px; letter-spacing: -.8px; line-height: 1.25; overflow-wrap: anywhere; }
+.details { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 15px; margin: 0; padding: 18px; background: #f8f9ff; border: 1px solid #ece8f4; border-radius: 18px; }
+.details dt { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #756681; margin-bottom: 8px; }
+.details dd { margin: 0; color: #4f4562; font-size: 13px; line-height: 1.6; font-weight: 600; overflow-wrap: anywhere; }
+.cardHint { font-size: 12px; line-height: 1.8; color: #696279; margin: 18px 0; }
+.actions { display: flex; align-items: center; gap: 20px; padding-top: 18px; border-top: 1px solid #eeeaf5; }
+.primary { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; padding: 12px 20px; border-radius: 999px; background: #6742e9; color: #fff; font-size: 12px; font-weight: 750; text-decoration: none; }
+.primary:hover { background: #5131b4; }
+.textLink { color: #6a587d; font-size: 12px; font-weight: 650; text-decoration: none; padding: 10px 0; }
+.guide { background: #eee9ff; border: 1px solid #dfd5f3; border-radius: 24px; padding: 25px; }
+.guide .kicker { font-size: 8px; line-height: 1.8; color: #74618d; letter-spacing: 1px; }
+.guide h2 { font-size: 24px; letter-spacing: -.8px; line-height: 1.25; color: #4e3972; margin: 0 0 24px; }
+.guide ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 23px; }
+.guide ol li { display: flex; gap: 12px; }
+.guide li > span { display: grid; place-items: center; flex: 0 0 26px; height: 26px; background: #dfd3f7; color: #6d4b9c; border-radius: 50%; font-size: 10px; font-weight: 800; }
+.guide strong { font-size: 12px; color: #4e3972; }
+.guide p:not(.kicker) { margin: 5px 0 0; font-size: 12px; color: #6b5a80; line-height: 1.75; }
+.safety { padding: 25px; border: 1px solid #dce7cf; border-radius: 24px; background: #f0f6e8; color: #4e653d; }
+.safety h2 { font-size: 18px; letter-spacing: -.4px; margin: 13px 0 10px; }
+.safety p { font-size: 12px; line-height: 1.8; margin: 0; }
+.safety a { display: inline-flex; align-items: center; gap: 6px; margin-top: 18px; font-size: 12px; font-weight: 700; text-decoration: none; }
+.newPlan { padding: 5px 15px; font-size: 12px; text-decoration: none; color: #696279; line-height: 1.8; }
+.newPlan strong { display: flex; align-items: center; gap: 6px; color: #6742e9; }
+.empty { padding: 34px; background: #fff; border: 1px solid #e3deef; border-radius: 25px; }
+.emptyIcon { display: grid; place-items: center; width: 65px; height: 65px; border-radius: 50%; background: #eee9ff; color: #6742e9; margin-bottom: 22px; }
+.empty h3, .empty h1 { margin: 0 0 12px; font-size: 26px; letter-spacing: -.8px; line-height: 1.25; }
+.empty p { font-size: 14px; color: #696279; line-height: 1.8; margin-bottom: 24px; }
+.empty .textLink { display: inline-block; margin-left: 18px; }
+.back { display: inline-flex; align-items: center; gap: 8px; color: #695b7d; font-size: 12px; text-decoration: none; margin-bottom: 24px; }
+.sessionIntro { padding: 0 0 24px; border-bottom: 1px solid #e3deef; }
+.sessionIntro h1 { font-size: clamp(28px, 3vw, 40px); letter-spacing: -1.3px; line-height: 1.2; max-width: 24ch; overflow-wrap: anywhere; margin: 0 0 12px; }
+.sessionIntro > p:not(.kicker) { font-size: 14px; line-height: 1.8; color: #696279; }
+.sessionMeta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-top: 20px; }
+.sessionMeta span, .sessionMeta a { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #695b7d; overflow-wrap: anywhere; }
+.sessionMeta svg { flex-shrink: 0; }
+.sessionMeta a { color: #6742e9; text-decoration: none; font-weight: 650; }
+.sessionLayout { margin-top: 25px; }
+.conversation { min-width: 0; }
+.reminders { margin: 0; padding-left: 16px; color: #6b5a80; font-size: 12px; line-height: 1.8; }
+.reminders li + li { margin-top: 14px; }
+.finishNote { padding: 0 15px; margin: 0; font-size: 12px; line-height: 1.8; color: #696279; }
+@media (max-width: 1000px) {
+  .layout, .sessionLayout { grid-template-columns: minmax(0, 1fr) 250px; gap: 20px; }
+  .guide, .safety { padding: 20px; }
+}
+@media (max-width: 800px) {
+  .layout, .sessionLayout { grid-template-columns: minmax(0, 1fr); }
+  .rail { display: grid; grid-template-columns: 1fr 1fr; }
+  .planArt { flex-basis: 220px; }
+  .planArt > span { width: 103px; height: 125px; }
+}
+@media (max-width: 550px) {
+  .hero { padding: 24px; }
+  .hero h1 { font-size: 34px; }
+  .kicker { font-size: 8px; letter-spacing: 1px; }
+  .planArt { display: none; }
+  .heading h2 { font-size: 21px; }
+  .cardTop { padding: 14px 20px; }
+  .cardBody { padding: 20px; }
+  .card h3 { font-size: 24px; }
+  .details { grid-template-columns: minmax(0, 1fr); }
+  .actions { flex-wrap: wrap; gap: 8px 18px; }
+  .rail { grid-template-columns: 1fr; }
+  .empty { padding: 24px; }
+  .empty .textLink { margin-left: 0; display: block; margin-top: 8px; }
+  .sessionMeta { flex-direction: column; align-items: flex-start; }
+}

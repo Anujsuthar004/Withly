@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import styles from "@/app/requests-design.module.css";
 
 import { RequestDetailPage } from "@/components/app/pages/request-detail-page";
 import { getPublicRequestDetail, getWorkspaceSnapshot } from "@/lib/supabase/queries";
@@ -18,12 +20,12 @@ export default async function RequestDetailRoute({ params }: { params: Promise<{
 
   if (!feedCard && !myRequest) {
     return (
-      <div className="workspace-page">
-        <section className="request-detail-status">
-          <div className="setup-banner" role="status" aria-live="polite">
-            <p className="kicker">Request</p>
-            <p>{publicRequest.requestError}</p>
-          </div>
+      <div className={styles.page}>
+        <Link className={styles.back} href="/requests">Back to your requests</Link>
+        <section className={styles.empty}>
+          <h1>We couldn’t load this plan.</h1>
+          <p role="status">{publicRequest.requestError}</p>
+          <Link className={styles.secondary} href="/feed">Browse other requests</Link>
         </section>
       </div>
     );

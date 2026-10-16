@@ -67,7 +67,7 @@ export function JoinReviewPanel({
     <div className="wl-inbox" style={{ maxWidth: 820 }}>
       {/* Join requests */}
       <section>
-        <h3 className="wl-section-title">Join requests</h3>
+        <h2 className="wl-section-title">Join requests</h2>
         <div className="wl-inbox-list">
           {entries.length === 0 ? (
             <div className="wl-empty-card">
@@ -81,17 +81,17 @@ export function JoinReviewPanel({
             const grad = getGradient(entry.joinerDisplayName);
 
             return (
-              <article key={entry.id} className="wl-join-card">
+              <article key={entry.id} className="wl-join-card" aria-label={`Introduction from ${entry.joinerDisplayName}`}>
                 <div className="wl-join-header">
                   <div className="wl-join-avatar-wrap">
                     <div className="wl-join-avatar" style={{ background: grad }}>
                       {initials}
                     </div>
-                    <span className="wl-active-dot" />
                   </div>
                   <div className="wl-join-info">
                     <div className="wl-join-name-row">
                       <strong>{entry.joinerDisplayName}</strong>
+                      {preview ? <span className="wl-join-preview">Example reply</span> : null}
                     </div>
                     <div className="wl-join-meta">
                       wants to join · {entry.requestTitle} · {formatRelativeTime(entry.createdAt)}
@@ -100,6 +100,7 @@ export function JoinReviewPanel({
                 </div>
 
                 <p className="wl-join-intro">&quot;{entry.introMessage || "No intro included."}&quot;</p>
+                {entry.joinerAboutMe ? <p className="wl-join-about"><strong>A little about them</strong> {entry.joinerAboutMe}</p> : null}
 
                 {cardErrors[entry.id] ? (
                   <div className="inline-error" role="alert">

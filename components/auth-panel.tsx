@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { TurnstileWidget } from "@/components/turnstile-widget";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { TURNSTILE_SITE_KEY, hasSupabaseEnv, hasTurnstileSiteKey } from "@/lib/env";
+import styles from "@/app/auth-design.module.css";
 
 type Mode = "signin" | "signup";
 
@@ -162,41 +163,15 @@ export function AuthPanel({ nextPath = "/feed" }: AuthPanelProps) {
   }
 
   return (
-    <section className="auth-panel">
-      <div className="eyebrow-row">
-        <span className="eyebrow-pill">
-          <ShieldCheck size={16} />
-          Email-confirmed members
-        </span>
-        <span className="eyebrow-pill muted">
-          <LockKeyhole size={16} />
-          Private plans
-        </span>
+    <section className={styles.panel} aria-labelledby="auth-heading">
+      <div className={styles.welcomeMark} aria-hidden="true"><span /></div>
+      <div className={styles.copy}>
+        <p className={styles.kicker}>{mode === "signin" ? "YOUR NEXT PLAN IS WAITING" : "MAKE ROOM FOR A LITTLE COMPANY"}</p>
+        <h2 id="auth-heading">{mode === "signin" ? "Good to see you." : "Your +1 starts here."}</h2>
+        <p>{mode === "signin" ? "Sign in to pick up your plans and conversations." : "Create your account, confirm your email, then find your kind of plan."}</p>
       </div>
 
-      <div className="auth-copy">
-        <h2>Sign in and keep every plan moving.</h2>
-        <p>Create an account, confirm your email, and handle requests, replies, and follow-up in one calm flow.</p>
-      </div>
-
-      <div className="auth-trust-strip" aria-label="Trust and privacy highlights">
-        <article>
-          <ShieldCheck size={16} />
-          <div>
-            <strong>Accountable profiles</strong>
-            <span>Email confirmation and reporting provide a basic accountability layer.</span>
-          </div>
-        </article>
-        <article>
-          <LockKeyhole size={16} />
-          <div>
-            <strong>Private coordination</strong>
-            <span>Exact logistics stay inside the thread until both people are aligned.</span>
-          </div>
-        </article>
-      </div>
-
-      <div className="segment-control">
+      <div className={styles.switcher} role="group" aria-label="Account access mode">
         <button
           type="button"
           className={mode === "signin" ? "active" : ""}
@@ -267,16 +242,18 @@ export function AuthPanel({ nextPath = "/feed" }: AuthPanelProps) {
           </label>
         ) : null}
 
-        <label>
-          Password
+        <div className={styles.passwordField}>
+          <label htmlFor="account-password">Password</label>
           <span className="input-action-row">
             <input
+              id="account-password"
               type={isPasswordVisible ? "text" : "password"}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="Minimum 8 characters"
+              placeholder={mode === "signin" ? "Your password" : "Minimum 8 characters"}
               autoComplete={mode === "signin" ? "current-password" : "new-password"}
               minLength={8}
+              aria-describedby={mode === "signup" ? "signup-password-hint" : undefined}
               required
               disabled={isBusy}
             />
@@ -290,7 +267,8 @@ export function AuthPanel({ nextPath = "/feed" }: AuthPanelProps) {
               {isPasswordVisible ? "Hide" : "Show"}
             </button>
           </span>
-        </label>
+        </div>
+        {mode === "signup" ? <p className={styles.hint} id="signup-password-hint">Use at least 8 characters. Choose a password you don’t use elsewhere.</p> : null}
 
         {hasTurnstileSiteKey ? (
           <TurnstileWidget
@@ -298,6 +276,7 @@ export function AuthPanel({ nextPath = "/feed" }: AuthPanelProps) {
             siteKey={TURNSTILE_SITE_KEY}
             onToken={setCaptchaToken}
             theme="light"
+            size="compact"
           />
         ) : null}
 
@@ -316,6 +295,8 @@ export function AuthPanel({ nextPath = "/feed" }: AuthPanelProps) {
       <p className="auth-status" role="status" aria-live="polite" aria-atomic="true" data-tone={statusTone}>
         {status}
       </p>
+      <div className={styles.footnote}><LockKeyhole size={14} aria-hidden="true" /><span>Meetup details stay in private chats after a match.</span></div>
+      {mode === "signup" ? <p className={styles.emailNote}><ShieldCheck size={14} aria-hidden="true" />Email confirmation is not identity or safety verification.</p> : null}
     </section>
   );
 }

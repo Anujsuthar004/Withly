@@ -12,6 +12,8 @@ import {
 } from "@/app/workspace/actions";
 import { ProfileAvatar } from "@/components/app/profile-avatar";
 import type { AvailabilityWindow, TrustedCompanion, WorkspaceProfile } from "@/lib/supabase/types";
+import { getProfileCompletion } from "@/lib/utils";
+import styles from "@/app/profile-design.module.css";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -44,7 +46,8 @@ export function ProfilePanel({
   const [availabilityForm, setAvailabilityForm] = useState({ dayOfWeek: 1, startTime: "18:00", endTime: "20:00", label: "" });
   const [isAvailabilityPending, startAvailabilityTransition] = useTransition();
 
-  const displayName = form.displayName.trim() || profile.displayName;
+  const displayName = profile.displayName.trim() || "Member";
+  const completion = getProfileCompletion(profile);
   const activeAvatarUrl = avatarPreviewUrl || profile.avatarUrl;
   const initials = displayName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 
@@ -78,10 +81,10 @@ export function ProfilePanel({
   const verifications = [{ label: "Email", status: "Confirmed", done: true }];
 
   return (
-    <div className="wl-profile" style={{ maxWidth: 960 }}>
+    <div className="wl-profile">
       {/* Hero card */}
       <section className="wl-profile-hero">
-        <div className="wl-profile-cover" />
+        <div className="wl-profile-cover" aria-hidden="true"><span className={styles.coverCaption}>ONE OF A KIND. BETTER TOGETHER.</span><span className={styles.coverPair}><i>You</i><i>+1</i></span></div>
         <div className="wl-profile-hero-body">
           <div className="wl-profile-avatar-wrap">
             {activeAvatarUrl ? (
@@ -99,14 +102,23 @@ export function ProfilePanel({
               </span>
             </div>
             <p className="wl-profile-bio">
-              {profile.homeArea || "Location not set"} · {profile.aboutMe || "Prefers clear plans, public spaces, and fast confirmations."}
+              {profile.homeArea || "Area not set"} · {profile.aboutMe || "Add a short introduction so others can get to know you."}
             </p>
           </div>
           <div className="wl-profile-hero-actions">
             <button
               type="button"
               className="wl-btn-gradient"
-              onClick={() => setIsEditing((c) => !c)}
+              aria-expanded={isEditing}
+              aria-controls="profile-edit-form"
+              disabled={isPending || isAvatarPending}
+              onClick={() => {
+                if (isEditing) {
+                  setForm({ displayName: profile.displayName, aboutMe: profile.aboutMe, homeArea: profile.homeArea });
+                  resetAvatarSelection();
+                }
+                setIsEditing((c) => !c);
+              }}
             >
               {isEditing ? "Cancel editing" : "Edit profile"}
             </button>
@@ -116,10 +128,13 @@ export function ProfilePanel({
 
       {/* Edit form (collapsible) */}
       {isEditing && (
-        <section className="wl-profile-edit-card">
+        <section className="wl-profile-edit-card" id="profile-edit-form" aria-labelledby="profile-edit-title">
+          <h2 id="profile-edit-title">Make yourself at home.</h2>
+          <p className={styles.formHint}>A name, a little context, and your general area. Keep exact addresses and private contact details out.</p>
           <form
             onSubmit={(e) => {
               e.preventDefault();
+              if (preview || isPending || isAvatarPending) return;
               startTransition(async () => {
                 const result = await updateProfileAction(form);
                 onStatus(result.message);
@@ -169,6 +184,7 @@ export function ProfilePanel({
               <input
                 ref={fileInputRef}
                 id="profile-avatar-input"
+                aria-label="Profile photo"
                 className="sr-only"
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
@@ -189,15 +205,15 @@ export function ProfilePanel({
                 }}
                 disabled={preview || isAvatarPending}
               />
-              <label className="wl-btn-ghost" htmlFor="profile-avatar-input">
+              <button className="wl-btn-ghost" type="button" disabled={preview || isAvatarPending} onClick={() => fileInputRef.current?.click()}>
                 {selectedAvatarFile ? "Choose another" : "Change photo"}
-              </label>
+              </button>
               {selectedAvatarFile && (
                 <button
                   type="button"
                   className="wl-btn-teal"
                   onClick={() => {
-                    if (!selectedAvatarFile) return;
+                    if (preview || !selectedAvatarFile) return;
                     startAvatarTransition(async () => {
                       const fd = new FormData();
                       fd.set("avatar", selectedAvatarFile);
@@ -212,6 +228,7 @@ export function ProfilePanel({
                 </button>
               )}
             </div>
+            <p className={styles.photoHint}>PNG, JPEG or WebP. Your photo is saved separately from your profile details.</p>
 
             <button className="wl-btn-gradient" type="submit" disabled={preview || isPending || isAvatarPending}>
               {preview ? "Preview mode only" : isPending ? "Saving..." : "Save profile details"}
@@ -224,6 +241,13 @@ export function ProfilePanel({
       <div className="wl-profile-two-up">
         {/* Trust score */}
         <div className="wl-rail-card">
+          <div className={styles.completionHeading}><span className={styles.pairMark} aria-hidden="true" /><h2>A little detail goes a long way.</h2></div>
+          <p className={styles.formHint}>Help someone get a sense of you before they say hello.</p>
+          <div className={styles.completionCount}><strong>{completion.completedCount}<span> / {completion.totalCount}</span></strong><span>profile details added</span></div>
+          <div className={styles.progress} role="progressbar" aria-label="Profile details completed" aria-valuemin={0} aria-valuemax={completion.totalCount} aria-valuenow={completion.completedCount}><span style={{ width: `${completion.percentage}%` }} /></div>
+          <ul className={styles.checklist}>{completion.steps.map((step) => <li key={step.id}><span className={step.done ? styles.done : styles.notYet} aria-hidden="true">{step.done ? <Check size={12} /> : "·"}</span><span>{step.label}</span><small>{step.done ? "Added" : "Not yet"}</small></li>)}</ul>
+          <p className={styles.photoHint}>A helpful checklist, not a popularity score.</p>
+          <div className={styles.trustSection}>
           <div className="wl-trust-head">
             <h3>Trust score</h3>
             <span className="wl-trust-number">{profile.trustScore}<span>/100</span></span>
@@ -244,11 +268,14 @@ export function ProfilePanel({
               </div>
             ))}
           </div>
+          <p className={styles.photoHint}>Trust scores and email confirmation are not identity or safety guarantees.</p>
+          </div>
         </div>
 
         {/* Availability */}
         <div className="wl-rail-card">
-          <h3 className="wl-rail-title">Availability</h3>
+          <h2 className="wl-rail-title">Make a little time.</h2>
+          <p className={styles.formHint}>Save your usual availability for finding time together.</p>
           <div className="wl-endorse-list">
             {availability.length === 0 ? <p>No availability windows saved yet.</p> : null}
             {availability.map((window) => (
@@ -279,6 +306,7 @@ export function ProfilePanel({
             className="stack-form"
             onSubmit={(event) => {
               event.preventDefault();
+              if (preview || isAvailabilityPending) return;
               startAvailabilityTransition(async () => {
                 const formData = new FormData();
                 formData.set("dayOfWeek", String(availabilityForm.dayOfWeek));
@@ -291,38 +319,38 @@ export function ProfilePanel({
               });
             }}
           >
-            <select
+            <label className={styles.field}>Day<select
               aria-label="Availability day"
               value={availabilityForm.dayOfWeek}
               disabled={preview || isAvailabilityPending}
               onChange={(event) => setAvailabilityForm((current) => ({ ...current, dayOfWeek: Number(event.target.value) }))}
             >
               {DAYS.map((day, index) => <option key={day} value={index}>{day}</option>)}
-            </select>
+            </select></label>
             <div className="grid-two">
-              <input
+              <label className={styles.field}>From<input
                 aria-label="Availability start time"
                 type="time"
                 value={availabilityForm.startTime}
                 disabled={preview || isAvailabilityPending}
                 onChange={(event) => setAvailabilityForm((current) => ({ ...current, startTime: event.target.value }))}
-              />
-              <input
+              /></label>
+              <label className={styles.field}>Until<input
                 aria-label="Availability end time"
                 type="time"
                 value={availabilityForm.endTime}
                 disabled={preview || isAvailabilityPending}
                 onChange={(event) => setAvailabilityForm((current) => ({ ...current, endTime: event.target.value }))}
-              />
+              /></label>
             </div>
-            <input
+            <label className={styles.field}>Label (optional)<input
               aria-label="Availability label"
               placeholder="Optional label"
               maxLength={80}
               value={availabilityForm.label}
               disabled={preview || isAvailabilityPending}
               onChange={(event) => setAvailabilityForm((current) => ({ ...current, label: event.target.value }))}
-            />
+            /></label>
             <button className="wl-btn-teal" type="submit" disabled={preview || isAvailabilityPending}>
               {preview ? "Preview mode only" : isAvailabilityPending ? "Saving..." : "Add availability"}
             </button>
@@ -333,11 +361,11 @@ export function ProfilePanel({
       {/* Meet-again roster */}
       <div className="wl-rail-card">
         <div className="wl-meet-head">
-          <h3>Meet-again roster</h3>
-          <span>People you&apos;d tag along with again</span>
+          <h2>Your familiar faces.</h2>
+          <span>Mutual meet-again connections</span>
         </div>
         <div className="wl-meet-scroll">
-          {companions.length === 0 ? <p>No mutual meet-again connections yet.</p> : null}
+          {companions.length === 0 ? <div className={styles.emptyConnections}><span className={styles.connectionPair} aria-hidden="true"><i>You</i><i>+1</i></span><div><strong>Good company is worth a repeat.</strong><p>When you both choose to meet again in session feedback, your connection appears here.</p></div></div> : null}
           {companions.map((companion) => (
             <div key={companion.id} className="wl-meet-card">
               <div className="wl-meet-avatar">{companion.companionName.slice(0, 1).toUpperCase()}</div>

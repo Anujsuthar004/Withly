@@ -4,7 +4,7 @@ import { StaticPageShell } from "@/components/static-page-shell";
 import { SUPPORT_EMAIL } from "@/lib/env";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Withly",
+  title: "Privacy Policy",
 };
 
 export default function PrivacyPage() {

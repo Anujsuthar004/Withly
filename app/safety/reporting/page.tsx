@@ -3,12 +3,13 @@ import type { Metadata } from "next";
 import { StaticPageShell } from "@/components/static-page-shell";
 
 export const metadata: Metadata = {
-  title: "Safety and Reporting | Withly",
+  title: "Safety and Reporting",
 };
 
 export default function ReportingPage() {
   return (
     <StaticPageShell
+      safety
       kicker="Safety and Reporting"
       title="What to do when something feels off."
       intro="If you need help, use the in-product report and block tools first, then contact support for urgent moderation follow-up."

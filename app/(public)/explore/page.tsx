@@ -1,6 +1,7 @@
 import Link from "next/link";
 
-import { SiteFooter } from "@/components/site-footer";
+import { PublicPageShell } from "@/components/public-page-shell";
+import styles from "@/app/public-design.module.css";
 import { getExplorePageState } from "@/lib/supabase/queries";
 import { formatDateTime } from "@/lib/utils";
 
@@ -10,22 +11,22 @@ export default async function ExplorePage() {
   const { feed, feedError, isSampleFeed } = await getExplorePageState(18);
 
   return (
-    <main className="marketing-page">
+    <PublicPageShell><div className={styles.page}>
       <section className="section-title">
         <p className="kicker">Explore</p>
         {isSampleFeed ? (
           <>
-            <h2>Here is what the feed looks like.</h2>
+            <h1>Here is what the feed looks like.</h1>
             <p>No active requests right now — these are samples. Sign up to be among the first to post.</p>
           </>
         ) : (
           <>
-            <h2>Browse open requests before you sign in.</h2>
+            <h1>Browse open requests before you sign in.</h1>
             <p>You can browse the public basics here, then step into your private feed when you want to respond or post.</p>
           </>
         )}
         <div className="section-action-row">
-          <Link className="primary-button compact" href="/?next=%2Ffeed">
+          <Link className="primary-button compact" href="/?next=%2Ffeed#join">
             Sign in to respond
           </Link>
           <Link className="ghost-button compact" href="/">
@@ -86,7 +87,6 @@ export default async function ExplorePage() {
         </section>
       ) : null}
 
-      <SiteFooter />
-    </main>
+      </div></PublicPageShell>
   );
 }

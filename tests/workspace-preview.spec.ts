@@ -12,6 +12,6 @@ test("public explore is reachable and legacy workspace redirects", async ({ page
 
   await page.goto("/feed");
   await expect(
-    page.getByRole("heading", { name: /Find requests worth replying to|intentional workspace for companionship/i })
+    page.getByRole("heading", { name: "Find your next +1.", exact: true })
   ).toBeVisible();
 });

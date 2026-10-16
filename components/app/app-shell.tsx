@@ -17,6 +17,7 @@ import {
 
 import { ProfileAvatar } from "@/components/app/profile-avatar";
 import { SignOutButton } from "@/components/sign-out-button";
+import feedStyles from "@/app/feed-design.module.css";
 
 type NavItem = {
   href: string;
@@ -56,8 +57,11 @@ const SCREEN_META: Record<string, { kicker: string; title: string }> = {
   "/feed": { kicker: "Discovery", title: "Feed" },
   "/requests/new": { kicker: "Compose", title: "New request" },
   "/inbox": { kicker: "Activity", title: "Inbox" },
+  "/sessions": { kicker: "Your plans", title: "Sessions" },
+  "/requests": { kicker: "Your plans", title: "My requests" },
   "/profile": { kicker: "You", title: "Your profile" },
   "/account": { kicker: "Settings", title: "Account" },
+  "/alerts": { kicker: "Activity", title: "Notifications" },
   "/admin": { kicker: "Admin", title: "Administration" },
 };
 
@@ -121,7 +125,7 @@ export function AppShell({
       : "Email confirmed";
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${["/feed", "/requests", "/inbox", "/sessions", "/profile", "/account", "/alerts"].includes(pathname) || pathname.startsWith("/sessions/") || pathname.startsWith("/requests/") ? feedStyles.shell : ""}`}>
       {/* ============ LEFT NAV RAIL ============ */}
       <aside className="app-sidebar" aria-label="Primary">
         <div className="app-sidebar-top">
@@ -218,7 +222,7 @@ export function AppShell({
           </div>
         </header>
 
-        <main className="app-content">
+        <main className="app-content" id="main-content" tabIndex={-1}>
           {notice ? (
             <div className="summary-callout" role="status" aria-live="polite">
               <strong>System Notice: </strong>

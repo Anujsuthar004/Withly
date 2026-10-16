@@ -29,9 +29,9 @@ export const metadata: Metadata = {
     follow: true,
   },
   icons: {
-    icon: "/withly-logo.svg?v=2",
-    shortcut: "/withly-logo.svg?v=2",
-    apple: "/withly-logo.svg?v=2",
+    icon: "/withly-app-icon.svg?v=3",
+    shortcut: "/withly-app-icon.svg?v=3",
+    apple: "/withly-app-icon.svg?v=3",
   },
   manifest: "/manifest.json",
   openGraph: {
@@ -61,6 +61,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" className={`${inter.variable} ${manrope.variable}`}>
       <body>
+        <a className="skip-link" href="#main-content">Skip to content</a>
         {children}
         <Analytics />
       </body>

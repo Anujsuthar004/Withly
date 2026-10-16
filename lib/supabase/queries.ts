@@ -444,11 +444,11 @@ export async function getSessionPageState(requestId: string) {
 
 export async function getAlertsPageState() {
   const supabase = await getSupabaseServerClientOrNull();
-  if (!supabase) return { notifications: [] };
+  if (!supabase) return { notifications: [], preview: true, error: "" };
 
-  const { data } = await supabase.rpc("get_my_notifications", { limit_count: 30 });
+  const { data, error } = await supabase.rpc("get_my_notifications", { limit_count: 30 });
   const parsed = notificationSchema.array().safeParse(data ?? []);
-  return { notifications: parsed.success ? parsed.data : [] };
+  return { notifications: !error && parsed.success ? parsed.data : [], preview: false, error: error || !parsed.success ? "We couldn’t load your notifications. Please refresh to try again." : "" };
 }
 
 export async function getProfilePageState() {
