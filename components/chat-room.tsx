@@ -121,18 +121,18 @@ export function ChatRoom({ requestId, currentUserId, initialMessages, onStatus }
           event.preventDefault();
 
           startTransition(async () => {
-            const result = await sendMessageAction({
-              requestId,
-              body,
-            });
-
-            onStatus(result.message);
-            if (!result.ok) {
-              return;
+            try {
+              const result = await sendMessageAction({
+                requestId,
+                body,
+              });
+              onStatus(result.message);
+              if (!result.ok) return;
+              setBody("");
+              router.refresh();
+            } catch {
+              onStatus("Could not confirm your message was sent. Your draft is still here. Check the conversation before trying again.");
             }
-
-            setBody("");
-            router.refresh();
           });
         }}
       >

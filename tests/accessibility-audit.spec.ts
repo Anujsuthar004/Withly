@@ -8,7 +8,7 @@ for (const width of [360, 1440]) {
     test.setTimeout(120000);
     await page.setViewportSize({ width, height: 1000 });
     const findings: Array<{ route: string; violations: unknown[] }> = [];
-    for (const route of routes) {
+    for (const route of [...routes, "/admin"]) {
       await page.goto(route);
       // Wait for hydration so scans do not capture controls mid-enable transition.
       if (route === "/") await expect(page.getByRole("group", { name: "Account access mode" }).getByRole("button", { name: "Sign In" })).toBeEnabled();

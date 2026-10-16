@@ -23,4 +23,4 @@ function run(path, args) {
 if (!process.argv.includes("--skip-build")) {
   run("node_modules/next/dist/bin/next", ["build"]);
 }
-run("node_modules/@playwright/test/cli.js", ["test"]);
+run("node_modules/@playwright/test/cli.js", ["test", ...process.argv.slice(2).filter((argument) => argument !== "--skip-build")]);

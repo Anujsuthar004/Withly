@@ -26,6 +26,16 @@ test("private export and maintenance reject anonymous callers", async ({ request
   }
 });
 
+test("admin remains private and never exposes the local design fixture", async ({ request, baseURL }) => {
+  const response = await request.get("/admin", { maxRedirects: 0 });
+  expect(response.status()).toBe(307);
+  const destination = new URL(response.headers().location);
+  expect(destination.origin).toBe(new URL(baseURL!).origin);
+  expect(destination.pathname).toBe("/");
+  expect(destination.searchParams.get("next")).toBe("/admin");
+  expect(await response.text()).not.toContain("Example admin workspace");
+});
+
 test("signup rejects missing and invalid CAPTCHA without creating an account", async ({ request }) => {
   for (const captchaToken of ["", "invalid-release-check-token"]) {
     const response = await request.post("/api/auth/sign-up", {

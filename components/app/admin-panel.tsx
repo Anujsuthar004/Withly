@@ -98,14 +98,19 @@ export function AdminPanel({
     }
 
     setModerationBusyId(reportId);
-    const result = await resolveReportAction({
-      reportId,
-      status,
-      resolutionNote: moderationNotes[reportId] ?? "",
-    });
-    setModerationBusyId(null);
-    onStatus(result.message);
-    if (result.ok) router.refresh();
+    try {
+      const result = await resolveReportAction({
+        reportId,
+        status,
+        resolutionNote: moderationNotes[reportId] ?? "",
+      });
+      onStatus(result.message);
+      if (result.ok) router.refresh();
+    } catch {
+      onStatus("Could not confirm the report update. Your note is still here. Refresh to check its status before trying again.");
+    } finally {
+      setModerationBusyId(null);
+    }
   }
 
   async function handleResolveDeletionRequest(requestId: string, status: "resolved" | "cancelled") {
@@ -115,14 +120,19 @@ export function AdminPanel({
     }
 
     setDeletionBusyId(requestId);
-    const result = await resolveDeletionRequestAction({
-      requestId,
-      status,
-      resolutionNote: deletionNotes[requestId] ?? "",
-    });
-    setDeletionBusyId(null);
-    onStatus(result.message);
-    if (result.ok) router.refresh();
+    try {
+      const result = await resolveDeletionRequestAction({
+        requestId,
+        status,
+        resolutionNote: deletionNotes[requestId] ?? "",
+      });
+      onStatus(result.message);
+      if (result.ok) router.refresh();
+    } catch {
+      onStatus("Could not confirm the request update. Your note is still here. Refresh to check its status before trying again.");
+    } finally {
+      setDeletionBusyId(null);
+    }
   }
 
   const reportsWithMeta = dashboard.reports
@@ -240,7 +250,7 @@ export function AdminPanel({
       <div className="panel-heading">
         <div>
           <p className="kicker">Moderation command center</p>
-          <h3>See pressure early and move through the queue with context.</h3>
+          <h2>Keep the next step clear.</h2>
         </div>
         <span className="status-dot">
           <ShieldCheck size={16} />
@@ -267,6 +277,7 @@ export function AdminPanel({
           </div>
 
           <p>{nextPriority}</p>
+          <p>Queue indicator only, calculated from backlog and age—not a measure of member safety. Severity labels are keyword-based suggestions for human review.</p>
 
           <div className="admin-health-signals">
             <span className="mini-chip">
@@ -360,9 +371,9 @@ export function AdminPanel({
         ) : null}
       </section>
 
-      <section className="panel-section">
+      <section id="reports" className="panel-section" aria-label="Reports queue">
         <div className="form-section-head">
-          <h4>Reports queue</h4>
+          <h2>Reports queue</h2>
           <p>Filter by urgency and status, then resolve each report with enough context to leave an audit trail.</p>
         </div>
 
@@ -372,41 +383,42 @@ export function AdminPanel({
               type="search"
               value={reportSearch}
               onChange={(event) => setReportSearch(event.target.value)}
+              aria-label="Search reports"
               placeholder="Search by reason, people, or report details"
             />
           </label>
 
           <div className="feed-filter-row">
-            <div className="filter-pill-group" role="tablist" aria-label="Report status filters">
-              <button type="button" className={`filter-pill ${reportView === "active" ? "active" : ""}`} onClick={() => setReportView("active")}>
+            <div className="filter-pill-group" role="group" aria-label="Report status filters">
+              <button type="button" className={`filter-pill ${reportView === "active" ? "active" : ""}`} aria-pressed={reportView === "active" } onClick={() => setReportView("active")}>
                 Active
               </button>
-              <button type="button" className={`filter-pill ${reportView === "open" ? "active" : ""}`} onClick={() => setReportView("open")}>
+              <button type="button" className={`filter-pill ${reportView === "open" ? "active" : ""}`} aria-pressed={reportView === "open" } onClick={() => setReportView("open")}>
                 Open
               </button>
               <button
                 type="button"
-                className={`filter-pill ${reportView === "reviewing" ? "active" : ""}`}
+                className={`filter-pill ${reportView === "reviewing" ? "active" : ""}`} aria-pressed={reportView === "reviewing" }
                 onClick={() => setReportView("reviewing")}
               >
                 Reviewing
               </button>
               <button
                 type="button"
-                className={`filter-pill ${reportView === "resolved" ? "active" : ""}`}
+                className={`filter-pill ${reportView === "resolved" ? "active" : ""}`} aria-pressed={reportView === "resolved" }
                 onClick={() => setReportView("resolved")}
               >
                 Resolved
               </button>
-              <button type="button" className={`filter-pill ${reportView === "all" ? "active" : ""}`} onClick={() => setReportView("all")}>
+              <button type="button" className={`filter-pill ${reportView === "all" ? "active" : ""}`} aria-pressed={reportView === "all" } onClick={() => setReportView("all")}>
                 All
               </button>
             </div>
 
-            <div className="filter-pill-group" role="tablist" aria-label="Severity filters">
+            <div className="filter-pill-group" role="group" aria-label="Severity filters">
               <button
                 type="button"
-                className={`filter-pill ${severityFilter === "all" ? "active" : ""}`}
+                className={`filter-pill ${severityFilter === "all" ? "active" : ""}`} aria-pressed={severityFilter === "all" }
                 onClick={() => setSeverityFilter("all")}
               >
                 All severities
@@ -415,7 +427,7 @@ export function AdminPanel({
                 <button
                   key={severity}
                   type="button"
-                  className={`filter-pill ${severityFilter === severity ? "active" : ""}`}
+                  className={`filter-pill ${severityFilter === severity ? "active" : ""}`} aria-pressed={severityFilter === severity }
                   onClick={() => setSeverityFilter(severity)}
                 >
                   {severity}
@@ -512,29 +524,29 @@ export function AdminPanel({
         </div>
       </section>
 
-      <section className="panel-section">
+      <section id="deletions" className="panel-section" aria-label="Account deletion requests">
         <div className="form-section-head">
-          <h4>Account deletion requests</h4>
+          <h2>Account deletion requests</h2>
           <p>Keep privacy/compliance operations visible, triaged, and clearly documented.</p>
         </div>
 
         <div className="feed-toolbar admin-toolbar">
-          <div className="filter-pill-group" role="tablist" aria-label="Deletion request filters">
+          <div className="filter-pill-group" role="group" aria-label="Deletion request filters">
             <button
               type="button"
-              className={`filter-pill ${deletionView === "pending" ? "active" : ""}`}
+              className={`filter-pill ${deletionView === "pending" ? "active" : ""}`} aria-pressed={deletionView === "pending" }
               onClick={() => setDeletionView("pending")}
             >
               Pending
             </button>
             <button
               type="button"
-              className={`filter-pill ${deletionView === "resolved" ? "active" : ""}`}
+              className={`filter-pill ${deletionView === "resolved" ? "active" : ""}`} aria-pressed={deletionView === "resolved" }
               onClick={() => setDeletionView("resolved")}
             >
               Resolved / cancelled
             </button>
-            <button type="button" className={`filter-pill ${deletionView === "all" ? "active" : ""}`} onClick={() => setDeletionView("all")}>
+            <button type="button" className={`filter-pill ${deletionView === "all" ? "active" : ""}`} aria-pressed={deletionView === "all" } onClick={() => setDeletionView("all")}>
               All
             </button>
           </div>
@@ -609,12 +621,12 @@ export function AdminPanel({
         </div>
       </section>
 
-      <section className="panel-section">
+      <section id="members" className="panel-section" aria-label="Members">
         <div className="form-section-head">
-          <h4>
+          <h2>
             <Users size={16} style={{ display: "inline", verticalAlign: "middle", marginRight: "0.4rem" }} />
             Members
-          </h4>
+          </h2>
           <p>Every account that has signed up — sorted by join date, newest first.</p>
         </div>
 
@@ -624,18 +636,19 @@ export function AdminPanel({
               type="search"
               value={userSearch}
               onChange={(e) => setUserSearch(e.target.value)}
+              aria-label="Search members"
               placeholder="Search by name or area"
             />
           </label>
 
-          <div className="filter-pill-group" role="tablist" aria-label="User filters">
-            <button type="button" className={`filter-pill ${userView === "all" ? "active" : ""}`} onClick={() => setUserView("all")}>
+          <div className="filter-pill-group" role="group" aria-label="User filters">
+            <button type="button" className={`filter-pill ${userView === "all" ? "active" : ""}`} aria-pressed={userView === "all" } onClick={() => setUserView("all")}>
               All
             </button>
-            <button type="button" className={`filter-pill ${userView === "active" ? "active" : ""}`} onClick={() => setUserView("active")}>
+            <button type="button" className={`filter-pill ${userView === "active" ? "active" : ""}`} aria-pressed={userView === "active" } onClick={() => setUserView("active")}>
               Have requests
             </button>
-            <button type="button" className={`filter-pill ${userView === "admins" ? "active" : ""}`} onClick={() => setUserView("admins")}>
+            <button type="button" className={`filter-pill ${userView === "admins" ? "active" : ""}`} aria-pressed={userView === "admins" } onClick={() => setUserView("admins")}>
               Admins
             </button>
           </div>
@@ -687,22 +700,22 @@ export function AdminPanel({
         </div>
       </section>
 
-      <section className="panel-section">
+      <section id="automated-reviews" className="panel-section" aria-label="AI Moderation Queue">
         <div className="form-section-head">
-          <h4>AI Moderation Queue</h4>
+          <h2>AI Moderation Queue</h2>
           <p>Review content flagged automatically by the AI system.</p>
         </div>
 
         <div className="feed-toolbar admin-toolbar">
-          <div className="filter-pill-group" role="tablist" aria-label="AI moderation filters">
+          <div className="filter-pill-group" role="group" aria-label="AI moderation filters">
             <button
               type="button"
-              className={`filter-pill ${aiModView === "pending" ? "active" : ""}`}
+              className={`filter-pill ${aiModView === "pending" ? "active" : ""}`} aria-pressed={aiModView === "pending" }
               onClick={() => setAiModView("pending")}
             >
               Pending
             </button>
-            <button type="button" className={`filter-pill ${aiModView === "all" ? "active" : ""}`} onClick={() => setAiModView("all")}>
+            <button type="button" className={`filter-pill ${aiModView === "all" ? "active" : ""}`} aria-pressed={aiModView === "all" } onClick={() => setAiModView("all")}>
               All
             </button>
           </div>

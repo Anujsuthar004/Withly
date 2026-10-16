@@ -217,9 +217,13 @@ export function ProfilePanel({
                     startAvatarTransition(async () => {
                       const fd = new FormData();
                       fd.set("avatar", selectedAvatarFile);
-                      const result = await uploadProfileAvatarAction(fd);
-                      onStatus(result.message);
-                      if (result.ok) { resetAvatarSelection(); router.refresh(); }
+                      try {
+                        const result = await uploadProfileAvatarAction(fd);
+                        onStatus(result.message);
+                        if (result.ok) { resetAvatarSelection(); router.refresh(); }
+                      } catch {
+                        onStatus("Could not confirm your photo was uploaded. Your selection is still here. Check your profile before trying again.");
+                      }
                     });
                   }}
                   disabled={isAvatarPending}

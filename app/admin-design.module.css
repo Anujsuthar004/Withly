@@ -1,0 +1,62 @@
+.page { max-width: 1160px; margin: auto; color: #25213c; overflow-wrap: anywhere; }
+.hero { display: flex; align-items: center; justify-content: space-between; gap: 28px; padding: 34px; background: #eee9ff; border: 1px solid #ded5f1; border-radius: 28px; }
+.kicker { color: #69548b; font-size: 10px; font-weight: 800; letter-spacing: 1.3px; margin: 0 0 18px; }
+.hero h1 { margin: 0; font-size: clamp(34px, 3.5vw, 48px); letter-spacing: -1.7px; line-height: 1.14; }
+.hero h1 span { color: #6742e9; }
+.intro { max-width: 55ch; font-size: 14px; line-height: 1.8; color: #625775; margin: 20px 0; }
+.heroIcon { flex: 0 0 180px; display: grid; justify-items: center; gap: 22px; color: #6742e9; }
+.heroIcon svg { background: #ddf7a4; border-radius: 32px; padding: 22px; width: 124px; height: 124px; transform: rotate(5deg); }
+.heroIcon span { font-size: 10px; letter-spacing: 1.4px; font-weight: 800; }
+.counts, .shortcuts { display: flex; flex-wrap: wrap; gap: 10px; }
+.counts span { padding: 8px 13px; border-radius: 999px; background: #fff; color: #59476e; font-size: 12px; font-weight: 700; }
+.shortcuts { margin: 24px 0 16px; }
+.shortcuts a { padding: 12px 18px; background: #fff; border: 1px solid #ded5eb; border-radius: 999px; color: #59476e; font-size: 13px; text-decoration: none; font-weight: 700; }
+.shortcuts a:hover { background: #eee9ff; }
+.status, .preview { padding: 15px 20px; border-radius: 16px; font-size: 13px; line-height: 1.8; margin: 12px 0; background: #eaf1ff; color: #455875; }
+.preview { background: #f0f7e6; color: #526246; }
+.page :global(.admin-panel) { background: transparent; border: 0; padding: 0; box-shadow: none; display: grid; gap: 24px; }
+.page :global(.admin-panel)::before, .page :global(.review-card)::before { display: none; }
+.page :global(.panel-heading) { margin: 20px 0 0; align-items: flex-start; flex-wrap: wrap; gap: 16px; }
+.page :global(.panel-intro) { margin: -12px 0 0; color: #625775; font-size: 13px; line-height: 1.8; }
+.page :global(.kicker) { color: #69548b; font-size: 10px; letter-spacing: 1.1px; }
+.page h2 { font-size: 25px; line-height: 1.3; letter-spacing: -.7px; margin: 0 0 8px; }
+.page h3 { font-size: 20px; line-height: 1.4; letter-spacing: -.4px; margin: 0 0 8px; }
+.page h4 { font-size: 18px; line-height: 1.4; color: #25213c; }
+.page :global(.panel-section) { background: #fff; border: 1px solid #e3deef; border-radius: 24px; padding: 26px; margin: 0; min-width: 0; scroll-margin-top: 100px; box-shadow: none; }
+.page :global(.admin-command-grid) { grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: 24px; }
+.page :global(.admin-health-card) { background: #f0f7e6; }
+.page :global(.admin-health-score) { color: #526246; }
+.page :global(.admin-health-score span) { color: #526246; }
+.page :global(.admin-health-card p), .page :global(.form-section-head p) { font-size: 13px; color: #625775; line-height: 1.8; }
+.page :global(.admin-overview-grid-rich) { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.page :global(.admin-stat-card), .page :global(.admin-signal-card) { background: #f8f9ff; border: 1px solid #e3deef; border-radius: 16px; padding: 17px; min-width: 0; box-shadow: none; }
+.page :global(.admin-stat-card span), .page :global(.admin-signal-card span) { color: #625775; font-size: 12px; }
+.page :global(.admin-stat-card strong), .page :global(.admin-signal-card strong) { color: #6742e9; font-size: 28px; }
+.page :global(.admin-signal-card p) { color: #625775; font-size: 12px; line-height: 1.7; }
+.page :global(.admin-signal-grid) { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.page :global(.admin-toolbar) { background: #f8f9ff; border: 1px solid #e3deef; border-radius: 18px; padding: 18px; box-shadow: none; }
+.page :global(.filter-pill-group), .page :global(.feed-filter-row) { display: flex; flex-wrap: wrap; gap: 8px; }
+.page :global(.filter-pill), .page :global(.primary-button), .page :global(.secondary-button), .page :global(.ghost-button) { min-height: 44px; border: 1px solid #ded5eb; border-radius: 999px; background: #fff; color: #59476e; font-size: 12px; padding: 11px 16px; box-shadow: none; white-space: normal; }
+.page :global(.filter-pill.active), .page :global(.primary-button) { background: #6742e9; color: #fff; border-color: #6742e9; }
+.page :global(.search-input) { display: block; background: transparent; border: 0; padding: 0; box-shadow: none; width: 100%; }
+.page :is(input, textarea) { width: 100%; min-width: 0; background: #fff; border: 1px solid #cdbfe1; color: #25213c; border-radius: 12px; padding: 13px; font-size: 14px; box-shadow: none; }
+.page :is(input, textarea)::placeholder { color: #696279; }
+.page textarea { resize: vertical; }
+.page label { color: #625775; font-size: 12px; }
+.page :global(.review-card) { background: #fff; border: 1px solid #ded5eb; border-radius: 20px; padding: 24px; box-shadow: 0 4px 0 #f1edf8; animation: none; min-width: 0; }
+.page :global(.review-card:hover) { transform: none; }
+.page :global(.summary-head) { gap: 16px; align-items: flex-start; }
+.page :global(.summary-head) > div { min-width: 0; }
+.page :global(.review-about) { white-space: pre-wrap; overflow-wrap: anywhere; color: #625775; line-height: 1.8; }
+.page :global(.summary-head p), .page :global(.feed-toolbar-meta) { color: #625775; font-size: 12px; }
+.page :global(.summary-callout) { background: #fff0f2; border: 1px solid #f0ccd5; color: #8a334b; border-radius: 14px; padding: 16px; font-size: 13px; }
+.page :global(.mini-chip), .page :global(.status-dot), .page :global(.status-pill) { color: #59476e; background: #eee9ff; border: 0; border-radius: 999px; padding: 7px 11px; font-size: 11px; line-height: 1.5; white-space: normal; }
+.page :global(.severity-critical), .page :global(.severity-high) { color: #8a334b; background: #ffe8ee; }
+.page :global(.severity-medium) { color: #77530d; background: #fff0bc; }
+.page :global(.severity-low), .page :global(.status-resolved) { color: #45622b; background: #e7f4d7; }
+.page :global(.empty-card) { background: #f8f9ff; color: #625775; border: 1px dashed #cdbfe1; border-radius: 16px; padding: 25px; }
+.page :is(a, button, input, textarea):focus-visible { outline: 3px solid #6742e9; outline-offset: 4px; }
+.page :is(button, textarea):disabled { opacity: .6; cursor: not-allowed; }
+@media (max-width: 1050px) { .page :global(.admin-command-grid) { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 650px) { .hero { padding: 25px; } .heroIcon { display: none; } .page :global(.panel-section) { padding: 20px; } .page :global(.admin-overview-grid-rich), .page :global(.admin-signal-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)); } .page :global(.summary-head) { flex-direction: column; } .page :global(.admin-card-meta-stack) { align-items: flex-start; } .page :is(input, textarea) { font-size: 16px; } .page :global(.admin-toolbar), .page :global(.review-card) { padding: 16px; } }
+@media (max-width: 370px) { .page :global(.admin-overview-grid-rich), .page :global(.admin-signal-grid) { grid-template-columns: minmax(0, 1fr); } }

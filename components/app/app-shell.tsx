@@ -125,7 +125,7 @@ export function AppShell({
       : "Email confirmed";
 
   return (
-    <div className={`app-shell ${["/feed", "/requests", "/inbox", "/sessions", "/profile", "/account", "/alerts"].includes(pathname) || pathname.startsWith("/sessions/") || pathname.startsWith("/requests/") ? feedStyles.shell : ""}`}>
+    <div className={`app-shell ${["/feed", "/requests", "/inbox", "/sessions", "/profile", "/account", "/alerts", "/admin"].includes(pathname) || pathname.startsWith("/sessions/") || pathname.startsWith("/requests/") ? feedStyles.shell : ""}`}>
       {/* ============ LEFT NAV RAIL ============ */}
       <aside className="app-sidebar" aria-label="Primary">
         <div className="app-sidebar-top">
