@@ -1,6 +1,18 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("navigation and page accessibility", () => {
+  test("footer uses clear copy without exposing an email link", async ({ page }) => {
+    for (const path of ["/", "/legal/privacy", "/legal/terms", "/legal/community", "/safety/reporting"]) {
+      await page.goto(path);
+      const footer = page.locator(".site-footer");
+      await expect(footer.getByRole("heading")).toHaveText("Good company. Better study sessions and coffee breaks.");
+      await expect(footer.locator('a[href^="mailto:"]')).toHaveCount(0);
+      await expect(footer).not.toContainText("@");
+      await expect(footer).not.toContainText("public window");
+      await expect(footer.getByRole("link", { name: "Help & reporting" })).toHaveAttribute("href", "/safety/reporting");
+    }
+  });
+
   test("failed email callbacks explain how to recover", async ({ page }) => {
     await page.goto("/auth/callback?error=access_denied");
     await expect(page).toHaveURL(/\/auth\/error$/);
@@ -30,7 +42,7 @@ test.describe("navigation and page accessibility", () => {
   test("landing page has working reporting link", async ({ page }) => {
     await page.goto("/");
 
-    const reportingLink = page.getByRole("link", { name: "Reporting" });
+    const reportingLink = page.getByRole("link", { name: "Help & reporting" });
     await expect(reportingLink).toBeVisible();
     await reportingLink.click();
     await expect(page).toHaveURL(/\/safety\/reporting$/);

@@ -45,7 +45,11 @@ test("signup shows consent, support and the production challenge container", asy
   await page.getByRole("button", { name: "Create Account", exact: true }).click();
   await expect(page.getByRole("checkbox", { name: /at least 18/ })).toBeVisible();
   await expect(page.locator(".turnstile-shell")).toBeAttached();
-  await expect(page.getByRole("link", { name: "sutharanuj530@gmail.com" })).toBeVisible();
+  const footer = page.locator(".site-footer");
+  await expect(footer.getByRole("heading")).toHaveText("Good company. Better study sessions and coffee breaks.");
+  await expect(footer.locator('a[href^="mailto:"]')).toHaveCount(0);
+  await expect(footer).not.toContainText("@");
+  await expect(footer.getByRole("link", { name: "Help & reporting" })).toHaveAttribute("href", "/safety/reporting");
   // Rendering a container does NOT prove challenge success or email delivery.
 });
 

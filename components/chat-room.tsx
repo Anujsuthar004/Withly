@@ -32,6 +32,8 @@ export function ChatRoom({ requestId, currentUserId, initialMessages, onStatus }
   });
 
   useEffect(() => {
+    // A server refresh supplies a new authoritative snapshot for the realtime view.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMessages(initialMessages);
   }, [initialMessages]);
 

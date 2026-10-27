@@ -20,7 +20,7 @@ for (const entry of pages) {
     await page.getByRole("link", { name: "Back to top" }).click();
     await expect(page).toHaveURL(/#page-top$/);
     await expect(page.getByRole("link", { name: "Contact support", exact: true })).toHaveAttribute("href", /^mailto:[^\s]+$/);
-    await expect(page.getByRole("navigation", { name: "Footer" }).getByRole("link")).toHaveCount(5);
+    await expect(page.getByRole("navigation", { name: "Footer" }).getByRole("link")).toHaveCount(4);
     if (entry.name === "safety") {
       await expect(page.getByText("Leave the situation if you feel unsafe.", { exact: false })).toBeVisible();
       await expect(page.getByRole("link", { name: "Open your sessions" })).toHaveAttribute("href", "/sessions");

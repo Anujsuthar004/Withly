@@ -1,8 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { SUPPORT_EMAIL } from "@/lib/env";
-
 export function SiteFooter() {
   return (
     <footer className="site-footer">
@@ -12,7 +10,7 @@ export function SiteFooter() {
           <Image src="/withly-app-icon.svg" alt="Withly Logo" width={20} height={20} />
           Withly
         </Link>
-        <h2>Keep the public window small. Let the real coordination happen in a private thread.</h2>
+        <h2>Good company. Better study sessions and coffee breaks.</h2>
         <p>Find company for focused work, study sessions, and coffee breaks in public spaces.</p>
       </div>
 
@@ -27,11 +25,8 @@ export function SiteFooter() {
           Community
         </Link>
         <Link href="/safety/reporting" className="footer-link-button">
-          Reporting
+          Help &amp; reporting
         </Link>
-        <a className="footer-link-button footer-link-email" href={`mailto:${SUPPORT_EMAIL}`}>
-          {SUPPORT_EMAIL}
-        </a>
       </nav>
     </footer>
   );
