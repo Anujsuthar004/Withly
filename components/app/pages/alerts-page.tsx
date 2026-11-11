@@ -4,22 +4,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Bell, CheckCheck, MessageCircleMore } from "lucide-react";
 import styles from "@/app/settings-design.module.css";
+import { DisplayTime } from "@/components/display-time";
 
 import { markNotificationsReadAction } from "@/app/workspace/actions";
 import type { z } from "zod";
 import type { notificationSchema } from "@/lib/validators";
 
 type Notification = z.infer<typeof notificationSchema>;
-
-function timeAgo(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
-}
 
 export function AlertsPage({ notifications, preview = false, error = "" }: { notifications: Notification[]; preview?: boolean; error?: string }) {
   const [acknowledged, setAcknowledged] = useState<Notification["id"][]>([]);
@@ -69,7 +60,7 @@ export function AlertsPage({ notifications, preview = false, error = "" }: { not
                 <h3>{n.title}</h3>
                 <p>{n.body}</p>
               <div className={styles.alertMeta}>
-                <time dateTime={n.createdAt}>{timeAgo(n.createdAt)}</time>
+                <DisplayTime value={n.createdAt} relative />
                 <span>{n.read || acknowledged.includes(n.id) ? <><CheckCheck size={13} aria-hidden="true" /> Read</> : <><i aria-hidden="true" /> Unread</>}</span>
               </div>
               </div>

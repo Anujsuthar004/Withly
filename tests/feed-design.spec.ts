@@ -11,6 +11,7 @@ test("feed search and filters keep example plans honest and usable", async ({ pa
   await expect(cards.first()).toContainText("Weekend library study");
   await page.getByRole("button", { name: "Email-confirmed only", exact: true }).click();
   await expect(cards).toHaveCount(0);
+  await expect(page.getByText("No requests match your filters", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Clear filters", exact: true }).click();
   await expect(cards).toHaveCount(3);
   await expect(page.getByRole("searchbox")).toHaveValue("");

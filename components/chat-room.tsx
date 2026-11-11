@@ -8,7 +8,7 @@ import { sendMessageAction } from "@/app/workspace/actions";
 import { hasSupabaseEnv } from "@/lib/env";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { SessionMessage } from "@/lib/supabase/types";
-import { formatRelativeTime } from "@/lib/utils";
+import { DisplayTime } from "@/components/display-time";
 import { connectChatRealtime, mergeChatMessages, type ChatConnectionState } from "@/lib/chat-realtime";
 
 interface ChatRoomProps {
@@ -109,7 +109,7 @@ export function ChatRoom({ requestId, currentUserId, initialMessages, onStatus }
                 {message.body}
               </div>
               <span className={`wl-bubble-meta ${isSelf ? "wl-meta-right" : ""}`}>
-                {isSystem ? "System" : message.senderName} · {formatRelativeTime(message.createdAt)}
+                {isSystem ? "System" : message.senderName} · <DisplayTime value={message.createdAt} relative />
               </span>
             </div>
           );

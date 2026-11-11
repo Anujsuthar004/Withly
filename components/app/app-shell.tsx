@@ -10,6 +10,7 @@ import {
   Inbox,
   LayoutGrid,
   MessageCircle,
+  MoreHorizontal,
   Plus,
   Settings,
   UserRound,
@@ -103,7 +104,7 @@ export function AppShell({
       { href: "/inbox", label: "Inbox", icon: <Inbox size={19} />, match: (p) => isActive(p, "/inbox"), badge: inboxCount },
       { href: "/sessions", label: "Sessions", icon: <MessageCircle size={19} />, match: (p) => isActive(p, "/sessions") },
       { href: "/profile", label: "Profile", icon: <UserRound size={19} />, match: (p) => isActive(p, "/profile") },
-      { href: "/requests/new", label: "Compose", icon: <LayoutGrid size={19} />, match: (p) => isActive(p, "/requests/new") },
+      { href: "/requests", label: "My requests", icon: <LayoutGrid size={19} />, match: (p) => p === "/requests" || (p.startsWith("/requests/") && p !== "/requests/new") },
     ],
     [inboxCount]
   );
@@ -125,7 +126,7 @@ export function AppShell({
       : "Email confirmed";
 
   return (
-    <div className={`app-shell ${["/feed", "/requests", "/inbox", "/sessions", "/profile", "/account", "/alerts"].includes(pathname) || pathname.startsWith("/sessions/") || pathname.startsWith("/requests/") ? feedStyles.shell : ""}`}>
+    <div className={`app-shell ${feedStyles.shell}`}>
       {/* ============ LEFT NAV RAIL ============ */}
       <aside className="app-sidebar" aria-label="Primary">
         <div className="app-sidebar-top">
@@ -158,7 +159,7 @@ export function AppShell({
                 {item.icon}
                 <span>{item.label}</span>
                 {item.badge && item.badge > 0 ? (
-                  <span className="nav-badge" aria-label={`${item.badge} pending`}>
+                  <span className="nav-badge" aria-label={`${item.badge} items`}>
                     {item.badge}
                   </span>
                 ) : null}
@@ -247,7 +248,7 @@ export function AppShell({
               <span className="app-bottom-icon-wrap">
                 {item.icon}
                 {item.badge && item.badge > 0 ? (
-                  <span className="nav-badge-small" aria-label={`${item.badge} pending`}>
+                  <span className="nav-badge-small" aria-label={`${item.badge} items`}>
                     {item.badge}
                   </span>
                 ) : null}
@@ -256,7 +257,25 @@ export function AppShell({
             </Link>
           );
         })}
+        <button type="button" className={`app-bottom-link ${feedStyles.moreButton}`} popoverTarget="mobile-more" aria-label="More navigation">
+          <MoreHorizontal size={18} aria-hidden="true" />
+          <span>More</span>
+        </button>
       </nav>
+      <div key={pathname} id="mobile-more" popover="auto" className={feedStyles.morePanel}>
+        <nav aria-label="More destinations">
+          {[
+            { href: "/sessions", label: "Sessions" },
+            { href: "/requests", label: "My requests" },
+            { href: "/account", label: "Account settings" },
+            ...(showAdmin ? [{ href: "/admin", label: "Admin" }] : []),
+          ].map((item) => (
+            <Link key={item.href} href={item.href} aria-current={pathname === item.href ? "page" : undefined}>
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { resolveDeletionRequestAction, resolveReportAction } from "@/app/workspace/actions";
 import type { AdminDashboard, AdminUser, ModerationReport } from "@/lib/supabase/types";
-import { formatRelativeTime } from "@/lib/utils";
+import { DisplayTime } from "@/components/display-time";
 
 type ReportSeverity = "critical" | "high" | "medium" | "low";
 type ReportView = "active" | "all" | "open" | "reviewing" | "resolved";
@@ -239,8 +239,8 @@ export function AdminPanel({
     <section className="panel admin-panel">
       <div className="panel-heading">
         <div>
-          <p className="kicker">Moderation command center</p>
-          <h3>See pressure early and move through the queue with context.</h3>
+          <p className="kicker">Moderation overview</p>
+          <h2>What needs your attention</h2>
         </div>
         <span className="status-dot">
           <ShieldCheck size={16} />
@@ -248,7 +248,7 @@ export function AdminPanel({
         </span>
       </div>
       <p className="panel-intro">
-        This view surfaces backlog health, urgency, queue mix, and the work most likely to need action next so you can moderate with fewer blind spots.
+        Start with urgent reports, then follow up on reviews and account requests.
       </p>
 
       <div className="admin-command-grid">
@@ -371,23 +371,25 @@ export function AdminPanel({
             <input
               type="search"
               value={reportSearch}
+              aria-label="Search reports"
               onChange={(event) => setReportSearch(event.target.value)}
               placeholder="Search by reason, people, or report details"
             />
           </label>
 
           <div className="feed-filter-row">
-            <div className="filter-pill-group" role="tablist" aria-label="Report status filters">
-              <button type="button" className={`filter-pill ${reportView === "active" ? "active" : ""}`} onClick={() => setReportView("active")}>
+            <div className="filter-pill-group" role="group" aria-label="Report status filters">
+              <button type="button" aria-pressed={reportView === "active"} className={`filter-pill ${reportView === "active" ? "active" : ""}`} onClick={() => setReportView("active")}>
                 Active
               </button>
-              <button type="button" className={`filter-pill ${reportView === "open" ? "active" : ""}`} onClick={() => setReportView("open")}>
+              <button type="button" aria-pressed={reportView === "open"} className={`filter-pill ${reportView === "open" ? "active" : ""}`} onClick={() => setReportView("open")}>
                 Open
               </button>
               <button
                 type="button"
                 className={`filter-pill ${reportView === "reviewing" ? "active" : ""}`}
                 onClick={() => setReportView("reviewing")}
+                aria-pressed={reportView === "reviewing"}
               >
                 Reviewing
               </button>
@@ -395,19 +397,21 @@ export function AdminPanel({
                 type="button"
                 className={`filter-pill ${reportView === "resolved" ? "active" : ""}`}
                 onClick={() => setReportView("resolved")}
+                aria-pressed={reportView === "resolved"}
               >
                 Resolved
               </button>
-              <button type="button" className={`filter-pill ${reportView === "all" ? "active" : ""}`} onClick={() => setReportView("all")}>
+              <button type="button" aria-pressed={reportView === "all"} className={`filter-pill ${reportView === "all" ? "active" : ""}`} onClick={() => setReportView("all")}>
                 All
               </button>
             </div>
 
-            <div className="filter-pill-group" role="tablist" aria-label="Severity filters">
+            <div className="filter-pill-group" role="group" aria-label="Severity filters">
               <button
                 type="button"
                 className={`filter-pill ${severityFilter === "all" ? "active" : ""}`}
                 onClick={() => setSeverityFilter("all")}
+                aria-pressed={severityFilter === "all"}
               >
                 All severities
               </button>
@@ -417,6 +421,7 @@ export function AdminPanel({
                   type="button"
                   className={`filter-pill ${severityFilter === severity ? "active" : ""}`}
                   onClick={() => setSeverityFilter(severity)}
+                  aria-pressed={severityFilter === severity}
                 >
                   {severity}
                 </button>
@@ -456,7 +461,7 @@ export function AdminPanel({
                   </p>
                 </div>
                 <div className="admin-card-meta-stack">
-                  <span className="mini-chip">{formatRelativeTime(report.createdAt)}</span>
+                  <span className="mini-chip"><DisplayTime value={report.createdAt} relative /></span>
                   <span className="mini-chip">{formatQueueAge(report.ageHours)} old</span>
                   {report.requestId ? <span className="mini-chip">request {report.requestId.slice(0, 8)}</span> : null}
                 </div>
@@ -519,11 +524,12 @@ export function AdminPanel({
         </div>
 
         <div className="feed-toolbar admin-toolbar">
-          <div className="filter-pill-group" role="tablist" aria-label="Deletion request filters">
+          <div className="filter-pill-group" role="group" aria-label="Deletion request filters">
             <button
               type="button"
               className={`filter-pill ${deletionView === "pending" ? "active" : ""}`}
               onClick={() => setDeletionView("pending")}
+              aria-pressed={deletionView === "pending"}
             >
               Pending
             </button>
@@ -531,10 +537,11 @@ export function AdminPanel({
               type="button"
               className={`filter-pill ${deletionView === "resolved" ? "active" : ""}`}
               onClick={() => setDeletionView("resolved")}
+              aria-pressed={deletionView === "resolved"}
             >
               Resolved / cancelled
             </button>
-            <button type="button" className={`filter-pill ${deletionView === "all" ? "active" : ""}`} onClick={() => setDeletionView("all")}>
+            <button type="button" aria-pressed={deletionView === "all"} className={`filter-pill ${deletionView === "all" ? "active" : ""}`} onClick={() => setDeletionView("all")}>
               All
             </button>
           </div>
@@ -567,7 +574,7 @@ export function AdminPanel({
                   <div className="admin-card-meta-stack">
                     <span className="mini-chip">
                       <Trash2 size={14} />
-                      {formatRelativeTime(entry.createdAt)}
+                      <DisplayTime value={entry.createdAt} relative />
                     </span>
                   </div>
                 </div>
@@ -623,19 +630,20 @@ export function AdminPanel({
             <input
               type="search"
               value={userSearch}
+              aria-label="Search members"
               onChange={(e) => setUserSearch(e.target.value)}
               placeholder="Search by name or area"
             />
           </label>
 
-          <div className="filter-pill-group" role="tablist" aria-label="User filters">
-            <button type="button" className={`filter-pill ${userView === "all" ? "active" : ""}`} onClick={() => setUserView("all")}>
+          <div className="filter-pill-group" role="group" aria-label="User filters">
+            <button type="button" aria-pressed={userView === "all"} className={`filter-pill ${userView === "all" ? "active" : ""}`} onClick={() => setUserView("all")}>
               All
             </button>
-            <button type="button" className={`filter-pill ${userView === "active" ? "active" : ""}`} onClick={() => setUserView("active")}>
+            <button type="button" aria-pressed={userView === "active"} className={`filter-pill ${userView === "active" ? "active" : ""}`} onClick={() => setUserView("active")}>
               Have requests
             </button>
-            <button type="button" className={`filter-pill ${userView === "admins" ? "active" : ""}`} onClick={() => setUserView("admins")}>
+            <button type="button" aria-pressed={userView === "admins"} className={`filter-pill ${userView === "admins" ? "active" : ""}`} onClick={() => setUserView("admins")}>
               Admins
             </button>
           </div>
@@ -676,7 +684,7 @@ export function AdminPanel({
                     <p>{u.homeArea || "No area set"} · user {u.id.slice(0, 8)}</p>
                   </div>
                   <div className="admin-card-meta-stack">
-                    <span className="mini-chip">joined {formatRelativeTime(u.createdAt)}</span>
+                    <span className="mini-chip">joined <DisplayTime value={u.createdAt} relative /></span>
                     <span className="mini-chip">trust {Math.round(u.trustScore)}</span>
                     <span className="mini-chip">{u.requestCount} request{u.requestCount !== 1 ? "s" : ""}</span>
                   </div>
@@ -694,15 +702,16 @@ export function AdminPanel({
         </div>
 
         <div className="feed-toolbar admin-toolbar">
-          <div className="filter-pill-group" role="tablist" aria-label="AI moderation filters">
+          <div className="filter-pill-group" role="group" aria-label="AI moderation filters">
             <button
               type="button"
               className={`filter-pill ${aiModView === "pending" ? "active" : ""}`}
               onClick={() => setAiModView("pending")}
+              aria-pressed={aiModView === "pending"}
             >
               Pending
             </button>
-            <button type="button" className={`filter-pill ${aiModView === "all" ? "active" : ""}`} onClick={() => setAiModView("all")}>
+            <button type="button" aria-pressed={aiModView === "all"} className={`filter-pill ${aiModView === "all" ? "active" : ""}`} onClick={() => setAiModView("all")}>
               All
             </button>
           </div>
@@ -731,7 +740,7 @@ export function AdminPanel({
                   <p>Content ID: {entry.contentId.slice(0, 8)}</p>
                 </div>
                 <div className="admin-card-meta-stack">
-                  <span className="mini-chip">{formatRelativeTime(entry.createdAt)}</span>
+                  <span className="mini-chip"><DisplayTime value={entry.createdAt} relative /></span>
                   <div className="tag-row" style={{ marginTop: '0.25rem' }}>
                     {entry.flags.map(f => <span key={f} className="mini-chip" style={{ fontSize: '10px'}}>{f}</span>)}
                   </div>

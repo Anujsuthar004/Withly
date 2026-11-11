@@ -19,6 +19,7 @@
   color: #25213c;
 }
 .shell :global(.app-sidebar) { background: #fff; border-right: 1px solid #e6e1f0; flex-basis: 230px; width: 230px; padding: 28px 18px; }
+.shell :global(.app-sidebar) > * { flex-shrink: 0; }
 .shell :global(.app-brand-copy strong) { font-size: 29px; letter-spacing: -1.3px; }
 .shell :global(.app-brand-logo) { background: #6742e9; border: 0; border-radius: 14px; box-shadow: none; }
 .shell :global(.app-brand-copy small), .shell :global(.wl-user-chip-copy small) { color: #696279; }
@@ -27,7 +28,7 @@
 .shell :global(.app-nav-link.active) { background: #eee9ff; color: #5131b4; box-shadow: none; }
 .shell :global(.app-nav-link.active .nav-badge) { background: #6742e9; color: #fff; }
 .shell :global(.wl-nav-cta) { border-radius: 999px; background: #6742e9; box-shadow: 0 4px 0 #e4daf9; margin: 28px 0 20px; }
-.shell :global(.app-nav-footer) { border-color: #e6e1f0; }
+.shell :global(.app-nav-footer) { display: grid; border-color: #e6e1f0; }
 .shell :global(.wl-user-chip) { background: #f8f9ff; border: 1px solid #e6e1f0; }
 .shell :global(.ghost-button) { color: #554f69; background: #fff; border: 1px solid #ded8e9; box-shadow: none; }
 .shell :global(.app-topbar) { background: #f8f9fff5; border-bottom: 1px solid #e6e1f0; box-shadow: none; padding: 18px 34px; }
@@ -141,10 +142,43 @@
   .shell :global(.wl-stories-head) { gap: 10px; flex-wrap: wrap; }
   .cardActivity { padding: 12px 19px; }
   .shell :global(.app-topbar-actions) { gap: 6px; }
-  .shell :global(.app-topbar-bell) { width: 34px; height: 34px; }
-  .shell :global(.app-mobile-signout .ghost-button) { padding: 9px 11px; min-height: 36px; font-size: 11px; }
+  .shell :global(.app-topbar-bell) { width: 44px; height: 44px; flex-shrink: 0; }
+  .shell :global(.app-mobile-signout .ghost-button) { padding: 9px 11px; min-height: 44px; font-size: 11px; white-space: nowrap; }
   .shell :global(.summary-callout) { font-size: 12px; padding: 14px 16px; border-radius: 18px; }
+}
+@media (max-width: 360px) {
+  .shell :global(.app-topbar) { padding-inline: 12px; gap: 8px; }
+  .shell :global(.app-topbar-brand) { font-size: 18px; gap: 6px; }
+  .shell :global(.app-topbar-brand .app-brand-logo) { width: 32px; height: 32px; flex-basis: 32px; }
+  .shell :global(.app-topbar-actions) { gap: 4px; }
+  .shell :global(.app-mobile-signout .ghost-button) { padding-inline: 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .shell *, .shell *::before, .shell *::after { animation: none !important; transition: none !important; }
+}
+
+.moreButton { border: 0; background: transparent; font: inherit; cursor: pointer; }
+.morePanel {
+  position: fixed;
+  inset: auto 16px calc(84px + env(safe-area-inset-bottom)) auto;
+  margin: 0;
+  width: min(280px, calc(100vw - 32px));
+  max-height: calc(100dvh - 180px);
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid #ddd6ec;
+  border-radius: 20px;
+  background: #fff;
+  color: #25213c;
+  box-shadow: 0 12px 36px #25213c26;
+}
+.morePanel nav { display: grid; gap: 4px; }
+.morePanel a { display: flex; align-items: center; min-height: 44px; padding: 10px 16px; border-radius: 12px; color: inherit; text-decoration: none; font-size: 14px; }
+.morePanel a:hover, .morePanel a[aria-current="page"] { background: #eee9ff; color: #5131b4; }
+.morePanel a:focus-visible { outline: 3px solid #6742e9; outline-offset: -3px; }
+@media (max-width: 1180px) {
+  :global(.app-bottom-nav) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (min-width: 1181px) {
+  .morePanel { display: none; }
 }

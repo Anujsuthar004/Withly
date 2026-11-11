@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 
 import { getProfileInitials } from "@/lib/avatar";
 import { cn } from "@/lib/utils";
@@ -26,10 +27,11 @@ export function ProfileAvatar({
   className?: string;
 }) {
   const label = name.trim() || "Member";
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
 
   return (
     <div className={cn("profile-avatar", `profile-avatar-${size}`, className)} aria-label={`${label} profile photo`}>
-      {url ? (
+      {url && url !== failedUrl ? (
         <Image
           src={url}
           alt={`${label} profile photo`}
@@ -37,6 +39,7 @@ export function ProfileAvatar({
           sizes={avatarSizes[size]}
           className="profile-avatar-image"
           unoptimized
+          onError={() => setFailedUrl(url)}
         />
       ) : (
         <span className="profile-avatar-fallback">{getProfileInitials(label)}</span>

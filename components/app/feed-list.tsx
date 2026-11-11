@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { deleteRequestAction, submitJoinRequestAction } from "@/app/workspace/actions";
 import { StatusBadge } from "@/components/app/status-badge";
 import type { FeedRequestCard, RequestLane, WorkspaceProfile } from "@/lib/supabase/types";
-import { formatDateTime, formatRelativeTime } from "@/lib/utils";
+import { DisplayTime } from "@/components/display-time";
 
 type FeedTab = "foryou" | "expiring";
 
@@ -59,6 +59,7 @@ export function FeedList({
   const [dismissedRequestIds, setDismissedRequestIds] = useState<string[]>([]);
   const [feedback, setFeedback] = useState("");
   const ownerRequestIdSet = useMemo(() => new Set(ownerRequestIds), [ownerRequestIds]);
+  const hasAvailableRequests = feed.some((entry) => !dismissedRequestIds.includes(entry.id));
 
   const filteredFeed = useMemo(() => {
     const query = deferredSearch.trim().toLowerCase();
@@ -186,11 +187,17 @@ export function FeedList({
               <div className="wl-empty-icon">
                 <Search size={24} />
               </div>
-              <strong>No requests match this view</strong>
-              <span>Try another tab, clear a filter, or widen your search so more plans can surface.</span>
-              <button type="button" className="wl-empty-action" onClick={clearFilters}>
-                Clear filters
-              </button>
+              <strong>{hasAvailableRequests ? "No requests match your filters" : "A little company starts with a plan"}</strong>
+              <span>{hasAvailableRequests
+                ? "Try a different search or clear your filters to see all available plans."
+                : "No open requests yet. Share what you would like to do and invite someone along."}</span>
+              {hasAvailableRequests ? (
+                <button type="button" className="wl-empty-action" onClick={clearFilters}>
+                  Clear filters
+                </button>
+              ) : (
+                <Link className="wl-empty-action" href="/requests/new">Post a plan</Link>
+              )}
             </div>
           ) : null}
 
@@ -241,13 +248,13 @@ export function FeedList({
                       <div className="wl-card-meta-line">
                         <span>{isSocial ? "Coworking & Focus" : "Coffee Walk"}</span>
                         <span className="wl-meta-dot" />
-                        <span>{formatRelativeTime(request.createdAt)}</span>
+                        <span><DisplayTime value={request.createdAt} relative /></span>
                         {request.expiresAt && (
                           <>
                             <span className="wl-meta-dot" />
                             <span className="wl-ephemeral-tag">
                               <Clock size={11} />
-                              Closes {formatDateTime(request.expiresAt)}
+                              Closes <DisplayTime value={request.expiresAt} />
                             </span>
                           </>
                         )}
@@ -273,7 +280,7 @@ export function FeedList({
                   </div>
                   {request.areaLabel || request.meetupAt ? <div className={styles.planMeta}>
                     {request.areaLabel ? <span><MapPin size={14} aria-hidden="true" />{request.areaLabel}</span> : null}
-                    {request.meetupAt ? <span><Clock size={14} aria-hidden="true" />{formatDateTime(request.meetupAt)}</span> : null}
+                    {request.meetupAt ? <span><Clock size={14} aria-hidden="true" /><DisplayTime value={request.meetupAt} /></span> : null}
                   </div> : null}
 
                   {/* Meta chips */}

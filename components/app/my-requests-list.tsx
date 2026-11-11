@@ -8,7 +8,7 @@ import { ArrowUpRight, CalendarDays, MapPin, MessageCircleMore, Trash2 } from "l
 import { deleteRequestAction, hideThreadAction } from "@/app/workspace/actions";
 
 import type { RequestStatus, WorkspaceRequest } from "@/lib/supabase/types";
-import { formatDateTime, formatRelativeTime } from "@/lib/utils";
+import { DisplayTime } from "@/components/display-time";
 import styles from "@/app/requests-design.module.css";
 
 export function MyRequestsList({ requests, preview = false }: { requests: WorkspaceRequest[]; preview?: boolean }) {
@@ -98,11 +98,11 @@ export function MyRequestsList({ requests, preview = false }: { requests: Worksp
                 </h3>
               </div>
             </div>
-            <div className={styles.meta}><span><MapPin size={15} />{request.areaLabel || "Agree in chat"}</span><span><CalendarDays size={15} />{formatDateTime(request.meetupAt)}</span></div>
+            <div className={styles.meta}><span><MapPin size={15} />{request.areaLabel || "Agree in chat"}</span><span><CalendarDays size={15} /><DisplayTime value={request.meetupAt} /></span></div>
             <div className={styles.planNote}>
               <MessageCircleMore size={17} aria-hidden="true" /><span>{request.status === "open" ? `${request.pendingJoinCount} pending ${request.pendingJoinCount === 1 ? "reply" : "replies"}` : request.partnerDisplayName ? `With ${request.partnerDisplayName}` : `This plan is ${request.status}`}</span>
             </div>
-            <small className={styles.updated}>Updated {formatRelativeTime(request.lastActivityAt)}{preview ? " · Example plan" : ""}</small>
+            <small className={styles.updated}>Updated <DisplayTime value={request.lastActivityAt} relative />{preview ? " · Example plan" : ""}</small>
             <div className={styles.actions}>
               <Link className={styles.secondary} href={`/requests/${request.id}`}>
                 View details

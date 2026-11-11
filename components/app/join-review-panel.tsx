@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { reviewJoinRequestAction } from "@/app/workspace/actions";
 import type { WorkspaceJoinReview } from "@/lib/supabase/types";
-import { formatRelativeTime } from "@/lib/utils";
+import { DisplayTime } from "@/components/display-time";
 
 function getInitials(name: string) {
   return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
@@ -94,7 +94,7 @@ export function JoinReviewPanel({
                       {preview ? <span className="wl-join-preview">Example reply</span> : null}
                     </div>
                     <div className="wl-join-meta">
-                      wants to join · {entry.requestTitle} · {formatRelativeTime(entry.createdAt)}
+                      wants to join · {entry.requestTitle} · <DisplayTime value={entry.createdAt} relative />
                     </div>
                   </div>
                 </div>

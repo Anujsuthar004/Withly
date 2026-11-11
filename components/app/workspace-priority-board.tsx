@@ -4,7 +4,8 @@ import Link from "next/link";
 import { ArrowRight, Compass, MessageCircleMore, PlusCircle, Sparkles, UserRound } from "lucide-react";
 
 import type { WorkspaceSnapshot } from "@/lib/supabase/types";
-import { formatDateTime, getProfileCompletion } from "@/lib/utils";
+import { getProfileCompletion } from "@/lib/utils";
+import { DisplayTime } from "@/components/display-time";
 
 export function WorkspacePriorityBoard({
   snapshot,
@@ -24,7 +25,7 @@ export function WorkspacePriorityBoard({
     ? {
         kicker: "Active now",
         title: `Keep ${activeSession.partnerDisplayName} in the loop.`,
-        description: `Your next confirmed plan is set for ${formatDateTime(activeSession.meetupAt)}. Use the inbox to keep the details crisp and easy to follow.`,
+        description: <>Your next confirmed plan is set for <DisplayTime value={activeSession.meetupAt} />. Use the inbox to keep the details crisp and easy to follow.</>,
         primaryHref: "/inbox",
         primaryLabel: "Open inbox",
         secondaryHref: `/requests/${activeSession.requestId}`,

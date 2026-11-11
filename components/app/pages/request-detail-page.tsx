@@ -8,7 +8,7 @@ import { deleteRequestAction, hideThreadAction, submitJoinRequestAction } from "
 import { JoinReviewPanel } from "@/components/app/join-review-panel";
 import { SessionControls } from "@/components/app/session-controls";
 import type { WorkspaceJoinReview, WorkspaceRequest } from "@/lib/supabase/types";
-import { formatDateTime } from "@/lib/utils";
+import { DisplayTime } from "@/components/display-time";
 import styles from "@/app/requests-design.module.css";
 import shared from "@/app/inbox-design.module.css";
 
@@ -66,7 +66,7 @@ export function RequestDetailPage({ detail, preview, myRequest, joinReviews, una
             <div className={styles.detailBody}>
               <p className={styles.kicker}>{detail.hostDisplayName ? `HOSTED BY ${detail.hostDisplayName}` : myRequest ? "IN YOUR PLANS" : "A LITTLE ROOM FOR COMPANY"}</p>
               <h1>{detail.title}</h1>
-              <dl className={styles.facts}><div><dt><MapPin size={16} /> Area</dt><dd>{detail.areaLabel || "Agree in chat"}</dd></div><div><dt><CalendarDays size={16} /> When</dt><dd>{formatDateTime(detail.meetupAt)}</dd></div></dl>
+              <dl className={styles.facts}><div><dt><MapPin size={16} /> Area</dt><dd>{detail.areaLabel || "Agree in chat"}</dd></div><div><dt><CalendarDays size={16} /> When</dt><dd><DisplayTime value={detail.meetupAt} /></dd></div></dl>
               {detail.description ? <div className={styles.description}><h2>The plan</h2><p>{detail.description}</p></div> : null}
               {detail.tags?.length ? <ul className={styles.tags} aria-label="Request tags">{detail.tags.map((tag, index) => <li key={`${tag}-${index}`}>#{tag}</li>)}</ul> : null}
               {detail.verifiedOnly ? <p className={styles.verified}><ShieldCheck size={16} /> Email-confirmed members only</p> : null}

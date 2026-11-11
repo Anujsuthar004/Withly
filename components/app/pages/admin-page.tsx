@@ -27,8 +27,8 @@ export function AdminPage({
     <div className="workspace-page">
       <WorkspacePageHeader
         kicker="Admin"
-        title="Run moderation like a command center, not a backlog list."
-        intro="See queue health, urgency, trend signals, and the next actions that deserve attention before pressure compounds."
+        title="Keep the community cared for."
+        intro="Review reports, support members, and track account requests in one place."
         status={status}
         meta={
           <>
