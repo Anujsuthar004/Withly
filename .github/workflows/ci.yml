@@ -35,7 +35,8 @@ jobs:
         run: bash scripts/test-database.sh
 
   verify:
-    runs-on: ubuntu-latest
+    # Playwright 1.58 supports Ubuntu 24.04, not the newer ubuntu-latest image.
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4.2.2

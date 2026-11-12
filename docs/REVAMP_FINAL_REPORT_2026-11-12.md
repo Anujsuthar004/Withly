@@ -40,6 +40,7 @@ the remaining validation gaps below prevent a claim of exhaustive sign-off.
 - Corrected misleading pending-item badge terminology.
 - Integrated the existing unpublished DisplayTime fix: initial date markup is stable across server and browser, then localized after hydration. This resolves the reproduced React hydration error across date-bearing screens.
 - Preserved the footer update removing a direct personal email link.
+- Pinned the GitHub browser-test job to Ubuntu 24.04 after the moving `ubuntu-latest` image switched to an OS unsupported by the installed Playwright version. This is a CI-only change, not a production application change.
 
 ## Verification results
 
